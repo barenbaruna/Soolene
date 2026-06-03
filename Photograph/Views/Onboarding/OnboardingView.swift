@@ -23,13 +23,13 @@ struct OnboardingView: View {
         OnboardingPage(
             symbol: "grid",
             title: "Live Overlays",
-            body: "Visual guides like Rule of Thirds, Golden Ratio, and Diagonal lines are drawn over your live preview to help you compose.",
+            body: "Visual guides like Rule of Thirds, Center, Horizontal, Vertical, and Diagonal lines are drawn over your live preview to help you compose.",
             accent: .orange
         ),
         OnboardingPage(
             symbol: "sparkles",
             title: "Smart Guidance",
-            body: "The app detects the scene — portrait, landscape, urban, macro — and suggests the best composition technique for it.",
+            body: "The app analyzes your scene geometry in real-time and suggests the best composition technique to guide your framing.",
             accent: .green
         )
     ]

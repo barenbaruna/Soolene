@@ -47,8 +47,8 @@ final class OverlayCanvas: UIView {
     // MARK: - Colors
 
     private let guideColor = UIColor.white.withAlphaComponent(0.3)
-    private let accentColor = UIColor.systemYellow.withAlphaComponent(0.8)
-    private let perfectColor = UIColor.systemGreen.withAlphaComponent(0.9)
+    private let accentColor = UIColor(AppColors.gridlineRed).withAlphaComponent(0.8)
+    private let perfectColor = UIColor(AppColors.gridlineGreen).withAlphaComponent(0.9)
 
     // MARK: - Draw
 

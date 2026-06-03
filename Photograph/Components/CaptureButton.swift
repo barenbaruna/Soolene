@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct CaptureButtonView: View {
+struct CaptureButton: View {
     let action: () -> Void
     @State private var isPressed = false
 
@@ -41,6 +41,6 @@ struct CaptureButtonView: View {
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        CaptureButtonView(action: {})
+        CaptureButton(action: {})
     }
 }

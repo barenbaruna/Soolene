@@ -33,8 +33,8 @@ final class CameraManager: NSObject, @unchecked Sendable {
     // MARK: - Session
 
     let session = AVCaptureSession()
-    private let sessionQueue = DispatchQueue(label: "com.frameit.sessionQueue", qos: .userInitiated)
-    private let processingQueue = DispatchQueue(label: "com.frameit.processingQueue", qos: .userInitiated)
+    private let sessionQueue = DispatchQueue(label: "com.photograph.sessionQueue", qos: .userInitiated)
+    private let processingQueue = DispatchQueue(label: "com.photograph.processingQueue", qos: .userInitiated)
 
     // MARK: - Outputs
 
@@ -49,6 +49,11 @@ final class CameraManager: NSObject, @unchecked Sendable {
     var onFrameCaptured: (@Sendable (CMSampleBuffer) -> Void)?
 
     // MARK: - Setup
+
+    override init() {
+        super.init()
+        discoverAvailableLenses()
+    }
 
     func checkPermissionsAndSetup() async {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -86,9 +91,17 @@ final class CameraManager: NSObject, @unchecked Sendable {
         var lenses: [LensType] = []
         let deviceTypes = Set(discoverySession.devices.map { $0.deviceType })
 
+        // Always show ultrawide if physically present
         if deviceTypes.contains(.builtInUltraWideCamera) { lenses.append(.ultraWide) }
-        lenses.append(.wide) // Always available
-        if deviceTypes.contains(.builtInTelephotoCamera) { lenses.append(.telephoto) }
+
+        // Wide (1×) is always present
+        lenses.append(.wide)
+
+        // 2× digital crop on wide — always useful on any device
+        lenses.append(.twoX)
+
+        // 5× telephoto (iPhone 15 Pro Max, 16 Pro, 17 Pro)
+        if deviceTypes.contains(.builtInTelephotoCamera) { lenses.append(.fiveX) }
 
         DispatchQueue.main.async { [weak self] in
             self?.availableLenses = lenses
@@ -128,7 +141,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
         ]
         videoDataOutput.setSampleBufferDelegate(
             self,
-            queue: DispatchQueue(label: "com.frameit.videoQueue", qos: .userInitiated)
+            queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
         )
         if session.canAddOutput(videoDataOutput) {
             session.addOutput(videoDataOutput)
@@ -147,6 +160,15 @@ final class CameraManager: NSObject, @unchecked Sendable {
         }
 
         session.commitConfiguration()
+
+        // Apply digital zoom for lenses that use it (e.g. 2× crop on wide-angle)
+        if !useFront && lens.zoomFactor > 1.0 {
+            if let device = session.inputs.compactMap({ $0 as? AVCaptureDeviceInput }).first?.device,
+               let _ = try? device.lockForConfiguration() {
+                device.videoZoomFactor = min(lens.zoomFactor, device.maxAvailableVideoZoomFactor)
+                device.unlockForConfiguration()
+            }
+        }
     }
 
     // MARK: - Exposure
@@ -167,7 +189,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
                 
                 DispatchQueue.main.async { self.exposureBias = clampedBias }
             } catch {
-                print("Failed to set exposure bias: \(error)")
+                // Ignore error
             }
         }
     }

@@ -23,10 +23,10 @@ enum CompositionType: String, CaseIterable, Identifiable, Codable {
     /// SF Symbol for each composition.
     var symbolName: String {
         switch self {
-        case .ruleOfThirds: return "grid.3x3"
+        case .ruleOfThirds: return "rectangle.split.3x3"
         case .center: return "scope"
         case .horizontal: return "line.horizontal.3"
-        case .vertical: return "line.vertical.3"
+        case .vertical: return "align.vertical.center"
         case .diagonal: return "line.diagonal"
         }
     }

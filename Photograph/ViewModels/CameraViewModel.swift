@@ -22,8 +22,8 @@ final class CameraViewModel {
 
     // MARK: - Capture State
 
-    var isShowingReview = false
-    var isSaving = false
+    var showShutterFlash = false
+    var lastSavedThumbnail: UIImage?
     var saveError: String?
     
     // Timer state
@@ -60,10 +60,43 @@ final class CameraViewModel {
     func onAppear() async {
         await checkPermissions()
         await cameraManager.checkPermissionsAndSetup()
+        await loadLatestThumbnail()
+    }
+
+    private func loadLatestThumbnail() async {
+        guard let assets = await GalleryManager.shared.fetchAllPhotos(),
+              let latestAsset = assets.firstObject else { return }
+
+        let size = CGSize(width: 80, height: 80)
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.isNetworkAccessAllowed = true
+        options.isSynchronous = false
+
+        PHImageManager.default().requestImage(
+            for: latestAsset,
+            targetSize: size,
+            contentMode: .aspectFill,
+            options: options
+        ) { img, _ in
+            if let img = img {
+                Task { @MainActor in
+                    self.lastSavedThumbnail = img
+                }
+            }
+        }
     }
 
     func onDisappear() {
         cameraManager.stopSession()
+    }
+
+    func pauseSession() {
+        cameraManager.stopSession()
+    }
+
+    func resumeSession() {
+        Task { await cameraManager.checkPermissionsAndSetup() }
     }
 
     // MARK: - Permissions
@@ -89,18 +122,22 @@ final class CameraViewModel {
     // MARK: - Camera Actions
 
     func switchCamera() {
+        HapticManager.selection()
         cameraManager.switchCamera()
     }
 
     func switchLens(_ lens: LensType) {
+        HapticManager.selection()
         cameraManager.switchLens(lens)
     }
 
     func cycleFlash() {
+        HapticManager.selection()
         cameraManager.cycleFlash()
     }
 
     func cycleTimer() {
+        HapticManager.selection()
         switch timerLength {
         case 0: timerLength = 3
         case 3: timerLength = 10
@@ -121,6 +158,7 @@ final class CameraViewModel {
         else if current == 2.0 { next = -2.0 }
         else if current == -2.0 { next = -1.0 }
         else { next = 0.0 }
+        HapticManager.selection()
         setExposure(next)
     }
 
@@ -156,6 +194,15 @@ final class CameraViewModel {
     }
     
     private func executeCapture() {
+        HapticManager.capture()
+        // Trigger UI flash
+        showShutterFlash = true
+        // Turn off flash after a short delay
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            showShutterFlash = false
+        }
+        
         cameraManager.capturedImage = nil
         cameraManager.capturedPhotoData = nil
         cameraManager.capturePhoto(aspectRatio: selectedAspectRatio)
@@ -165,20 +212,22 @@ final class CameraViewModel {
 
     func savePhoto() async {
         guard let data = cameraManager.capturedPhotoData else { return }
-        isSaving = true
-        defer { isSaving = false }
 
         do {
             try await GalleryManager.shared.savePhoto(data, composition: analysis.detectedComposition)
+            
+            // Generate thumbnail for the gallery button
+            if let image = UIImage(data: data) {
+                // Resize for thumbnail to save memory
+                let renderer = UIGraphicsImageRenderer(size: CGSize(width: 80, height: 80))
+                let thumb = renderer.image { _ in
+                    image.draw(in: CGRect(x: 0, y: 0, width: 80, height: 80))
+                }
+                self.lastSavedThumbnail = thumb
+            }
         } catch {
             saveError = error.localizedDescription
         }
-    }
-
-    func dismissReview() {
-        isShowingReview = false
-        cameraManager.capturedImage = nil
-        cameraManager.capturedPhotoData = nil
     }
 
     // MARK: - Resolved Composition

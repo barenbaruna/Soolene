@@ -2,13 +2,18 @@
 //  PhotoDetailView.swift
 //  Photograph
 //
+//  Full-screen photo viewer with:
+//  - Navigation bar: date (title) + composition toggle (trailing)
+//  - Bottom toolbar: delete button
+//  - Composition overlay toggle
+//
 //  Created by Baren Baruna Harahap on 01/06/26.
 //
 
 import Photos
 import SwiftUI
 
-/// Full-screen photo detail view with composition overlay toggle and metadata.
+/// Full-screen photo detail view.
 struct PhotoDetailView: View {
     let asset: PHAsset
     let composition: CompositionType
@@ -28,13 +33,10 @@ struct PhotoDetailView: View {
                     .resizable()
                     .scaledToFit()
 
-                // Composition overlay (toggle)
+                // Composition overlay toggle
                 if isShowingOverlay {
                     GeometryReader { geo in
-                        StaticOverlayView(
-                            composition: composition,
-                            size: geo.size
-                        )
+                        StaticOverlayView(composition: composition, size: geo.size)
                     }
                     .allowsHitTesting(false)
                 }
@@ -45,37 +47,59 @@ struct PhotoDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // Centre: date & time
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 1) {
-                    Text(composition.rawValue)
-                        .font(.caption)
-                        .fontWeight(.medium)
                     Text(formattedDate)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                    Text(composition.rawValue)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.7))
                 }
             }
+
+            // Trailing: toggle composition overlay
             ToolbarItem(placement: .primaryAction) {
                 Button {
+                    HapticManager.selection()
                     isShowingOverlay.toggle()
                 } label: {
-                    Image(systemName: isShowingOverlay ? "grid.circle.fill" : "grid.circle")
+                    Image(systemName: isShowingOverlay ? "rectangle.split.3x3.fill" : "rectangle.split.3x3")
                         .font(.title3)
+                        .foregroundStyle(.white)
                 }
                 .accessibilityLabel(isShowingOverlay ? "Hide Overlay" : "Show Overlay")
             }
+
+            // Bottom bar: delete button (HIG — destructive actions in bottom bar)
+            ToolbarItem(placement: .bottomBar) {
+                Button(role: .destructive) {
+                    HapticManager.selection()
+                    isShowingDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.title3)
+                        .foregroundStyle(.red)
+                }
+                .accessibilityLabel("Delete Photo")
+            }
         }
         .toolbarBackground(.hidden, for: .navigationBar)
-        .confirmationDialog("Delete Photo", isPresented: $isShowingDeleteConfirmation) {
-            Button("Delete", role: .destructive) {
+        .toolbarBackground(.hidden, for: .bottomBar)
+        .confirmationDialog(
+            "Delete Photo",
+            isPresented: $isShowingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete from App", role: .destructive) {
                 deletePhoto()
             }
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Remove this photo from the Photograph album?")
+            Text("Are you sure you want to delete this photo from the app?")
         }
-        .task {
-            await loadFullImage()
-        }
+        .task { await loadFullImage() }
     }
 
     // MARK: - Helpers
@@ -88,6 +112,10 @@ struct PhotoDetailView: View {
         return formatter.string(from: date)
     }
 
+    // MARK: - Image Loading
+    // Note: highQualityFormat can call the completion block more than once
+    // (first with a degraded image, then with the full quality one).
+    // We use imageLoaded flag to only keep the best result and avoid issues.
     private func loadFullImage() async {
         let size = CGSize(
             width: CGFloat(asset.pixelWidth),
@@ -98,19 +126,29 @@ struct PhotoDetailView: View {
         options.isNetworkAccessAllowed = true
         options.isSynchronous = false
 
-        let result = await withCheckedContinuation { (continuation: CheckedContinuation<UIImage?, Never>) in
-            PHImageManager.default().requestImage(
-                for: asset,
-                targetSize: size,
-                contentMode: .aspectFit,
-                options: options
-            ) { image, _ in
-                continuation.resume(returning: image)
+        PHImageManager.default().requestImage(
+            for: asset,
+            targetSize: size,
+            contentMode: .aspectFit,
+            options: options
+        ) { img, info in
+            guard let img else { return }
+            // Only update once with final image (not progressive degraded versions)
+            let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+            if !isDegraded {
+                Task { @MainActor in
+                    self.fullImage = img
+                }
+            } else if self.fullImage == nil {
+                // Show degraded preview while full quality loads
+                Task { @MainActor in
+                    self.fullImage = img
+                }
             }
         }
-
-        await MainActor.run { fullImage = result }
     }
+
+    // MARK: - Delete
 
     private func deletePhoto() {
         PHPhotoLibrary.shared().performChanges {
@@ -123,9 +161,9 @@ struct PhotoDetailView: View {
     }
 }
 
-// MARK: - Static Overlay View (for photo review)
+// MARK: - Static Overlay View
 
-/// A simple SwiftUI-drawn overlay for viewing composition lines on saved photos.
+/// Draws composition guideline lines on a saved photo.
 struct StaticOverlayView: View {
     let composition: CompositionType
     let size: CGSize
@@ -136,22 +174,15 @@ struct StaticOverlayView: View {
             let lineColor = Color.white.opacity(0.5)
 
             switch composition {
-            case .ruleOfThirds:
-                drawRuleOfThirds(context: &context, rect: rect, color: lineColor)
-            case .center:
-                drawCenter(context: &context, rect: rect, color: lineColor)
-            case .horizontal:
-                drawHorizontal(context: &context, rect: rect, color: lineColor)
-            case .vertical:
-                drawVertical(context: &context, rect: rect, color: lineColor)
-            case .diagonal:
-                drawDiagonal(context: &context, rect: rect, color: lineColor)
+            case .ruleOfThirds:  drawRuleOfThirds(context: &context, rect: rect, color: lineColor)
+            case .center:        drawCenter(context: &context, rect: rect, color: lineColor)
+            case .horizontal:    drawHorizontal(context: &context, rect: rect, color: lineColor)
+            case .vertical:      drawVertical(context: &context, rect: rect, color: lineColor)
+            case .diagonal:      drawDiagonal(context: &context, rect: rect, color: lineColor)
             }
         }
         .frame(width: size.width, height: size.height)
     }
-
-    // MARK: - Drawing Methods
 
     private func drawRuleOfThirds(context: inout GraphicsContext, rect: CGRect, color: Color) {
         let thirdW = rect.width / 3
@@ -164,7 +195,6 @@ struct StaticOverlayView: View {
             path.addLine(to: CGPoint(x: x, y: rect.height))
             context.stroke(path, with: .color(color), lineWidth: 0.8)
         }
-
         for i in 1...2 {
             let y = thirdH * CGFloat(i)
             var path = Path()
@@ -172,15 +202,13 @@ struct StaticOverlayView: View {
             path.addLine(to: CGPoint(x: rect.width, y: y))
             context.stroke(path, with: .color(color), lineWidth: 0.8)
         }
-
         // Power points
         let dotColor = Color.yellow.opacity(0.6)
         for col in 1...2 {
             for row in 1...2 {
                 let x = thirdW * CGFloat(col)
                 let y = thirdH * CGFloat(row)
-                let dotRect = CGRect(x: x - 4, y: y - 4, width: 8, height: 8)
-                context.fill(Path(ellipseIn: dotRect), with: .color(dotColor))
+                context.fill(Path(ellipseIn: CGRect(x: x - 4, y: y - 4, width: 8, height: 8)), with: .color(dotColor))
             }
         }
     }
@@ -188,15 +216,10 @@ struct StaticOverlayView: View {
     private func drawCenter(context: inout GraphicsContext, rect: CGRect, color: Color) {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let radius: CGFloat = 30
-
-        // Circle
-        let circlePath = Path(ellipseIn: CGRect(
-            x: center.x - radius, y: center.y - radius,
-            width: radius * 2, height: radius * 2
-        ))
-        context.stroke(circlePath, with: .color(color), lineWidth: 1.0)
-
-        // Crosshair
+        context.stroke(
+            Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)),
+            with: .color(color), lineWidth: 1.0
+        )
         let crossLen: CGFloat = 12
         var hPath = Path()
         hPath.move(to: CGPoint(x: center.x - crossLen, y: center.y))

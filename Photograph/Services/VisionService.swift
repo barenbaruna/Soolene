@@ -32,18 +32,17 @@ final class VisionService: @unchecked Sendable {
         guard let url = Bundle.main.url(forResource: "FiveCompositionDetector", withExtension: "mlmodelc") ??
             Bundle.main.url(forResource: "FiveCompositionDetector", withExtension: "mlpackage")
         else {
-            print("❌ [VisionService] Failed to find FiveCompositionDetector model.")
             return nil
         }
         guard let model = try? MLModel(contentsOf: url),
               let visionModel = try? VNCoreMLModel(for: model) else { return nil }
-        print("✅ [VisionService] FiveCompositionDetector loaded!")
         return visionModel
     }()
 
     // MARK: - Accumulated State
 
     private var currentAnalysis = CompositionAnalysis()
+    private var wasCompositionPerfect = false
 
     // MARK: - Coordinate Helpers
 
@@ -108,6 +107,12 @@ final class VisionService: @unchecked Sendable {
                 self.currentAnalysis = updated
                 self.onAnalysisUpdated?(updated)
                 self.isAnalyzing = false
+                
+                // Trigger success haptic if we just became perfect
+                if updated.isCompositionPerfect && !self.wasCompositionPerfect {
+                    HapticManager.success()
+                }
+                self.wasCompositionPerfect = updated.isCompositionPerfect
             }
         }
     }
@@ -182,12 +187,6 @@ final class VisionService: @unchecked Sendable {
         }
 
         analysis.mlPredictions = predictions
-
-        // Debug logging
-        print("--- ML Composition Predictions ---")
-        for (i, p) in predictions.enumerated() {
-            print("\(i + 1). \(p.type.rawValue): \(String(format: "%.1f%%", p.confidence * 100))")
-        }
     }
 
     // MARK: - Subject Offset Computation

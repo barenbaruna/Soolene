@@ -15,9 +15,6 @@ struct CompositionAnalysis: Equatable {
     /// Full geometric data from Vision APIs (saliency, horizon, face).
     var sceneGeometry = SceneGeometry()
 
-    /// Composition score 0–100 (from iOS 18+ aesthetic API).
-    var compositionScore: Int = 0
-
     /// Top-3 ML predictions from FiveCompositionDetector.
     var mlPredictions: [CompositionPrediction] = []
 

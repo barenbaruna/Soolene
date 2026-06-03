@@ -85,6 +85,11 @@ actor GalleryManager {
             .map { $0.assetIdentifier }
     }
 
+    /// Returns all metadata entries (used by GalleryView to map asset IDs → composition).
+    func fetchAllCompositionMetadata() async -> [PhotoMetadata] {
+        loadAllMetadata()
+    }
+
     // MARK: - Album Management
 
     private func getOrCreateAlbum() async throws -> PHAssetCollection {
@@ -111,7 +116,7 @@ actor GalleryManager {
     // MARK: - Local Metadata (JSON file)
 
     /// Simple local storage for composition metadata since EXIF doesn't support custom fields easily.
-    private struct PhotoMetadata: Codable {
+    struct PhotoMetadata: Codable {
         let assetIdentifier: String
         let composition: CompositionType
         let timestamp: Date
