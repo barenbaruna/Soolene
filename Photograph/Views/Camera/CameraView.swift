@@ -29,7 +29,9 @@ struct CameraView: View {
                 geometry: viewModel.analysis.sceneGeometry,
                 aspectRatio: viewModel.selectedAspectRatio,
                 subjectOffset: viewModel.analysis.subjectOffset,
-                isPerfect: viewModel.analysis.isCompositionPerfect
+                isPerfect: viewModel.analysis.isCompositionPerfect,
+                sceneAlignmentScore: viewModel.analysis.sceneAlignmentScore,
+                hasSceneData: viewModel.analysis.hasSceneData
             )
             .ignoresSafeArea()
             .allowsHitTesting(false)

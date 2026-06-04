@@ -31,4 +31,10 @@ struct SceneGeometry: Equatable {
 
     /// Normalized CGRect of the first detected face (UIKit coords).
     var faceRect: CGRect? = nil
+
+    // MARK: - Structural Lines
+
+    /// True when VNDetectRectanglesRequest found tall/narrow vertical shapes
+    /// (e.g., columns, trees, buildings). Used for Vertical composition detection.
+    var hasStrongVerticals: Bool = false
 }

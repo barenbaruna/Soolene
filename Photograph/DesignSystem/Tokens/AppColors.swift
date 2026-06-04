@@ -2,31 +2,70 @@
 //  AppColors.swift
 //  Photograph
 //
-//  Created by Baren Baruna Harahap on 03/06/26.
+//  Centralised color tokens matching the Design System spec.
+//  Every color used in the app must be referenced from here.
+//
+//  Color Palette:
+//    Primary   #1861EE  — Primary action buttons
+//    Accent    #12A0FF  — Accent / interactive highlights
+//    Text      #FFFFFF  — On-camera text
+//    Surface   #000000  — Background surfaces
+//    Gridline Red   #D94A3D  — Guide overlay (not yet aligned)
+//    Gridline Green #35C75A  — Guide overlay (scene is aligned ✅)
 //
 
 import SwiftUI
 
-/// Standardized color palette based on the Design System.
 enum AppColors {
-    /// #FFF6C0 - Light Yellow (Used for secondary accents or specific surface highlights)
-    static let secondarySurface = Color(hex: 0xFFF6C0)
 
-    /// #D94A3D - Red accent for ML gridlines
+    // MARK: - Brand
+
+    /// #1861EE — Primary action color.
+    static let primary = Color(hex: 0x1861EE)
+
+    /// #12A0FF — Accent / interactive highlight.
+    static let accent = Color(hex: 0x12A0FF)
+
+    // MARK: - Text
+
+    /// #FFFFFF — On-camera UI text, always white.
+    static let textOnCamera = Color.white
+
+    // MARK: - Gridline
+
+    /// #D94A3D — Composition guide lines when NOT yet aligned.
+    /// Use this when the scene/object detection shows the subject
+    /// is not in the correct position for the chosen composition.
     static let gridlineRed = Color(hex: 0xD94A3D)
 
-    /// #7FB77E - Green accent for ML gridlines (perfect alignment)
-    static let gridlineGreen = Color(hex: 0x7FB77E)
+    /// #35C75A — Composition guide lines when the scene IS aligned.
+    /// Use this when Vision analysis confirms the composition matches
+    /// what is physically in the camera frame (object/scene based, not gyroscope).
+    static let gridlineGreen = Color(hex: 0x35C75A)
+
+    /// White at 60% — fallback when Vision has no data.
+    /// Used when saliency / horizon / face detection has not yet returned results.
+    static let gridlineWhite = Color.white.opacity(0.6)
 }
+
+// MARK: - Hex Init
 
 extension Color {
     init(hex: UInt, alpha: Double = 1) {
         self.init(
             .sRGB,
-            red: Double((hex >> 16) & 0xFF) / 255,
+            red:   Double((hex >> 16) & 0xFF) / 255,
             green: Double((hex >> 08) & 0xFF) / 255,
-            blue: Double((hex >> 00) & 0xFF) / 255,
+            blue:  Double((hex >> 00) & 0xFF) / 255,
             opacity: alpha
         )
     }
+}
+
+// MARK: - UIColor convenience (for Core Graphics rendering)
+
+extension UIColor {
+    static let gridlineRed   = UIColor(Color(hex: 0xD94A3D))
+    static let gridlineGreen = UIColor(Color(hex: 0x35C75A))
+    static let gridlineWhite = UIColor.white.withAlphaComponent(0.6)
 }
