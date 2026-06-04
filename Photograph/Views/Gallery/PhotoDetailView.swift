@@ -113,9 +113,10 @@ struct PhotoDetailView: View {
     }
 
     // MARK: - Image Loading
-    // Note: highQualityFormat can call the completion block more than once
-    // (first with a degraded image, then with the full quality one).
-    // We use imageLoaded flag to only keep the best result and avoid issues.
+
+    /// Note: highQualityFormat can call the completion block more than once
+    /// (first with a degraded image, then with the full quality one).
+    /// We use imageLoaded flag to only keep the best result and avoid issues.
     private func loadFullImage() async {
         let size = CGSize(
             width: CGFloat(asset.pixelWidth),
@@ -174,11 +175,11 @@ struct StaticOverlayView: View {
             let lineColor = Color.white.opacity(0.5)
 
             switch composition {
-            case .ruleOfThirds:  drawRuleOfThirds(context: &context, rect: rect, color: lineColor)
-            case .center:        drawCenter(context: &context, rect: rect, color: lineColor)
-            case .horizontal:    drawHorizontal(context: &context, rect: rect, color: lineColor)
-            case .vertical:      drawVertical(context: &context, rect: rect, color: lineColor)
-            case .diagonal:      drawDiagonal(context: &context, rect: rect, color: lineColor)
+            case .ruleOfThirds: drawRuleOfThirds(context: &context, rect: rect, color: lineColor)
+            case .center: drawCenter(context: &context, rect: rect, color: lineColor)
+            case .horizontal: drawHorizontal(context: &context, rect: rect, color: lineColor)
+            case .vertical: drawVertical(context: &context, rect: rect, color: lineColor)
+            case .diagonal: drawDiagonal(context: &context, rect: rect, color: lineColor)
             }
         }
         .frame(width: size.width, height: size.height)

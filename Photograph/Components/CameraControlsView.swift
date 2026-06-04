@@ -2,17 +2,7 @@
 //  CameraControlsView.swift
 //  Photograph
 //
-//  Camera HUD layout (portrait):
-//
-//  ┌──────────────────────────────────┐
-//  │  [Guidance Tip]          [⋯ btn] │  ← top row
-//  │                                  │
-//  │        [Countdown / empty]        │  ← middle spacer
-//  │                                  │
-//  │       [0.5×] [1×] [2×] [5×]      │  ← lens selector
-//  │  ⊞ Rule of Thirds (pill)         │  ← composition label
-//  │  [Gallery] [●  Shutter] [↺ Flip] │  ← bottom bar
-//  └──────────────────────────────────┘
+//  Camera layout (portrait):
 //
 //  Tapping ⋯ opens a bottom sheet with Flash / Timer / Exposure / Aspect.
 //
@@ -33,7 +23,6 @@ struct CameraControlsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-
             // ── Top Row: Guidance Tip (left-centre) + Settings button (right) ──
             topRow
                 .padding(.top, Spacing.standard)
@@ -103,10 +92,10 @@ struct CameraControlsView: View {
             let o = UIDevice.current.orientation
             withAnimation(.spring(response: 0.3)) {
                 switch o {
-                case .landscapeLeft:      iconRotation = 90
-                case .landscapeRight:     iconRotation = -90
+                case .landscapeLeft: iconRotation = 90
+                case .landscapeRight: iconRotation = -90
                 case .portraitUpsideDown: iconRotation = 180
-                default:                  iconRotation = 0
+                default: iconRotation = 0
                 }
             }
         }
@@ -263,7 +252,6 @@ struct CameraSettingsSheet: View {
 
     // MARK: - Setting Button
 
-    @ViewBuilder
     private func settingButton(
         icon: String,
         label: String,
@@ -296,9 +284,9 @@ struct CameraSettingsSheet: View {
     private var flashIcon: String {
         if viewModel.cameraManager.isUsingFrontCamera { return "bolt.slash.fill" }
         switch viewModel.cameraManager.flashMode {
-        case .on:   return "bolt.fill"
+        case .on: return "bolt.fill"
         case .auto: return "bolt.badge.automatic.fill"
-        case .off:  return "bolt.slash.fill"
+        case .off: return "bolt.slash.fill"
         @unknown default: return "bolt.slash.fill"
         }
     }

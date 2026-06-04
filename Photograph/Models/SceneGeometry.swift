@@ -11,7 +11,6 @@ import Foundation
 /// Real-time geometric data from Vision APIs.
 /// Used by GuidanceEngine to validate ML predictions.
 struct SceneGeometry: Equatable {
-
     // MARK: - Saliency
 
     /// Normalized centroid of the salient region (UIKit coords: origin top-left).

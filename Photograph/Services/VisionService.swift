@@ -16,7 +16,6 @@ import Vision
 /// - Medium tier (every 8 frames): saliency analysis
 /// - Slow tier (every 60 frames): composition ML prediction
 final class VisionService: @unchecked Sendable {
-
     // MARK: - Callbacks
 
     var onAnalysisUpdated: ((CompositionAnalysis) -> Void)?
@@ -107,9 +106,9 @@ final class VisionService: @unchecked Sendable {
                 self.currentAnalysis = updated
                 self.onAnalysisUpdated?(updated)
                 self.isAnalyzing = false
-                
+
                 // Trigger success haptic if we just became perfect
-                if updated.isCompositionPerfect && !self.wasCompositionPerfect {
+                if updated.isCompositionPerfect, !self.wasCompositionPerfect {
                     HapticManager.success()
                 }
                 self.wasCompositionPerfect = updated.isCompositionPerfect

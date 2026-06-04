@@ -30,7 +30,7 @@ actor GalleryManager {
             guard newStatus == .authorized || newStatus == .limited else {
                 throw GalleryError.permissionDenied
             }
-        } else if status != .authorized && status != .limited {
+        } else if status != .authorized, status != .limited {
             throw GalleryError.permissionDenied
         }
 

@@ -117,7 +117,7 @@ final class OverlayCanvas: UIView {
                 : rect.minY + thirdH * 2
 
             let highlightColor = isPerfect ? perfectColor : accentColor
-            
+
             if isPerfect {
                 ctx.setShadow(offset: .zero, blur: 8, color: highlightColor.cgColor)
             }

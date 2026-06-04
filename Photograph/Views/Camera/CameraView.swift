@@ -16,12 +16,14 @@ struct CameraView: View {
     var body: some View {
         ZStack {
             // MARK: Layer 1 — Camera Preview
+
             CameraPreviewView(session: viewModel.cameraManager.session)
                 .ignoresSafeArea()
                 .task { await viewModel.onAppear() }
                 .onDisappear { viewModel.onDisappear() }
 
             // MARK: Layer 2 — Composition Overlay
+
             CompositionOverlayView(
                 composition: viewModel.resolvedComposition,
                 geometry: viewModel.analysis.sceneGeometry,
@@ -33,12 +35,14 @@ struct CameraView: View {
             .allowsHitTesting(false)
 
             // MARK: Layer 3 — Camera Controls
+
             CameraControlsView(
                 viewModel: viewModel,
                 isShowingGallery: $isShowingGallery
             )
 
             // MARK: Layer 4 — Shutter Flash
+
             if viewModel.showShutterFlash {
                 Color.white
                     .ignoresSafeArea()

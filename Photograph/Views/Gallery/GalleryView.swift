@@ -23,7 +23,7 @@ struct GalleryView: View {
     @State private var previewAssets: [CompositionType: PHAsset] = [:]
     @State private var isLoading = true
 
-    // 2-column grid for category cards
+    /// 2-column grid for category cards
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.small),
         GridItem(.flexible(), spacing: Spacing.small)

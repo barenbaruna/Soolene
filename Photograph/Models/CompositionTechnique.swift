@@ -18,7 +18,9 @@ enum CompositionType: String, CaseIterable, Identifiable, Codable {
     case vertical = "Vertical"
     case diagonal = "Diagonal"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     /// SF Symbol for each composition.
     var symbolName: String {
@@ -87,7 +89,6 @@ struct CompositionTechnique: Identifiable, Equatable {
 /// 3. The composition with the highest combined score wins
 /// 4. Generates a human-readable guidance tip
 enum GuidanceEngine {
-
     /// Picks the best composition and generates guidance.
     /// - Parameters:
     ///   - predictions: Top-3 ML predictions sorted by confidence (highest first)

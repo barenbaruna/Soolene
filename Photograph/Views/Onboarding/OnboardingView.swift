@@ -9,7 +9,6 @@ import SwiftUI
 
 /// Simple 3-page onboarding explaining what the app does and what the overlays mean.
 struct OnboardingView: View {
-
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var currentPage = 0
 
@@ -38,17 +37,17 @@ struct OnboardingView: View {
         ZStack {
             // Background gradient
             LinearGradient(
-                colors: [Color(.systemBackground), pages[currentPage].accent.opacity(0.15)],
+                colors: [Color(.systemBackground), self.pages[self.currentPage].accent.opacity(0.15)],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .ignoresSafeArea()
-            .animation(.easeInOut(duration: 0.5), value: currentPage)
+            .animation(.easeInOut(duration: 0.5), value: self.currentPage)
 
             VStack(spacing: 0) {
-                TabView(selection: $currentPage) {
-                    ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
-                        pageView(page: page)
+                TabView(selection: self.$currentPage) {
+                    ForEach(Array(self.pages.enumerated()), id: \.offset) { index, page in
+                        self.pageView(page: page)
                             .tag(index)
                     }
                 }
@@ -56,37 +55,36 @@ struct OnboardingView: View {
 
                 // Page dots
                 HStack(spacing: 8) {
-                    ForEach(0..<pages.count, id: \.self) { index in
+                    ForEach(0 ..< self.pages.count, id: \.self) { index in
                         Capsule()
-                            .fill(currentPage == index ? pages[currentPage].accent : Color.secondary.opacity(0.4))
-                            .frame(width: currentPage == index ? 20 : 8, height: 8)
-                            .animation(.spring(response: 0.4), value: currentPage)
+                            .fill(self.currentPage == index ? self.pages[self.currentPage].accent : Color.secondary.opacity(0.4))
+                            .frame(width: self.currentPage == index ? 20 : 8, height: 8)
+                            .animation(.spring(response: 0.4), value: self.currentPage)
                     }
                 }
                 .padding(.bottom, 24)
 
                 // Action button
                 Button {
-                    if currentPage < pages.count - 1 {
-                        withAnimation { currentPage += 1 }
+                    if self.currentPage < self.pages.count - 1 {
+                        withAnimation { self.currentPage += 1 }
                     } else {
-                        hasSeenOnboarding = true
+                        self.hasSeenOnboarding = true
                     }
                 } label: {
-                    Text(currentPage < pages.count - 1 ? "Next" : "Get Started")
+                    Text(self.currentPage < self.pages.count - 1 ? "Next" : "Get Started")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                 }
-                .onboardingButtonStyle(accent: pages[currentPage].accent)
+                .onboardingButtonStyle(accent: self.pages[self.currentPage].accent)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 40)
-                .animation(.easeInOut(duration: 0.3), value: currentPage)
+                .animation(.easeInOut(duration: 0.3), value: self.currentPage)
             }
         }
     }
 
-    @ViewBuilder
     private func pageView(page: OnboardingPage) -> some View {
         VStack(spacing: 28) {
             Spacer()

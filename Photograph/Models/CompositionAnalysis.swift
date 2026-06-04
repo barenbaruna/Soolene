@@ -11,7 +11,6 @@ import Foundation
 /// Assembled result from the Vision analysis pipeline.
 /// Built on the Vision queue, delivered to ViewModel on the main queue.
 struct CompositionAnalysis: Equatable {
-
     /// Full geometric data from Vision APIs (saliency, horizon, face).
     var sceneGeometry = SceneGeometry()
 
@@ -32,7 +31,15 @@ struct CompositionAnalysis: Equatable {
 
     // MARK: - Convenience
 
-    var horizonAngle: Double { sceneGeometry.horizonAngle }
-    var faceRect: CGRect? { sceneGeometry.faceRect }
-    var saliencyCentroid: CGPoint? { sceneGeometry.saliencyCentroid }
+    var horizonAngle: Double {
+        sceneGeometry.horizonAngle
+    }
+
+    var faceRect: CGRect? {
+        sceneGeometry.faceRect
+    }
+
+    var saliencyCentroid: CGPoint? {
+        sceneGeometry.saliencyCentroid
+    }
 }

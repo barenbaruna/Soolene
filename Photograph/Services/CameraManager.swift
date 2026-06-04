@@ -162,9 +162,10 @@ final class CameraManager: NSObject, @unchecked Sendable {
         session.commitConfiguration()
 
         // Apply digital zoom for lenses that use it (e.g. 2× crop on wide-angle)
-        if !useFront && lens.zoomFactor > 1.0 {
+        if !useFront, lens.zoomFactor > 1.0 {
             if let device = session.inputs.compactMap({ $0 as? AVCaptureDeviceInput }).first?.device,
-               let _ = try? device.lockForConfiguration() {
+               let _ = try? device.lockForConfiguration()
+            {
                 device.videoZoomFactor = min(lens.zoomFactor, device.maxAvailableVideoZoomFactor)
                 device.unlockForConfiguration()
             }
@@ -178,15 +179,15 @@ final class CameraManager: NSObject, @unchecked Sendable {
             guard let self, let device = self.session.inputs.compactMap({ $0 as? AVCaptureDeviceInput }).first?.device else { return }
             do {
                 try device.lockForConfiguration()
-                
+
                 // Clamp to device limits
                 let minBias = device.minExposureTargetBias
                 let maxBias = device.maxExposureTargetBias
                 let clampedBias = max(minBias, min(maxBias, bias))
-                
+
                 device.setExposureTargetBias(clampedBias)
                 device.unlockForConfiguration()
-                
+
                 DispatchQueue.main.async { self.exposureBias = clampedBias }
             } catch {
                 // Ignore error

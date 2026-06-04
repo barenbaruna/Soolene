@@ -14,7 +14,6 @@ import SwiftUI
 @Observable
 @MainActor
 final class CameraViewModel {
-
     // MARK: - Analysis State
 
     var analysis = CompositionAnalysis()
@@ -25,7 +24,7 @@ final class CameraViewModel {
     var showShutterFlash = false
     var lastSavedThumbnail: UIImage?
     var saveError: String?
-    
+
     // Timer state
     var timerLength: Int = 0 // 0, 3, 10
     var isCountingDown = false
@@ -169,12 +168,12 @@ final class CameraViewModel {
             executeCapture()
         }
     }
-    
+
     private func startCountdown() {
         guard !isCountingDown else { return }
         isCountingDown = true
         countdownValue = timerLength
-        
+
         // Simple recursive countdown using Task
         Task {
             while countdownValue > 0 {
@@ -188,11 +187,11 @@ final class CameraViewModel {
             }
         }
     }
-    
+
     func cancelCountdown() {
         isCountingDown = false
     }
-    
+
     private func executeCapture() {
         HapticManager.capture()
         // Trigger UI flash
@@ -202,7 +201,7 @@ final class CameraViewModel {
             try? await Task.sleep(nanoseconds: 100_000_000)
             showShutterFlash = false
         }
-        
+
         cameraManager.capturedImage = nil
         cameraManager.capturedPhotoData = nil
         cameraManager.capturePhoto(aspectRatio: selectedAspectRatio)
@@ -215,7 +214,7 @@ final class CameraViewModel {
 
         do {
             try await GalleryManager.shared.savePhoto(data, composition: analysis.detectedComposition)
-            
+
             // Generate thumbnail for the gallery button
             if let image = UIImage(data: data) {
                 // Resize for thumbnail to save memory
@@ -223,7 +222,7 @@ final class CameraViewModel {
                 let thumb = renderer.image { _ in
                     image.draw(in: CGRect(x: 0, y: 0, width: 80, height: 80))
                 }
-                self.lastSavedThumbnail = thumb
+                lastSavedThumbnail = thumb
             }
         } catch {
             saveError = error.localizedDescription
