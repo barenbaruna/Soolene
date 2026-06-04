@@ -174,10 +174,13 @@ enum GuidanceEngine {
 
     // MARK: - Tip Generation
 
-    /// Generates a directional guidance tip telling the user WHERE to move the subject.
+    /// Generates a concise, human-readable guidance tip.
     ///
-    /// Uses Unicode arrows (→ ← ↑ ↓) for compact, clear direction cues.
-    /// Falls back to a generic instruction when no scene data is available.
+    /// Design principles:
+    /// - Simple, action-oriented text (≤5 words)
+    /// - NO directional text arrows (→ ← ↑ ↓) — visual direction is handled
+    ///   by CompositionDirectionOverlay which shows a bold arrow on the camera frame
+    /// - Three states: (1) no data, (2) guiding, (3) aligned
     private static func generateTip(
         for type: CompositionType,
         geometry: SceneGeometry
@@ -186,14 +189,14 @@ enum GuidanceEngine {
 
         case .ruleOfThirds:
             guard let centroid = geometry.saliencyCentroid ?? faceCenter(geometry) else {
-                return "Place the main object on one of the circles"
+                return "Place the main object on one of circle"
             }
             let targetX: CGFloat = centroid.x < 0.5 ? 0.33 : 0.67
             let targetY: CGFloat = centroid.y < 0.5 ? 0.33 : 0.67
             let dist = hypot(centroid.x - targetX, centroid.y - targetY)
             if dist < 0.08 { return "You're All Set" }
-            return directionTip(from: centroid, to: CGPoint(x: targetX, y: targetY),
-                                prefix: "Place the main object on one of circle")
+            if dist < 0.15 { return "Almost there!" }
+            return "Place the main object on one of circle"
 
         case .center:
             guard let centroid = geometry.saliencyCentroid ?? faceCenter(geometry) else {
@@ -201,17 +204,17 @@ enum GuidanceEngine {
             }
             let dist = hypot(centroid.x - 0.5, centroid.y - 0.5)
             if dist < 0.08 { return "You're All Set" }
-            return directionTip(from: centroid, to: CGPoint(x: 0.5, y: 0.5),
-                                prefix: "Place the main object inside the circle")
+            if dist < 0.18 { return "Almost there!" }
+            return "Place the main object inside the circle"
 
         case .horizontal:
-            // This is purely a VISUAL horizon check — not gyroscope
             if geometry.horizonAngle == 0 {
+                // No visual horizon detected yet
                 return "Align the object with horizontal guide lines"
             }
             if abs(geometry.horizonAngle) < 2.0 { return "You're All Set" }
-            let dir = geometry.horizonAngle > 0 ? "Tilt slightly ←" : "Tilt slightly →"
-            return "Align the object with horizontal guide lines — \(dir)"
+            if abs(geometry.horizonAngle) < 6.0 { return "Almost there!" }
+            return "Align the object with horizontal guide lines"
 
         case .vertical:
             guard let centroid = geometry.saliencyCentroid ?? faceCenter(geometry) else {
@@ -219,57 +222,26 @@ enum GuidanceEngine {
             }
             let dist = abs(centroid.x - 0.5)
             if dist < 0.08 { return "You're All Set" }
-            let dir = centroid.x < 0.5 ? "Move subject →" : "Move subject ←"
-            return "Align the object with vertical guide lines — \(dir)"
+            if dist < 0.16 { return "Almost there!" }
+            return "Align the object with vertical guide lines"
 
         case .diagonal:
             guard let centroid = geometry.saliencyCentroid ?? faceCenter(geometry) else {
                 return "Make sure the scene is symmetrical"
             }
-            let distToDiag1 = abs(centroid.y - centroid.x) / sqrt(2)
-            let distToDiag2 = abs(centroid.y - (1 - centroid.x)) / sqrt(2)
-            let minDist = min(distToDiag1, distToDiag2)
-            if minDist < 0.08 { return "You're All Set" }
+            let d1 = abs(centroid.y - centroid.x) / sqrt(2)
+            let d2 = abs(centroid.y - (1 - centroid.x)) / sqrt(2)
+            if min(d1, d2) < 0.08 { return "You're All Set" }
+            if min(d1, d2) < 0.16 { return "Almost there!" }
             return "Make sure the scene is symmetrical"
         }
     }
 
     // MARK: - Helpers
 
-    /// Returns the center point of the face bounding box if one is detected.
+    /// Returns the face bounding box center, or nil if no face is detected.
     private static func faceCenter(_ geometry: SceneGeometry) -> CGPoint? {
         guard let face = geometry.faceRect else { return nil }
         return CGPoint(x: face.midX, y: face.midY)
-    }
-
-    /// Generates a directional tip string with a Unicode arrow.
-    ///
-    /// - Parameters:
-    ///   - from: Current subject position (normalised 0–1)
-    ///   - to: Target ideal position (normalised 0–1)
-    ///   - prefix: The base instruction text
-    private static func directionTip(
-        from current: CGPoint,
-        to target: CGPoint,
-        prefix: String
-    ) -> String {
-        let dx = target.x - current.x  // + = right, - = left
-        let dy = target.y - current.y  // + = down, - = up
-
-        let absDx = abs(dx)
-        let absDy = abs(dy)
-
-        // Determine dominant direction
-        if absDx < 0.04 && absDy < 0.04 {
-            return prefix  // Almost there, just return the base instruction
-        }
-
-        var arrows: [String] = []
-
-        if absDx > 0.04 { arrows.append(dx > 0 ? "→" : "←") }
-        if absDy > 0.04 { arrows.append(dy > 0 ? "↓" : "↑") }
-
-        let arrowText = arrows.joined(separator: " ")
-        return "\(prefix) \(arrowText)"
     }
 }

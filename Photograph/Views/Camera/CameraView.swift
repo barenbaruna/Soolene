@@ -22,7 +22,7 @@ struct CameraView: View {
                 .task { await viewModel.onAppear() }
                 .onDisappear { viewModel.onDisappear() }
 
-            // MARK: Layer 2 — Composition Overlay
+            // MARK: Layer 2 — Static Composition Grid (Core Graphics)
 
             CompositionOverlayView(
                 composition: viewModel.resolvedComposition,
@@ -36,14 +36,27 @@ struct CameraView: View {
             .ignoresSafeArea()
             .allowsHitTesting(false)
 
-            // MARK: Layer 3 — Camera Controls
+            // MARK: Layer 3 — Animated Direction Overlay (SwiftUI)
+            // Separate from Core Graphics grid so it can use SwiftUI animations.
+            // Shows: pulsing ring at target position + bold arrow toward target.
+
+            CompositionDirectionOverlay(
+                composition: viewModel.resolvedComposition,
+                subjectPoint: viewModel.analysis.bestSubjectPoint,
+                isPerfect: viewModel.analysis.isCompositionPerfect,
+                hasSceneData: viewModel.analysis.hasSceneData,
+                alignmentScore: viewModel.analysis.sceneAlignmentScore
+            )
+            .ignoresSafeArea()
+
+            // MARK: Layer 4 — Camera Controls
 
             CameraControlsView(
                 viewModel: viewModel,
                 isShowingGallery: $isShowingGallery
             )
 
-            // MARK: Layer 4 — Shutter Flash
+            // MARK: Layer 5 — Shutter Flash
 
             if viewModel.showShutterFlash {
                 Color.white

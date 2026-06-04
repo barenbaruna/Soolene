@@ -70,4 +70,16 @@ struct CompositionAnalysis: Equatable {
     var horizonAngle: Double { sceneGeometry.horizonAngle }
     var faceRect: CGRect?    { sceneGeometry.faceRect }
     var saliencyCentroid: CGPoint? { sceneGeometry.saliencyCentroid }
+
+    /// The best available subject position in normalised coordinates (0–1, UIKit).
+    /// Uses the same priority chain as VisionService: face > body > saliency
+    var bestSubjectPoint: CGPoint? {
+        if let face = sceneGeometry.faceRect {
+            return CGPoint(x: face.midX, y: face.midY)
+        }
+        if let body = sceneGeometry.bodyCenter {
+            return body
+        }
+        return sceneGeometry.saliencyCentroid
+    }
 }

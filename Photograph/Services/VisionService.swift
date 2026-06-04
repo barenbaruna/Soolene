@@ -166,25 +166,36 @@ final class VisionService: @unchecked Sendable {
 
     // MARK: - Medium Tier (every 8 frames)
 
-    /// Detects where in the frame the main subject/salient region is,
-    /// and whether there are strong vertical structures in the scene.
+    /// Detects subject position (saliency + body pose) and vertical structures.
+    ///
+    /// Subject detection priority:
+    ///   1. Body pose torso center (VNDetectHumanBodyPoseRequest) — most accurate for humans
+    ///   2. Attention saliency centroid — fallback for all other subjects
     private func runMediumRequests(pixelBuffer: CVPixelBuffer, geometry: inout SceneGeometry) {
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
 
-        // ── Attention saliency — where is the main subject? ───────────────
+        // ── Saliency ──────────────────────────────────────────────────────
         let saliencyReq = VNGenerateAttentionBasedSaliencyImageRequest()
 
-        // ── Rectangle detection — are there strong vertical structures? ────
-        // e.g., columns, doors, buildings, trees
+        // ── Body Pose (human center of mass) ──────────────────────────────
+        // Uses 4 torso keypoints to approximate body center — much more accurate
+        // than saliency centroid for human subjects.
+        let bodyPoseReq = VNDetectHumanBodyPoseRequest()
+
+        // ── Vertical structure detection ───────────────────────────────────
+        // Looks for rectangles that are significantly taller than wide
+        // (e.g., columns, doors, trees) — indicates a Vertical composition scene.
+        // VNDetectRectanglesRequest aspect ratio = width / height.
+        // A tall object: width/height < 0.5 (e.g., 0.3 means 3× taller than wide)
         let rectReq = VNDetectRectanglesRequest()
-        rectReq.minimumAspectRatio = 0.05   // Very narrow = vertical objects
-        rectReq.maximumAspectRatio = 0.4    // Moderately tall rectangles
-        rectReq.minimumConfidence  = 0.5
-        rectReq.maximumObservations = 5
+        rectReq.minimumAspectRatio = 0.1    // At least 1:10 ratio (extremely tall)
+        rectReq.maximumAspectRatio = 0.5    // At most 1:2 ratio (2× taller than wide)
+        rectReq.minimumConfidence  = 0.6
+        rectReq.maximumObservations = 3
 
-        try? handler.perform([saliencyReq, rectReq])
+        try? handler.perform([saliencyReq, bodyPoseReq, rectReq])
 
-        // Process saliency
+        // ── Process saliency ──────────────────────────────────────────────
         if let obs = saliencyReq.results?.first as? VNSaliencyImageObservation,
            let salientObjects = obs.salientObjects, !salientObjects.isEmpty
         {
@@ -206,15 +217,46 @@ final class VisionService: @unchecked Sendable {
             geometry.saliencyAreaRatio = min(totalArea, 1.0)
         }
 
-        // Process rectangles — flag if any are tall/vertical (aspect ratio < 0.5 means taller than wide)
+        // ── Process body pose ─────────────────────────────────────────────
+        // Use torso keypoints: left/right shoulder and left/right hip.
+        // Their centroid approximates the human body's center of mass.
+        if let bodyObs = bodyPoseReq.results?.first {
+            let torsoJoints: [VNHumanBodyPoseObservation.JointName] = [
+                .leftShoulder, .rightShoulder, .leftHip, .rightHip
+            ]
+            var xs: [CGFloat] = []
+            var ys: [CGFloat] = []
+
+            for joint in torsoJoints {
+                // Only use high-confidence keypoints (>0.5) to avoid jitter
+                if let pt = try? bodyObs.recognizedPoint(joint), pt.confidence > 0.5 {
+                    xs.append(pt.location.x)
+                    // Vision coords: origin bottom-left → flip Y for UIKit (origin top-left)
+                    ys.append(1.0 - pt.location.y)
+                }
+            }
+
+            if xs.count >= 2 {   // Require at least 2 reliable joints
+                geometry.bodyCenter = CGPoint(
+                    x: xs.reduce(0, +) / CGFloat(xs.count),
+                    y: ys.reduce(0, +) / CGFloat(ys.count)
+                )
+            } else {
+                geometry.bodyCenter = nil
+            }
+        }
+
+        // ── Process vertical rectangles ───────────────────────────────────
         if let rects = rectReq.results as? [VNRectangleObservation] {
-            let hasVertical = rects.contains {
-                let b = $0.boundingBox
-                return b.height > b.width * 1.5  // Significantly taller than wide
+            // Double-check: bounding box height must be > width * 1.5
+            let hasVertical = rects.contains { obs in
+                let b = obs.boundingBox
+                return b.height > b.width * 1.5
             }
             geometry.hasStrongVerticals = hasVertical
         }
     }
+
 
     // MARK: - Slow Tier (every 60 frames)
 
@@ -256,8 +298,11 @@ final class VisionService: @unchecked Sendable {
         switch composition {
 
         case .ruleOfThirds, .center, .diagonal:
-            // Subject must be detected (face or salient region)
-            guard geometry.saliencyCentroid != nil || geometry.faceRect != nil else { return 0.0 }
+            // Subject must be detected via any method in the priority chain
+            let hasSubject = geometry.faceRect != nil
+                          || geometry.bodyCenter != nil
+                          || geometry.saliencyCentroid != nil
+            guard hasSubject else { return 0.0 }
             return isPerfect ? 0.95 : 0.4
 
         case .horizontal:
@@ -271,8 +316,9 @@ final class VisionService: @unchecked Sendable {
             return 0.3                            // Severely tilted horizon → RED
 
         case .vertical:
-            // Need saliency data or strong vertical shapes in the scene
-            guard geometry.saliencyBounds != nil || geometry.hasStrongVerticals else { return 0.0 }
+            // Need saliency/body data or strong vertical shapes in the scene
+            let hasSubject = geometry.bodyCenter != nil || geometry.saliencyBounds != nil
+            guard hasSubject || geometry.hasStrongVerticals else { return 0.0 }
             if geometry.hasStrongVerticals { return isPerfect ? 0.95 : 0.55 }
             // Check if saliency bounding box is tall and narrow (vertical subject)
             if let bounds = geometry.saliencyBounds {
@@ -285,18 +331,24 @@ final class VisionService: @unchecked Sendable {
 
     // MARK: - Subject Offset Computation
 
-    /// Returns the direction vector from the subject to its ideal position
-    /// in normalised coordinates (0–1 space), and whether it's "perfect".
+    /// Returns the direction vector FROM the subject TO its ideal target position,
+    /// and whether the subject is close enough to be considered "perfect".
     ///
-    /// This drives the directional arrow in the guidance tip ("Move subject → right").
+    /// Subject detection uses a 3-level priority chain:
+    ///   1. Face centroid (VNDetectFaceRectanglesRequest) — highest accuracy for portraits
+    ///   2. Body center (VNDetectHumanBodyPoseRequest torso) — accurate for full-body shots
+    ///   3. Saliency centroid — fallback for non-human subjects
     private func computeSubjectOffset(
         for composition: CompositionType,
         geometry: SceneGeometry
     ) -> (vector: CGVector, isPerfect: Bool) {
-        // Face has higher priority than saliency centroid
+
+        // Priority chain: face > body > saliency
         let subjectPoint: CGPoint?
         if let face = geometry.faceRect {
             subjectPoint = CGPoint(x: face.midX, y: face.midY)
+        } else if let body = geometry.bodyCenter {
+            subjectPoint = body
         } else {
             subjectPoint = geometry.saliencyCentroid
         }

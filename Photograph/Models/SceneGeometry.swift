@@ -32,6 +32,13 @@ struct SceneGeometry: Equatable {
     /// Normalized CGRect of the first detected face (UIKit coords).
     var faceRect: CGRect? = nil
 
+    // MARK: - Body Pose
+
+    /// Approximate center of mass of a detected human body (UIKit coords).
+    /// Calculated from shoulder and hip keypoints via VNDetectHumanBodyPoseRequest.
+    /// Priority: face centroid > bodyCenter > saliencyCentroid
+    var bodyCenter: CGPoint? = nil
+
     // MARK: - Structural Lines
 
     /// True when VNDetectRectanglesRequest found tall/narrow vertical shapes
