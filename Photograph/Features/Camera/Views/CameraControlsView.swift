@@ -61,14 +61,6 @@ struct CameraControlsView: View {
                 .padding(.bottom, Spacing.small)
             }
 
-            // Focus Lock Status
-            if viewModel.isSubjectPinned {
-                PinnedSubjectBadge()
-                    .padding(.bottom, Spacing.small)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.isSubjectPinned)
-            }
-
             // Composition Pill
             if !viewModel.isCountingDown {
                 compositionPill

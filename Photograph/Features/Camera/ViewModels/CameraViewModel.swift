@@ -36,14 +36,14 @@ final class CameraViewModel {
     
     // Mocked Capture Data
     var saveError: String? = nil
-    var capturedPhotoData: Data? = nil
+    var capturedPhotoData: Data? {
+        cameraManager.capturedPhotoData
+    }
     
-    // Mocked from previous AVFoundation/Vision
+    // Thumbnail for Gallery Button
     var lastSavedThumbnail: UIImage? = nil
-    var activeTechnique: CompositionType? = nil
-    var isSubjectPinned: Bool = false
-    var analysis = CompositionAnalysis()
-    var resolvedComposition: CompositionType { .ruleOfThirds }
+    
+
     
     // Dummy analysis state for UI testing
     var compositionLabel: String = "Rule of Thirds"
@@ -107,16 +107,20 @@ final class CameraViewModel {
     }
     
     func savePhoto() async {
-        // Mock save
+        guard let data = cameraManager.capturedPhotoData else { return }
+        do {
+            try await GalleryManager.shared.savePhoto(data, composition: .ruleOfThirds)
+            // Update the gallery thumbnail
+            if let image = UIImage(data: data) {
+                lastSavedThumbnail = image
+            }
+            cameraManager.capturedPhotoData = nil
+        } catch {
+            self.saveError = error.localizedDescription
+        }
     }
     
-    func pinSubject(at point: CGPoint) {
-        isSubjectPinned = true
-    }
-    
-    func clearPinnedSubject() {
-        isSubjectPinned = false
-    }
+
     
     func cancelCountdown() {
         isCountingDown = false

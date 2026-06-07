@@ -40,8 +40,6 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     let photoOutput = AVCapturePhotoOutput()
     let videoDataOutput = AVCaptureVideoDataOutput()
-    let depthDataOutput = AVCaptureDepthDataOutput()
-    var outputSynchronizer: AVCaptureDataOutputSynchronizer?
 
     /// Transient state for capture
     var pendingAspectRatio: AspectRatioMode = .free
@@ -53,7 +51,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     // MARK: - Frame callback
 
-    var onFrameCaptured: (@Sendable (CMSampleBuffer, AVDepthData?) -> Void)?
+    var onFrameCaptured: (@Sendable (CMSampleBuffer) -> Void)?
 
     // MARK: - Setup
 
@@ -151,34 +149,10 @@ final class CameraManager: NSObject, @unchecked Sendable {
         videoDataOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
         ]
-        session.outputs
-            .compactMap { $0 as? AVCaptureDepthDataOutput }
-            .forEach { session.removeOutput($0) }
-            
-        if session.canAddOutput(videoDataOutput) {
-            session.addOutput(videoDataOutput)
-        }
-
-        if session.canAddOutput(depthDataOutput) {
-            session.addOutput(depthDataOutput)
-            depthDataOutput.isFilteringEnabled = false // Raw depth for precise alignment
-        }
-
-        // Setup Synchronizer if depth is supported by this device format
-        if device.activeFormat.supportedDepthDataFormats.isEmpty == false {
-            outputSynchronizer = AVCaptureDataOutputSynchronizer(dataOutputs: [videoDataOutput, depthDataOutput])
-            outputSynchronizer?.setDelegate(
-                self,
-                queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
-            )
-        } else {
-            // Fallback for non-LiDAR/non-depth devices
-            outputSynchronizer = nil
-            videoDataOutput.setSampleBufferDelegate(
-                self,
-                queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
-            )
-        }
+        videoDataOutput.setSampleBufferDelegate(
+            self,
+            queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
+        )
 
         if session.canAddOutput(photoOutput) {
             session.addOutput(photoOutput)
@@ -197,10 +171,6 @@ final class CameraManager: NSObject, @unchecked Sendable {
                 self.sessionQueue.async {
                     // Update video output
                     if let connection = self.videoDataOutput.connection(with: .video), connection.isVideoRotationAngleSupported(angle) {
-                        connection.videoRotationAngle = angle
-                    }
-                    // Update LiDAR depth output to perfectly align with RGB!
-                    if let connection = self.depthDataOutput.connection(with: .depthData), connection.isVideoRotationAngleSupported(angle) {
                         connection.videoRotationAngle = angle
                     }
                     // Update photo output

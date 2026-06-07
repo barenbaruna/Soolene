@@ -16,29 +16,11 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
-        onFrameCaptured?(sampleBuffer, nil)
+        onFrameCaptured?(sampleBuffer)
     }
 }
 
-// MARK: - AVCaptureDataOutputSynchronizerDelegate
 
-extension CameraManager: AVCaptureDataOutputSynchronizerDelegate {
-    nonisolated func dataOutputSynchronizer(
-        _ synchronizer: AVCaptureDataOutputSynchronizer,
-        didOutput synchronizedDataCollection: AVCaptureSynchronizedDataCollection
-    ) {
-        guard let syncedVideoData = synchronizedDataCollection.synchronizedData(for: videoDataOutput) as? AVCaptureSynchronizedSampleBufferData else {
-            return
-        }
-        
-        var depthData: AVDepthData? = nil
-        if let syncedDepthData = synchronizedDataCollection.synchronizedData(for: depthDataOutput) as? AVCaptureSynchronizedDepthData {
-            depthData = syncedDepthData.depthData
-        }
-        
-        onFrameCaptured?(syncedVideoData.sampleBuffer, depthData)
-    }
-}
 
 // MARK: - AVCapturePhotoCaptureDelegate
 

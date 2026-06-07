@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Atomic component for the Flash Button.
+/// UI Element for the Flash Button.
 /// Matches Design System: Inactive (bolt.slash.fill) vs Active (bolt.fill).
 struct FlashButton: View {
     let isActive: Bool

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Atomic component for Camera Settings Button.
+/// UI Element for Camera Settings Button.
 /// Matches Design System: Circle with 6 dots, Foreground #000000 60%.
 struct CameraSettingsButton: View {
     let action: () -> Void

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Atomic component for the Camera Shutter Button.
+/// UI Element for the Camera Shutter Button.
 /// Matches Design System: Outer Circle (SystemGray2), Inner Circle (White, Border Primary).
 struct ShutterButton: View {
     let action: () -> Void

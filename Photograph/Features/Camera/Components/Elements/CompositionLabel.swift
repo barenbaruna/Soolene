@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Atomic component for the "Analyzing..." label or guidance tip.
+/// UI Element for the "Analyzing..." label or guidance tip.
 /// Matches Design System: Capsule, Subheadline/Regular/15.
 struct CompositionLabel: View {
     let text: String

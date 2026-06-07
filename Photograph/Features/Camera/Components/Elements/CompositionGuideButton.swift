@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Atomic component for the text-based guidance (e.g. "Align the object with horizontal guide lines").
+/// UI Element for the text-based guidance (e.g. "Align the object with horizontal guide lines").
 /// Matches Design System: Capsule, Body/Regular/17, Foreground #000000 Opacity 60%.
 struct CompositionGuideButton: View {
     let text: String

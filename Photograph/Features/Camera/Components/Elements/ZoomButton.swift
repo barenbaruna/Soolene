@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Atomic component for Zoom selection.
+/// UI Element for Zoom selection.
 /// Matches Design System: Circle, Subheadline/Regular/15, Padding 4, Foreground #000000 41%.
 struct ZoomButton: View {
     let text: String

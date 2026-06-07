@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Atomic component for showing image date and time in Gallery.
+/// UI Element for showing image date and time in Gallery.
 /// Matches Design System: Capsule, Button/Semibold/17 & Caption/Regular/12,
 /// Foreground #000000 80%, Liquid Glass.
 struct ImageDateLabel: View {
