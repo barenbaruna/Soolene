@@ -19,7 +19,7 @@ struct CameraView: View {
         ZStack {
             // MARK: Layer 1 — Camera Preview
 
-            CameraPreviewView()
+            CameraPreviewView(session: viewModel.cameraManager.session)
                 .ignoresSafeArea()
                 .task { await viewModel.onAppear() }
                 .onDisappear { viewModel.onDisappear() }

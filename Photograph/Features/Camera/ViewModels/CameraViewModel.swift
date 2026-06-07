@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 
 /// Mocked CameraViewModel for UI Development.
@@ -5,10 +6,26 @@ import SwiftUI
 @Observable
 @MainActor
 final class CameraViewModel {
-    var isFlashActive: Bool = false
-    var exposureBias: Float = 0.0
-    var selectedLens: String = "1x"
-    var isFrontCamera: Bool = false
+    var cameraManager = CameraManager()
+    
+    // UI State (Mapped to CameraManager)
+    var isFlashActive: Bool {
+        get { cameraManager.flashMode != .off }
+        set { cameraManager.cycleFlash() }
+    }
+    var exposureBias: Float {
+        get { cameraManager.exposureBias }
+        set { cameraManager.setExposureBias(newValue) }
+    }
+    var selectedLens: String {
+        get { cameraManager.selectedLens.rawValue }
+        set { if let l = LensType(rawValue: newValue) { cameraManager.switchLens(l) } }
+    }
+    var isFrontCamera: Bool {
+        get { cameraManager.isUsingFrontCamera }
+        set { cameraManager.switchCamera() }
+    }
+    
     var selectedAspectRatio: AspectRatioMode = .free
     
     var timerLength: Int = 0
@@ -32,30 +49,39 @@ final class CameraViewModel {
     var compositionLabel: String = "Rule of Thirds"
     var isSceneAligned: Bool = false // Toggle this to see Red/Green gridlines
     
-    // MARK: - Actions (Mocked)
-    
-    func onAppear() {}
-    func onDisappear() {}
-    func pauseSession() {}
-    func resumeSession() {}
-    
-    func switchCamera() {
-        isFrontCamera.toggle()
+    func onAppear() async {
+        await cameraManager.checkPermissionsAndSetup()
+    }
+    func onDisappear() {
+        cameraManager.stopSession()
+    }
+    func pauseSession() {
+        cameraManager.stopSession()
+    }
+    func resumeSession() {
+        Task { await cameraManager.checkPermissionsAndSetup() }
     }
     
-    func switchLens(_ lens: String) {
-        selectedLens = lens
+    func switchCamera() {
+        cameraManager.switchCamera()
+    }
+    
+    func switchLens(_ lensStr: String) {
+        if let lens = LensType(rawValue: lensStr) {
+            cameraManager.switchLens(lens)
+        }
     }
     
     func cycleFlash() {
-        isFlashActive.toggle()
+        cameraManager.cycleFlash()
     }
     
     func cycleExposure() {
-        if exposureBias == 0 { exposureBias = 1.0 }
-        else if exposureBias == 1.0 { exposureBias = 2.0 }
-        else if exposureBias == 2.0 { exposureBias = -2.0 }
-        else if exposureBias == -2.0 { exposureBias = -1.0 }
+        let bias = exposureBias
+        if bias == 0 { exposureBias = 1.0 }
+        else if bias == 1.0 { exposureBias = 2.0 }
+        else if bias == 2.0 { exposureBias = -2.0 }
+        else if bias == -2.0 { exposureBias = -1.0 }
         else { exposureBias = 0.0 }
     }
     
@@ -69,12 +95,15 @@ final class CameraViewModel {
     }
     
     func capturePhoto() {
-        // Mock capture sequence
         showShutterFlash = true
         Task {
             try? await Task.sleep(nanoseconds: 100_000_000)
             showShutterFlash = false
         }
+        
+        cameraManager.capturedImage = nil
+        cameraManager.capturedPhotoData = nil
+        cameraManager.capturePhoto(aspectRatio: selectedAspectRatio)
     }
     
     func savePhoto() async {

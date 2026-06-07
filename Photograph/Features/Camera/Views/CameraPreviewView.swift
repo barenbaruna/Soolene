@@ -5,11 +5,67 @@
 //  Created by Baren Baruna Harahap on 18/05/26.
 //
 
+import AVFoundation
 import SwiftUI
 
-/// Mocked CameraPreviewView that just shows a placeholder instead of an actual AV feed.
-struct CameraPreviewView: View {
-    var body: some View {
-        Color.black // Mock camera feed
+/// UIViewRepresentable wrapping AVCaptureVideoPreviewLayer.
+/// Full-screen, hardware-composited — lowest possible latency.
+struct CameraPreviewView: UIViewRepresentable {
+    let session: AVCaptureSession
+
+    func makeUIView(context: Context) -> PreviewUIView {
+        let view = PreviewUIView()
+        view.previewLayer.session = session
+        view.previewLayer.videoGravity = .resizeAspectFill
+        
+        if let input = session.inputs.first as? AVCaptureDeviceInput {
+            let coordinator = AVCaptureDevice.RotationCoordinator(device: input.device, previewLayer: view.previewLayer)
+            view.rotationObservation = coordinator.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.initial, .new]) { [weak view] _, change in
+                if let angle = change.newValue, let connection = view?.previewLayer.connection, connection.isVideoRotationAngleSupported(angle) {
+                    DispatchQueue.main.async {
+                        connection.videoRotationAngle = angle
+                    }
+                }
+            }
+            view.rotationCoordinator = coordinator
+        }
+        
+        return view
+    }
+
+    func updateUIView(_ uiView: PreviewUIView, context: Context) {
+        // Handle camera switch (inputs changed)
+        if let input = session.inputs.first as? AVCaptureDeviceInput, 
+           uiView.rotationCoordinator?.device !== input.device {
+            let coordinator = AVCaptureDevice.RotationCoordinator(device: input.device, previewLayer: uiView.previewLayer)
+            uiView.rotationObservation = coordinator.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.initial, .new]) { [weak uiView] _, change in
+                if let angle = change.newValue, let connection = uiView?.previewLayer.connection, connection.isVideoRotationAngleSupported(angle) {
+                    DispatchQueue.main.async {
+                        connection.videoRotationAngle = angle
+                    }
+                }
+            }
+            uiView.rotationCoordinator = coordinator
+        }
+    }
+}
+
+// MARK: - PreviewUIView
+
+final class PreviewUIView: UIView {
+    var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+    var rotationObservation: NSKeyValueObservation?
+
+    override class var layerClass: AnyClass {
+        AVCaptureVideoPreviewLayer.self
+    }
+
+    var previewLayer: AVCaptureVideoPreviewLayer {
+        layer as! AVCaptureVideoPreviewLayer
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        previewLayer.frame = bounds
     }
 }
