@@ -19,7 +19,7 @@ struct CameraView: View {
         ZStack {
             // MARK: Layer 1 — Camera Preview
 
-            CameraPreviewView(session: viewModel.cameraManager.session)
+            CameraPreviewView()
                 .ignoresSafeArea()
                 .task { await viewModel.onAppear() }
                 .onDisappear { viewModel.onDisappear() }
@@ -106,7 +106,7 @@ struct CameraView: View {
             GalleryView()
         }
         // Auto-save on capture
-        .onChange(of: viewModel.cameraManager.capturedPhotoData) { _, newData in
+        .onChange(of: viewModel.capturedPhotoData) { _, newData in
             if newData != nil {
                 Task { await viewModel.savePhoto() }
             }

@@ -23,7 +23,7 @@ struct CameraSettingsSheet: View {
                 settingButton(
                     icon: flashIcon,
                     label: "FLASH",
-                    isActive: viewModel.cameraManager.flashMode != .off
+                    isActive: viewModel.isFlashActive
                 ) { viewModel.cycleFlash() }
 
                 Spacer()
@@ -41,7 +41,7 @@ struct CameraSettingsSheet: View {
                 settingButton(
                     icon: "plusminus",
                     label: exposureLabel,
-                    isActive: viewModel.cameraManager.exposureBias != 0
+                    isActive: viewModel.exposureBias != 0
                 ) { viewModel.cycleExposure() }
 
                 Spacer()
@@ -93,13 +93,8 @@ struct CameraSettingsSheet: View {
     // MARK: - Computed Labels
 
     private var flashIcon: String {
-        if viewModel.cameraManager.isUsingFrontCamera { return "bolt.slash.fill" }
-        switch viewModel.cameraManager.flashMode {
-        case .on: return "bolt.fill"
-        case .auto: return "bolt.badge.automatic.fill"
-        case .off: return "bolt.slash.fill"
-        @unknown default: return "bolt.slash.fill"
-        }
+        if viewModel.isFrontCamera { return "bolt.slash.fill" }
+        return viewModel.isFlashActive ? "bolt.fill" : "bolt.slash.fill"
     }
 
     private var timerLabel: String {
@@ -107,7 +102,7 @@ struct CameraSettingsSheet: View {
     }
 
     private var exposureLabel: String {
-        let bias = viewModel.cameraManager.exposureBias
+        let bias = viewModel.exposureBias
         if bias == 0 { return "EV" }
         return bias > 0 ? "+\(Int(bias))" : "\(Int(bias))"
     }
