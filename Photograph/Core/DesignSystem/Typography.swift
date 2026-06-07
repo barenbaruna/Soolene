@@ -1,39 +1,43 @@
-//
-//  Typography.swift
-//  Photograph
-//
-//  Created by Baren Baruna Harahap on 03/06/26.
-//
-
 import SwiftUI
 
 /// Standardized typography matching the Design System spec.
-///
-/// Usage: `.font(Typography.headline)` or `.textStyle(Typography.body)`
-enum Typography {
+/// Following iOS 26 HIG: Uses semantic styles for Dynamic Type support instead of hardcoded sizes.
+struct Typography {
+    
+    /// Large Title / Bold / 34
+    static var largeTitle: Font {
+        .largeTitle.weight(.bold)
+    }
 
-    // MARK: - Scale
+    /// Title / Semibold / 28
+    static var title: Font {
+        .title.weight(.semibold)
+    }
 
-    /// 34pt / Bold
-    static let largeTitle = Font.system(size: 34, weight: .bold)
+    /// Headline / Semibold / 17
+    static var headline: Font {
+        .headline
+    }
 
-    /// 28pt / Semibold
-    static let title = Font.system(size: 28, weight: .semibold)
+    /// Body / Regular / 17
+    static var body: Font {
+        .body
+    }
 
-    /// 17pt / Semibold
-    static let headline = Font.system(size: 17, weight: .semibold)
+    /// Subheadline / Regular / 15
+    static var subheadline: Font {
+        .subheadline
+    }
 
-    /// 17pt / Regular
-    static let body = Font.system(size: 17, weight: .regular)
+    /// Caption / Regular / 12
+    static var caption: Font {
+        .caption
+    }
 
-    /// 15pt / Regular
-    static let subheadline = Font.system(size: 15, weight: .regular)
-
-    /// 12pt / Regular
-    static let caption = Font.system(size: 12, weight: .regular)
-
-    /// 17pt / Semibold — Buttons and CTAs
-    static let buttonCTA = Font.system(size: 17, weight: .semibold)
+    /// Button/CTA / Semibold / 17
+    static var buttonCTA: Font {
+        .headline
+    }
 }
 
 extension View {

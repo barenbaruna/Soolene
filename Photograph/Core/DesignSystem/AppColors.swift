@@ -1,19 +1,3 @@
-//
-//  AppColors.swift
-//  Photograph
-//
-//  Centralised color tokens matching the Design System spec.
-//  Every color used in the app must be referenced from here.
-//
-//  Color Palette:
-//    Primary   #EFC44F  — Primary action, active states (golden yellow)
-//    Accent    #12A0FF  — Accent / interactive highlights
-//    Text      #FFFFFF  — On-camera text
-//    Secondary #000000  — Background surfaces
-//    Gridline Red   #D94A3D  — Guide overlay (not yet aligned)
-//    Gridline Green #35C75A  — Guide overlay (scene is aligned)
-//
-
 import SwiftUI
 
 enum AppColors {
@@ -26,28 +10,25 @@ enum AppColors {
     /// #12A0FF — Accent / interactive highlight.
     static let accent = Color(hex: 0x12A0FF)
 
-    /// #000000 — Secondary/surface background.
-    static let secondary = Color(hex: 0x000000)
+    // MARK: - Surface
+
+    /// #2C2C2E — Screen / Base background
+    static let screen = Color(hex: 0x2C2C2E)
 
     // MARK: - Text
 
     /// #FFFFFF — On-camera UI text, always white.
-    static let textOnCamera = Color.white
+    static let textOnCamera = Color(hex: 0xFFFFFF)
 
     // MARK: - Gridline
 
     /// #D94A3D — Composition guide lines when NOT yet aligned.
-    /// Use this when the scene/object detection shows the subject
-    /// is not in the correct position for the chosen composition.
     static let gridlineRed = Color(hex: 0xD94A3D)
 
     /// #35C75A — Composition guide lines when the scene IS aligned.
-    /// Use this when Vision analysis confirms the composition matches
-    /// what is physically in the camera frame (object/scene based, not gyroscope).
     static let gridlineGreen = Color(hex: 0x35C75A)
-
+    
     /// White at 60% — fallback when Vision has no data.
-    /// Used when saliency / horizon / face detection has not yet returned results.
     static let gridlineWhite = Color.white.opacity(0.6)
 }
 

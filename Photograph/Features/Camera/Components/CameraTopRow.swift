@@ -36,7 +36,7 @@ struct CameraTopRow: View {
 
             // Guidance tip — centered, below the settings button
             if let technique = viewModel.activeTechnique, !isCountingDown {
-                GuidanceTipView(tip: technique.tip)
+                GuidanceTipView(tip: "Align the subject with the guidelines.")
             }
         }
     }

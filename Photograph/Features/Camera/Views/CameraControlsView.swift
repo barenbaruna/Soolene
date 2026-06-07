@@ -48,15 +48,14 @@ struct CameraControlsView: View {
             }
 
             // Lens Selector
-            if !viewModel.cameraManager.isUsingFrontCamera,
-               viewModel.cameraManager.availableLenses.count > 1,
+            if !viewModel.isFrontCamera,
                !viewModel.isCountingDown
             {
                 LensSelectorView(
-                    availableLenses: viewModel.cameraManager.availableLenses,
+                    availableLenses: [LensType.ultraWide, LensType.wide, LensType.twoX],
                     selectedLens: Binding(
-                        get: { viewModel.cameraManager.selectedLens },
-                        set: { viewModel.switchLens($0) }
+                        get: { LensType(rawValue: viewModel.selectedLens) ?? .wide },
+                        set: { viewModel.switchLens($0.rawValue) }
                     )
                 )
                 .padding(.bottom, Spacing.small)
@@ -119,7 +118,7 @@ struct CameraControlsView: View {
 
     private var compositionPill: some View {
         HStack(spacing: 6) {
-            Image(systemName: viewModel.resolvedComposition.symbolName)
+            Image(systemName: "camera.viewfinder")
                 .font(.caption)
             Text(viewModel.compositionLabel)
                 .textStyle(Typography.subheadline)
