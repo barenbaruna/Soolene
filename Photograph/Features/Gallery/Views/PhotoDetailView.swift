@@ -2,10 +2,14 @@
 //  PhotoDetailView.swift
 //  Photograph
 //
-//  Full-screen photo viewer with:
-//  - Navigation bar: date (title) + composition toggle (trailing)
-//  - Bottom-right floating delete button
-//  - Composition overlay toggle
+//  Full-screen photo viewer with composition overlay toggle.
+//
+//  HIG §8.1: Toolbar with .principal for date pill, .topBarTrailing for toggle
+//  HIG §15.1: .regularMaterial for date capsule, .ultraThinMaterial for controls
+//  HIG §12.4: .confirmationDialog for delete
+//  HIG §4.6: .buttonStyle(.glass) for interactive buttons
+//
+//  Uses Design System: Typography, Spacing, AppColors.
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
@@ -13,7 +17,6 @@
 import Photos
 import SwiftUI
 
-/// Full-screen photo detail view.
 struct PhotoDetailView: View {
     let asset: PHAsset
     let composition: CompositionType
@@ -25,23 +28,21 @@ struct PhotoDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
 
+            // Photo + overlay
             if let fullImage {
-                // Photo with overlay
                 GeometryReader { geo in
                     let imageSize = imageFitSize(image: fullImage, in: geo.size)
                     let imageOrigin = CGPoint(
                         x: (geo.size.width - imageSize.width) / 2,
                         y: (geo.size.height - imageSize.height) / 2
                     )
-
                     Image(uiImage: fullImage)
                         .resizable()
                         .scaledToFit()
                         .frame(width: geo.size.width, height: geo.size.height)
 
-                    // Composition overlay — positioned exactly over the image area
                     if isShowingOverlay {
                         StaticOverlayView(composition: composition, size: imageSize)
                             .position(
@@ -52,143 +53,127 @@ struct PhotoDetailView: View {
                     }
                 }
             } else {
-                ProgressView()
-                    .tint(.white)
+                ProgressView().tint(.white)
             }
 
-            // Bottom-right delete button
+            // Bottom: delete bar — glass capsule
             VStack {
                 Spacer()
-                HStack {
-                    Spacer()
-                    Button {
-                        HapticManager.selection()
-                        isShowingDeleteConfirmation = true
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.title3)
-                            .foregroundStyle(.red)
-                            .padding(Spacing.standard)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                    .accessibilityLabel("Delete Photo")
-                    .padding(.trailing, Spacing.medium)
-                    .padding(.bottom, Spacing.large)
-                }
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            // Centre: date & composition type
-            ToolbarItem(placement: .principal) {
-                VStack(spacing: 1) {
-                    Text(formattedDate)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                    Text(composition.rawValue)
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.7))
-                }
+                deleteBar
             }
 
-            // Trailing: toggle composition overlay
-            ToolbarItem(placement: .primaryAction) {
+            // Walkthrough Overlay
+            WalkthroughOverlayView(context: .detail)
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbarTitleDisplayMode(.inline)
+        .toolbar {
+            // Back
+            ToolbarItem(placement: .topBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(AppColors.primary)
+                        .padding(8)
+//                        .background(.ultraThinMaterial, in: Circle())
+//                        .tint(AppColors.primary)
+                }
+                .buttonStyle(.plain)
+            }
+            // Date pill — HIG §15.1 .regularMaterial
+            ToolbarItem(placement: .principal) {
+                ImageDateLabel(dateText: dateParts.date, timeText: dateParts.time)
+            }
+            // Grid toggle
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     HapticManager.selection()
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isShowingOverlay.toggle()
-                    }
+                    withAnimation(.easeInOut(duration: 0.2)) { isShowingOverlay.toggle() }
                 } label: {
-                    Image(systemName: isShowingOverlay ? "rectangle.split.3x3.fill" : "rectangle.split.3x3")
-                        .font(.title3)
-                        .foregroundStyle(.white)
+                    Image(systemName: "perspective")
+                        .fontWeight(.medium)
+                        .foregroundStyle(isShowingOverlay ? .black : AppColors.primary)
+                        .padding(8)
+                        .background(
+                            isShowingOverlay ? AnyShapeStyle(AppColors.primary) : AnyShapeStyle(.ultraThinMaterial),
+                            in: Circle()
+                        )
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel(isShowingOverlay ? "Hide Overlay" : "Show Overlay")
             }
         }
         .toolbarBackground(.hidden, for: .navigationBar)
         .confirmationDialog(
-            "Delete Photo",
+            "Delete",
             isPresented: $isShowingDeleteConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Delete from App", role: .destructive) {
-                deletePhoto()
-            }
-            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { deletePhoto() }
         } message: {
-            Text("Are you sure you want to delete this photo from the app?")
+            Text("Are you sure you want to delete the photo from this app?")
         }
         .task { await loadFullImage() }
     }
 
-    // MARK: - Layout Helpers
+    // MARK: - Delete Bar
 
-    /// Calculates the displayed size of the image when using `.scaledToFit()`.
-    private func imageFitSize(image: UIImage, in containerSize: CGSize) -> CGSize {
-        let imageRatio = image.size.width / image.size.height
-        let containerRatio = containerSize.width / containerSize.height
-
-        if imageRatio > containerRatio {
-            // Image is wider than container — width-constrained
-            let width = containerSize.width
-            let height = width / imageRatio
-            return CGSize(width: width, height: height)
-        } else {
-            // Image is taller — height-constrained
-            let height = containerSize.height
-            let width = height * imageRatio
-            return CGSize(width: width, height: height)
+    /// Small capsule delete button — bottom trailing
+    private var deleteBar: some View {
+        HStack {
+            Spacer()
+            Button {
+                HapticManager.selection()
+                isShowingDeleteConfirmation = true
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 18))
+                    .foregroundStyle(AppColors.primary)
+                    .padding(Spacing.standard)
+                    .background(.regularMaterial, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Delete Photo")
         }
+        .padding(.horizontal, Spacing.medium)
+        .padding(.bottom, Spacing.standard)
     }
 
     // MARK: - Helpers
 
-    private var formattedDate: String {
-        guard let date = asset.creationDate else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+    private func imageFitSize(image: UIImage, in containerSize: CGSize) -> CGSize {
+        let r = image.size.width / image.size.height
+        let cr = containerSize.width / containerSize.height
+        return r > cr
+            ? CGSize(width: containerSize.width, height: containerSize.width / r)
+            : CGSize(width: containerSize.height * r, height: containerSize.height)
     }
 
-    // MARK: - Image Loading
+    private var dateParts: (date: String, time: String) {
+        guard let date = asset.creationDate else { return ("", "") }
+        let df = DateFormatter(); df.dateFormat = "d MMM"
+        let tf = DateFormatter(); tf.dateFormat = "HH.mm"
+        return (df.string(from: date), tf.string(from: date))
+    }
 
     private func loadFullImage() async {
-        let size = CGSize(
-            width: CGFloat(asset.pixelWidth),
-            height: CGFloat(asset.pixelHeight)
-        )
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isNetworkAccessAllowed = true
-        options.isSynchronous = false
-
-        PHImageManager.default().requestImage(
-            for: asset,
-            targetSize: size,
-            contentMode: .aspectFit,
-            options: options
-        ) { img, info in
+        let size = CGSize(width: CGFloat(asset.pixelWidth), height: CGFloat(asset.pixelHeight))
+        let opts = PHImageRequestOptions()
+        opts.deliveryMode = .highQualityFormat
+        opts.isNetworkAccessAllowed = true
+        PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: opts) { img, info in
             guard let img else { return }
-            let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-            if !isDegraded {
-                Task { @MainActor in self.fullImage = img }
-            } else if self.fullImage == nil {
-                Task { @MainActor in self.fullImage = img }
-            }
+            let degraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+            if !degraded { Task { @MainActor in self.fullImage = img } }
+            else if self.fullImage == nil { Task { @MainActor in self.fullImage = img } }
         }
     }
-
-    // MARK: - Delete
 
     private func deletePhoto() {
         PHPhotoLibrary.shared().performChanges {
             PHAssetChangeRequest.deleteAssets([asset] as NSFastEnumeration)
         } completionHandler: { success, _ in
-            if success {
-                DispatchQueue.main.async { dismiss() }
-            }
+            if success { DispatchQueue.main.async { dismiss() } }
         }
     }
 }

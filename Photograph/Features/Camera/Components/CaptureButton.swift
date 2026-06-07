@@ -20,16 +20,20 @@ struct CaptureButton: View {
             action()
         }) {
             ZStack {
-                // Outer ring
+                // Outer ring (SystemGray2)
                 Circle()
-                    .strokeBorder(.white.opacity(0.9), lineWidth: 3)
+                    .fill(Color(uiColor: .systemGray2))
                     .frame(width: 76, height: 76)
 
-                // Inner filled circle — 62pt diameter per Design System (cornerRadiusXXLarge)
-                Circle()
-                    .fill(.white)
-                    .frame(width: Spacing.cornerRadiusXXLarge, height: Spacing.cornerRadiusXXLarge)
-                    .scaleEffect(isPressed ? 0.85 : 1.0)
+                // Inner filled circle with primary border
+                ZStack {
+                    Circle()
+                        .fill(.white)
+                    Circle()
+                        .strokeBorder(AppColors.primary, lineWidth: 2)
+                }
+                .frame(width: Spacing.cornerRadiusXXLarge, height: Spacing.cornerRadiusXXLarge)
+                .scaleEffect(isPressed ? 0.85 : 1.0)
                     .animation(.easeInOut(duration: 0.15), value: isPressed)
             }
         }

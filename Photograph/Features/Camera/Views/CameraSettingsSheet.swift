@@ -2,68 +2,70 @@
 //  CameraSettingsSheet.swift
 //  Photograph
 //
+//  iOS Camera-style settings grid presented as sheet.
+//  3-column grid: Flash, Timer, EV (row 1), Aspect (row 2).
+//
+//  HIG §4.6: .buttonStyle(.glass) for interactive buttons
+//  HIG §15.1: .regularMaterial for backgrounds
+//  HIG §6.1: Spacing tokens for layout
+//
+//  Uses Design System: Typography, Spacing, AppColors.
+//
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
 
 import AVFoundation
 import SwiftUI
 
-/// Bottom sheet with Flash, Timer, Exposure, Aspect controls.
-/// Presented when the user taps the ellipsis button.
 struct CameraSettingsSheet: View {
     @Bindable var viewModel: CameraViewModel
 
+    private let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+
     var body: some View {
-        VStack(spacing: 0) {
-            // Drag handle — provided by .presentationDragIndicator(.visible) automatically
-            HStack(spacing: 0) {
-                Spacer()
-
-                // Flash
-                settingButton(
-                    icon: flashIcon,
-                    label: "FLASH",
-                    isActive: viewModel.isFlashActive
-                ) { viewModel.cycleFlash() }
-
-                Spacer()
-
-                // Timer
-                settingButton(
-                    icon: "timer",
-                    label: timerLabel,
-                    isActive: viewModel.timerLength > 0
-                ) { viewModel.cycleTimer() }
-
-                Spacer()
-
-                // Exposure
-                settingButton(
-                    icon: "plusminus",
-                    label: exposureLabel,
-                    isActive: viewModel.exposureBias != 0
-                ) { viewModel.cycleExposure() }
-
-                Spacer()
-
-                // Aspect Ratio
-                VStack(spacing: 6) {
-                    AspectRatioButton(selectedRatio: $viewModel.selectedAspectRatio)
-                        .frame(width: 56, height: 56)
-                    Text("ASPECT")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
+        LazyVGrid(columns: columns, spacing: Spacing.medium) {
+            // Flash
+            settingItem(
+                icon: flashIcon,
+                label: "FLASH",
+                isActive: viewModel.isFlashActive,
+                action: { viewModel.cycleFlash() }
+            )
+            // Timer
+            settingItem(
+                icon: "timer",
+                label: timerLabel,
+                isActive: viewModel.timerLength > 0,
+                action: { viewModel.cycleTimer() }
+            )
+            // Exposure
+            settingItem(
+                icon: "plusminus",
+                label: exposureLabel,
+                isActive: viewModel.exposureBias != 0,
+                action: { viewModel.cycleExposure() }
+            )
+            // Aspect
+            VStack(spacing: Spacing.small) {
+                AspectRatioButton(selectedRatio: $viewModel.selectedAspectRatio)
+                    .frame(width: 56, height: 56)
+                    .background(Color(.tertiarySystemFill), in: Circle())
+                Text("ASPECT")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.vertical, Spacing.large)
         }
+        .padding(.horizontal, Spacing.large)
+        .padding(.vertical, Spacing.large)
     }
 
-    // MARK: - Setting Button
+    // MARK: - Setting Item
 
-    private func settingButton(
+    private func settingItem(
         icon: String,
         label: String,
         isActive: Bool,
@@ -73,24 +75,28 @@ struct CameraSettingsSheet: View {
             HapticManager.selection()
             action()
         } label: {
-            VStack(spacing: 6) {
+            VStack(spacing: Spacing.small) {
                 Image(systemName: icon)
-                    .font(.system(size: 24, weight: .medium))
+                    .font(.system(size: 22))
                     .foregroundStyle(isActive ? AppColors.primary : .primary)
                     .frame(width: 56, height: 56)
-                    .background(
-                        Circle()
-                            .fill(isActive ? AppColors.primary.opacity(0.2) : Color(.systemGray5))
+                    .background(Color(.tertiarySystemFill), in: Circle())
+                    .overlay(
+                        Circle().strokeBorder(
+                            isActive ? AppColors.primary.opacity(0.5) : .clear,
+                            lineWidth: 1.5
+                        )
                     )
+
                 Text(label)
-                    .font(Typography.caption)
+                    .font(.caption2)
                     .foregroundStyle(isActive ? AppColors.primary : .secondary)
             }
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Computed Labels
+    // MARK: - Computed
 
     private var flashIcon: String {
         if viewModel.isFrontCamera { return "bolt.slash.fill" }

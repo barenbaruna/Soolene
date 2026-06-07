@@ -38,9 +38,10 @@ struct CameraBottomBarComplete: View {
             // Flip Button
             CircularGlassButton(
                 iconName: "arrow.trianglehead.2.clockwise.rotate.90",
-                iconOpacity: 0.41,
+                iconColor: AppColors.primary,
                 action: onFlipTap
             )
+            .background(Color.black.opacity(0.41), in: Circle())
         }
         .padding(.horizontal, 28)
         .padding(.vertical, 22)

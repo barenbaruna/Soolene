@@ -4,13 +4,13 @@ import SwiftUI
 /// Follows iOS 26 Liquid Glass behavior while satisfying the Figma Design System specs.
 struct CircularGlassButton: View {
     let iconName: String
-    let iconOpacity: Double
+    let iconColor: Color
     let action: () -> Void
     
     // Default opacity for icons in the Design System is often 80% or 41%
-    init(iconName: String, iconOpacity: Double = 0.8, action: @escaping () -> Void) {
+    init(iconName: String, iconColor: Color = Color.black.opacity(0.8), action: @escaping () -> Void) {
         self.iconName = iconName
-        self.iconOpacity = iconOpacity
+        self.iconColor = iconColor
         self.action = action
     }
     
@@ -18,7 +18,7 @@ struct CircularGlassButton: View {
         Button(action: action) {
             Image(systemName: iconName)
                 .font(Typography.headline) // Scalable icon size
-                .foregroundStyle(Color.black.opacity(iconOpacity))
+                .foregroundStyle(iconColor)
                 .interactiveGlassCircle(size: 56)
         }
         .buttonStyle(.plain) // Prevent default button styling since we use interactive glass
@@ -31,7 +31,7 @@ struct CircularGlassButton: View {
         HStack(spacing: 20) {
             CircularGlassButton(iconName: "chevron.left") { } // Back Button
             CircularGlassButton(iconName: "perspective") { } // Grid Button
-            CircularGlassButton(iconName: "arrow.trianglehead.2.clockwise.rotate.90", iconOpacity: 0.41) { } // Flip Button
+            CircularGlassButton(iconName: "arrow.trianglehead.2.clockwise.rotate.90", iconColor: Color.black.opacity(0.41)) { } // Flip Button
         }
     }
 }

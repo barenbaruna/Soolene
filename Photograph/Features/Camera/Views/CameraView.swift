@@ -2,6 +2,13 @@
 //  CameraView.swift
 //  Photograph
 //
+//  Main camera screen. Layers (bottom to top):
+//  1. Camera Preview (AVCaptureSession)
+//  2. Composition Overlay (gridlines)
+//  3. Camera Controls (HUD)
+//  4. Shutter Flash
+//  5. Walkthrough Overlay (onboarding tooltips)
+//
 //  Created by Baren Baruna Harahap on 18/05/26.
 //
 
@@ -10,9 +17,9 @@ import SwiftUI
 
 /// Main camera screen.
 struct CameraView: View {
+    @EnvironmentObject private var onboardingManager: OnboardingManager
     @State private var viewModel = CameraViewModel()
     @State private var isShowingGallery = false
-
 
     var body: some View {
         ZStack {
@@ -23,21 +30,32 @@ struct CameraView: View {
                 .task { await viewModel.onAppear() }
                 .onDisappear { viewModel.onDisappear() }
 
+            // MARK: Layer 2 — Composition Overlay (live gridlines)
 
-            // MARK: Layer 6 — Camera Controls
+            CompositionOverlayView(
+                composition: CompositionType(rawValue: viewModel.compositionLabel) ?? .center,
+                isAligned: viewModel.isSceneAligned
+            )
+            .ignoresSafeArea()
+
+            // MARK: Layer 3 — Camera Controls (HUD)
 
             CameraControlsView(
                 viewModel: viewModel,
                 isShowingGallery: $isShowingGallery
             )
 
-            // MARK: Layer 7 — Shutter Flash
+            // MARK: Layer 4 — Shutter Flash
 
             if viewModel.showShutterFlash {
                 Color.white
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }
+
+            // MARK: Layer 5 — Walkthrough Overlay
+
+            WalkthroughOverlayView(context: .camera)
         }
         // Stop camera when gallery opens
         .onChange(of: isShowingGallery) { _, showing in
@@ -45,6 +63,12 @@ struct CameraView: View {
                 viewModel.pauseSession()
             } else {
                 viewModel.resumeSession()
+            }
+        }
+        // Dismiss gallery automatically if they finish walkthrough while inside it
+        .onChange(of: onboardingManager.hasCompletedWalkthrough) { _, completed in
+            if completed {
+                isShowingGallery = false
             }
         }
         // Gallery
@@ -66,5 +90,4 @@ struct CameraView: View {
             Text(viewModel.saveError ?? "")
         }
     }
-
 }

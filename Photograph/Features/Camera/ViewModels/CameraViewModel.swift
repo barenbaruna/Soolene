@@ -1,4 +1,5 @@
 import AVFoundation
+import Photos
 import SwiftUI
 
 /// Mocked CameraViewModel for UI Development.
@@ -51,6 +52,10 @@ final class CameraViewModel {
     
     func onAppear() async {
         await cameraManager.checkPermissionsAndSetup()
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        if status == .notDetermined {
+            _ = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        }
     }
     func onDisappear() {
         cameraManager.stopSession()

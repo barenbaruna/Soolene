@@ -256,15 +256,15 @@
 				DEVELOPMENT_TEAM = V36823696A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "FrameIt needs camera access to provide real-time composition guidance.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "FrameIt saves your composed photos to a dedicated FrameIt album.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FrameIt reads your library to display photos.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Visula needs camera access to provide real-time composition guidance and help you master photography framing.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Visula saves your composed photos so you can review them in the gallery.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Visula accesses your photo library to display and organise your captured compositions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -290,15 +290,15 @@
 				DEVELOPMENT_TEAM = V36823696A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "FrameIt needs camera access to provide real-time composition guidance.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "FrameIt saves your composed photos to a dedicated FrameIt album.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FrameIt reads your library to display photos.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Visula needs camera access to provide real-time composition guidance and help you master photography framing.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Visula saves your composed photos so you can review them in the gallery.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Visula accesses your photo library to display and organise your captured compositions.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

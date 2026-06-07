@@ -47,12 +47,12 @@ struct CameraControlsView: View {
                     .padding(.bottom, Spacing.large)
             }
 
-            // Lens Selector
+            // Lens Selector — dynamic based on device capabilities
             if !viewModel.isFrontCamera,
                !viewModel.isCountingDown
             {
                 LensSelectorView(
-                    availableLenses: [LensType.ultraWide, LensType.wide, LensType.twoX],
+                    availableLenses: LensType.availableOnDevice,
                     selectedLens: Binding(
                         get: { LensType(rawValue: viewModel.selectedLens) ?? .wide },
                         set: { viewModel.switchLens($0.rawValue) }

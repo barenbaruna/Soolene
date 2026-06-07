@@ -1,25 +1,26 @@
 import SwiftUI
 
-/// UI Element for showing image date and time in Gallery.
-/// Matches Design System: Capsule, Button/Semibold/17 & Caption/Regular/12,
-/// Foreground #000000 80%, Liquid Glass.
+/// Date & time pill for photo detail toolbar (.principal placement).
+/// Uses native `.regularMaterial` capsule — matching Apple's gallery.
+///
+/// HIG §15.1: .regularMaterial for pill/badge backgrounds
+/// HIG §2.2: .headline for primary, .caption for metadata
 struct ImageDateLabel: View {
     let dateText: String
     let timeText: String
-    
+
     var body: some View {
         VStack(spacing: 2) {
             Text(dateText)
-                .font(Typography.buttonCTA) // Semibold 17
-                .foregroundStyle(AppColors.primary) // Example uses yellow text
-            
+                .font(.headline)
+                .foregroundStyle(.primary)
+
             Text(timeText)
-                .font(Typography.caption) // Regular 12
-                .foregroundStyle(AppColors.primary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 8)
-        .background(Color.black.opacity(0.8), in: Capsule())
+        .padding(.horizontal, Spacing.medium)
+        .padding(.vertical, Spacing.small)
         .background(.regularMaterial, in: Capsule())
     }
 }
@@ -27,6 +28,6 @@ struct ImageDateLabel: View {
 #Preview {
     ZStack {
         Color.gray.ignoresSafeArea()
-        ImageDateLabel(dateText: "23 May", timeText: "15.20")
+        ImageDateLabel(dateText: "7 Jun", timeText: "17.42")
     }
 }
