@@ -1,0 +1,580 @@
+Date: Sat, 6 Jun 2026 05:11:08 +0000 (UTC)
+Message-ID: <1710020279.33.1780722668909@efa658c78d26>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_32_1188616392.1780722668908"
+
+------=_Part_32_1188616392.1780722668908
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>Training an Action Classifier</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font: var(--ds-font-body-small, Arial, Helvetica, FreeSans, sans-se=
+rif);
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: var(--ds-surface, #fff) !important;
+        color: var(--ds-text, #000) !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: var(--ds-text, #000);
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        page-break-after: avoid;
+    }
+
+    pre {
+        font: var(--ds-font-code, Monaco, "Courier New", monospace);
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>Training an Action Classifier</h1>
+    <div class=3D"Section1">
+        <div class=3D"contentLayout2">
+<div class=3D"columnLayout fixed-width" data-layout=3D"fixed-width">
+<div class=3D"cell normal" data-type=3D"normal">
+<div class=3D"innerCell">
+<p>An&nbsp;<strong>Action Classifier</strong>&nbsp;is a machine learning mo=
+del designed to identify and classify human actions from video footage. Thi=
+s type of classifier leverages computational vision technologies, primarily=
+ Vision and Create ML, to recognize body movements and patterns. For instan=
+ce, an action classifier trained to detect exercise movements can recognize=
+ and label videos of someone performing jumping jacks, squats, or lunges.</=
+p>
+<p>In this section, you will learn how to create, train, and deploy an acti=
+on classifier using Swift and Create ML. We=E2=80=99ll cover every essentia=
+l step=E2=80=94from gathering and preparing data to evaluating and integrat=
+ing the classifier into an iOS application.</p>
+<hr>
+<h3 id=3D"TraininganActionClassifier-WhyUseanActionClassifier?">Why Use an =
+Action Classifier?</h3>
+<p>Implementing action classifiers can significantly enhance your app by en=
+abling it to automatically recognize physical activities, movements, or ges=
+tures. Common application areas include:</p>
+<ul>
+<li>
+<p><strong>Fitness Apps:</strong>&nbsp;Automatic recognition of workout rou=
+tines and tracking user progress.</p></li>
+<li>
+<p><strong>Interactive Games:</strong>&nbsp;Detecting player gestures to fa=
+cilitate immersive gameplay.</p></li>
+<li>
+<p><strong>Augmented Reality (AR):</strong>&nbsp;Enabling realistic interac=
+tion between users and virtual objects.</p></li>
+</ul>
+<h3 id=3D"TraininganActionClassifier-ActionClassifier">Action Classifier</h=
+3>
+<p>Build a customized action recognition model using Create ML by collectin=
+g sample videos showcasing the specific actions you'd like your classifier =
+to recognize. For instance, to develop a fitness action recognition model, =
+record or collect videos of people performing different workouts like jumpi=
+ng jacks, push-ups, squats, or lunges.</p>
+<p>During training, Create ML utilizes Apple's&nbsp;Vision framework&nbsp;t=
+o pinpoint essential anatomical landmarks on the human body within each vid=
+eo frame. Action recognition models are trained to detect and interpret the=
+ movement trajectories of these points throughout video sequences.</p>
+<p>The Create ML developer tool streamlines the training, evaluation, and t=
+esting of your action recognition models. It enables the creation of severa=
+l models within one project by defining individual&nbsp;<em>model sources</=
+em>, each consisting of specific training data and configuration parameters=
+. After achieving your desired performance, export the trained action recog=
+nition model as a Core ML file, making it ready for integration into your X=
+code project.</p>
+<p>At runtime, your app leverages the action recognition model to classify =
+actions by analyzing sequential video frames sourced from a live camera fee=
+d or pre-recorded video files.</p>
+<p>Although training an action recognition model follows a workflow similar=
+ to other Create ML models, such as image classifiers, there are distinct c=
+onsiderations to keep in mind:</p>
+<ul>
+<li>
+<p>Setting the appropriate frame rate for the action recognition model base=
+d on the intended use in your app.</p></li>
+<li>
+<p>Ensuring video examples match or surpass this frame rate for optimal acc=
+uracy.</p></li>
+<li>
+<p>Capturing videos of individuals clearly performing designated actions wi=
+thin appropriate environmental conditions.</p></li>
+<li>
+<p>Including videos depicting closely related yet irrelevant actions to hel=
+p the model distinguish and improve accuracy.</p></li>
+</ul>
+<h3 id=3D"TraininganActionClassifier-SelectinganAppropriateFrameRate"><stro=
+ng>Selecting an Appropriate Frame Rate</strong></h3>
+<p>Before creating your action recognition model, determine the frame rate =
+(number of frames per second) your destination app will use, whether source=
+d from a camera or video file.</p>
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p>The chosen frame rate significantly impacts your action recognition mode=
+l=E2=80=99s effectiveness and the type of training data required.</p>
+<p>Aim to align your action recognition model=E2=80=99s frame rate with tha=
+t of your target application. For example, if your app captures video at 30=
+ frames per second (fps), your action model should also be configured for 3=
+0 fps.</p>
+</div>
+</div>
+<h3 id=3D"TraininganActionClassifier-GatheringExampleVideos"><strong>Gather=
+ing Example Videos</strong></h3>
+<p>After establishing the appropriate frame rate for your action model, col=
+lect relevant training videos. While your model=E2=80=99s and application=
+=E2=80=99s frame rates must align, the frame rates of the training videos c=
+an be equal to or higher. For instance, videos captured at 30, 50, or 60 fp=
+s can effectively train a model configured for 30 fps.</p>
+<p>Collect a minimum of 50 videos for each action you want your model to re=
+cognize. Each training video should clearly feature a single person perform=
+ing the action. If capturing videos with multiple individuals, ensure the t=
+arget individual performing the action occupies the majority of the frame.<=
+/p>
+<p>Additionally, gather videos representing a&nbsp;<em>negative class</em>=
+=E2=80=94actions that may be similar but irrelevant to your application's c=
+ontext. Including negative classes helps your model avoid misclassification=
+ by clearly distinguishing between relevant and irrelevant actions.</p>
+<p>Proper data organization helps streamline training. Create ML supports s=
+ome common methods, such as:</p>
+</div>
+</div>
+</div>
+<div class=3D"columnLayout two-equal" data-layout=3D"two-equal">
+<div class=3D"cell normal" data-type=3D"normal">
+<div class=3D"innerCell">
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p><strong>Labeled Folders:</strong></p>
+<p>Store videos in separate labeled folders within a parent directory. Each=
+ folder corresponds to a specific action (e.g., Squats, Lunges, Jumping Jac=
+ks).</p>
+</div>
+</div>
+</div>
+</div>
+<div class=3D"cell normal" data-type=3D"normal">
+<div class=3D"innerCell">
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p><strong>Annotation-based:</strong></p>
+<p>Store videos in a single folder accompanied by an annotation file (CSV) =
+specifying each video's associated action labels.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class=3D"columnLayout fixed-width" data-layout=3D"fixed-width">
+<div class=3D"cell normal" data-type=3D"normal">
+<div class=3D"innerCell">
+<p><strong>Configure an Action Classification Project</strong></p>
+<p>Open the developer tool by choosing Xcode &gt; Open Developer Tool &gt; =
+Create ML, and create a new Action Classification project.</p><span class=
+=3D"confluence-embedded-file-wrapper image-center-wrapper confluence-embedd=
+ed-manual-size"><img class=3D"confluence-embedded-image confluence-external=
+-resource image-center" width=3D"650" src=3D"https://docs-assets.developer.=
+apple.com/published/38c7f28b647dbfccbc2990468c340a44/creating-an-action-cla=
+ssifier-model-4@2x.png" data-image-src=3D"https://docs-assets.developer.app=
+le.com/published/38c7f28b647dbfccbc2990468c340a44/creating-an-action-classi=
+fier-model-4@2x.png" loading=3D"lazy"></span>
+<p>In the Data section of the model source=E2=80=99s Settings tab, drag the=
+ parent folder of your training data source onto the Training Data box.</p>=
+<span class=3D"confluence-embedded-file-wrapper image-center-wrapper conflu=
+ence-embedded-manual-size"><img class=3D"confluence-embedded-image confluen=
+ce-external-resource image-center" width=3D"650" src=3D"https://docs-assets=
+.developer.apple.com/published/b601f871a91b39358acd52baf7046aad/creating-an=
+-action-classifier-model-5@2x.png" data-image-src=3D"https://docs-assets.de=
+veloper.apple.com/published/b601f871a91b39358acd52baf7046aad/creating-an-ac=
+tion-classifier-model-5@2x.png" loading=3D"lazy"></span>
+<p>If relevant, drag and drop the folders containing your validation and te=
+sting datasets into their corresponding Validation Data and Testing Data fi=
+elds. In case a validation dataset isn't specified, Create ML automatically=
+ reserves a portion of the training dataset for validation purposes.</p>
+<p>Next, customize your action classifier by adjusting settings in the Para=
+meters area. Ensure the Frame Rate matches the frame rate used by your targ=
+et application. For instance, if your app captures and processes video at 3=
+0 frames per second, you should also set the classifier's Frame Rate parame=
+ter to 30 fps.</p>
+<p>Finally, set the Action Duration according to how long it typically take=
+s to perform actions in your training videos. If most actions in your datas=
+et are completed in roughly two seconds, select an Action Duration of 2 sec=
+onds.</p><span class=3D"confluence-embedded-file-wrapper image-center-wrapp=
+er confluence-embedded-manual-size"><img class=3D"confluence-embedded-image=
+ confluence-external-resource image-center" width=3D"650" src=3D"https://do=
+cs-assets.developer.apple.com/published/6c35996d1b5e528e7c54e38cfd989e17/cr=
+eating-an-action-classifier-model-6@2x.png" data-image-src=3D"https://docs-=
+assets.developer.apple.com/published/6c35996d1b5e528e7c54e38cfd989e17/creat=
+ing-an-action-classifier-model-6@2x.png" loading=3D"lazy"></span>
+<p>Create ML determines the prediction window size=E2=80=94the total number=
+ of frames required for each prediction=E2=80=94by multiplying the chosen F=
+rame Rate by the Action Duration. For example, a Frame Rate of 30 fps and a=
+n Action Duration of 2 seconds would result in a prediction window size of =
+60 frames.</p>
+<p>If the actions you're classifying are equally recognizable from either t=
+he left or right side of the camera view, you can significantly enhance you=
+r training dataset by activating the Horizontal Flip augmentation. When Hor=
+izontal Flip is turned on, Create ML generates horizontally mirrored versio=
+ns of the landmark positions identified by Vision for each analyzed video f=
+rame.</p>
+<h3 id=3D"TraininganActionClassifier-TrainingYourActionClassifier"><strong>=
+Training Your Action Classifier</strong></h3>
+<p>Click the&nbsp;<strong>Train</strong>&nbsp;button to initiate the traini=
+ng process. Create ML begins by extracting features, employing a&nbsp;<code=
+>VNDetectHumanBodyPoseRequest</code>&nbsp;to identify body landmarks within=
+ every frame of your video data.</p>
+<p>This initial feature extraction phase might require some time, depending=
+ on both your dataset's size and your Mac's computing capabilities. Once fe=
+ature extraction is complete, Create ML moves into the training phase. Duri=
+ng this stage, it trains the action classifier to recognize specific action=
+s from patterns of landmark data. Throughout the training process, Create M=
+L provides visual feedback, displaying a graph of the model=E2=80=99s accur=
+acy improvements across successive training iterations.</p><span class=3D"c=
+onfluence-embedded-file-wrapper image-center-wrapper confluence-embedded-ma=
+nual-size"><img class=3D"confluence-embedded-image confluence-external-reso=
+urce image-center" width=3D"650" src=3D"https://docs-assets.developer.apple=
+.com/published/eec07bf4c375b3814a66d3539f0cae29/creating-an-action-classifi=
+er-model-7@2x.png" data-image-src=3D"https://docs-assets.developer.apple.co=
+m/published/eec07bf4c375b3814a66d3539f0cae29/creating-an-action-classifier-=
+model-7@2x.png" loading=3D"lazy"></span>
+<p>If you need to pause the training session temporarily=E2=80=94for instan=
+ce, to conserve battery life=E2=80=94click the&nbsp;<strong>Pause</strong>&=
+nbsp;button. When you're prepared to resume, simply click&nbsp;<strong>Resu=
+me</strong>.</p>
+<p>To test an early version of your model without waiting for the entire tr=
+aining session to complete, select&nbsp;<strong>Snapshot</strong>. Snapshot=
+s let you export preliminary Core ML model files. To export a snapshot, sel=
+ect it and use the options available in the&nbsp;<strong>Output</strong>&nb=
+sp;tab.</p>
+<h3 id=3D"TraininganActionClassifier-EvaluatingYourActionClassifier"><stron=
+g>Evaluating Your Action Classifier</strong></h3>
+<p>Review your trained model=E2=80=99s predictive performance by examining =
+the&nbsp;<strong>Recall</strong>&nbsp;and&nbsp;<strong>Precision</strong>&n=
+bsp;metrics displayed within the&nbsp;<strong>Evaluation</strong>&nbsp;tab.=
+ These metrics are available separately for the training, validation, and t=
+esting stages.</p><span class=3D"confluence-embedded-file-wrapper image-cen=
+ter-wrapper confluence-embedded-manual-size"><img class=3D"confluence-embed=
+ded-image confluence-external-resource image-center" width=3D"650" src=3D"h=
+ttps://docs-assets.developer.apple.com/published/b0e16a86bb370138f9c009b1b4=
+8eff32/creating-an-action-classifier-model-8@2x.png" data-image-src=3D"http=
+s://docs-assets.developer.apple.com/published/b0e16a86bb370138f9c009b1b48ef=
+f32/creating-an-action-classifier-model-8@2x.png" loading=3D"lazy"></span>
+<p>If the action classifier doesn=E2=80=99t meet your needs, click Train Mo=
+re to further train the model. If the additional training iterations don=E2=
+=80=99t improve the action classifier=E2=80=99s performance.</p>
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p>you can select File &gt; New Model Source to train a model with either o=
+r both of the following:</p>
+<ul>
+<li>
+<p>A new or modified training-data source</p></li>
+<li>
+<p>Different parameters</p></li>
+</ul>
+</div>
+</div>
+<p>If you=E2=80=99d like to improve the accuracy of your action classifier,=
+ consider adjusting the&nbsp;<strong>Action Duration</strong>&nbsp;setting =
+or enabling the&nbsp;<strong>Horizontal Flip</strong>&nbsp;augmentation. If=
+ the model struggles with recognizing certain actions, enhance your dataset=
+ by adding or updating the data source with more varied, high-quality examp=
+les specifically demonstrating those challenging actions.</p>
+<p>In situations where the model incorrectly labels unrelated movements or =
+nonactions as valid actions, it's helpful to create or expand a&nbsp;<stron=
+g>negative class</strong>=E2=80=94a collection of videos illustrating examp=
+les the classifier should ignore.</p>
+<p>After making adjustments to your dataset or parameters, click&nbsp;<stro=
+ng>Train</strong>&nbsp;again to build a revised action classifier. Continue=
+ iteratively evaluating, fine-tuning, and retraining your classifier until =
+you achieve results that meet your expectations.</p>
+<h3 id=3D"TraininganActionClassifier-PreviewingYourActionClassifier"><stron=
+g>Previewing Your Action Classifier</strong></h3>
+<p>The&nbsp;<strong>Preview</strong>&nbsp;tab allows you to quickly test an=
+d visualize the classifier=E2=80=99s predictions before integrating it into=
+ your Xcode project. Simply drag a video file into the Preview area and pre=
+ss&nbsp;<strong>Play</strong>&nbsp;to observe how effectively the model ide=
+ntifies actions in real-time.</p><span class=3D"confluence-embedded-file-wr=
+apper image-center-wrapper confluence-embedded-manual-size"><img class=3D"c=
+onfluence-embedded-image confluence-external-resource image-center" width=
+=3D"650" src=3D"https://docs-assets.developer.apple.com/published/78af64f15=
+8184d826427091ea163ffc7/creating-an-action-classifier-model-9@2x.png" data-=
+image-src=3D"https://docs-assets.developer.apple.com/published/78af64f15818=
+4d826427091ea163ffc7/creating-an-action-classifier-model-9@2x.png" loading=
+=3D"lazy"></span>
+<p>When you drop a video file into the Preview tab, Create ML analyzes the =
+entire video using your action classifier. As you play back the video, Crea=
+te ML visually displays real-time predictions for each frame, helping you a=
+ssess how accurately actions are detected.</p>
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p>To rapidly verify your classifier's capability to recognize all action c=
+ategories, use an action montage video that demonstrates each action sequen=
+tially.</p>
+</div>
+</div>
+<h3 id=3D"TraininganActionClassifier-ExportingYourActionClassifier"><strong=
+>Exporting Your Action Classifier</strong></h3>
+<p>To export your trained action classifier as a Core ML model file, naviga=
+te to the&nbsp;<strong>Output</strong>&nbsp;tab and choose from the availab=
+le options:&nbsp;<strong>Get</strong>,&nbsp;<strong>Xcode</strong>, or&nbsp=
+;<strong>Share</strong>. You can export a fully-trained model or a snapshot=
+ captured at any stage during the training process.</p><span class=3D"confl=
+uence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual=
+-size"><img class=3D"confluence-embedded-image confluence-external-resource=
+ image-center" width=3D"650" src=3D"https://docs-assets.developer.apple.com=
+/published/72e5488326ec24c5ab791b2dfa302abb/creating-an-action-classifier-m=
+odel-10@2x.png" data-image-src=3D"https://docs-assets.developer.apple.com/p=
+ublished/72e5488326ec24c5ab791b2dfa302abb/creating-an-action-classifier-mod=
+el-10@2x.png" loading=3D"lazy"></span>
+<h3 id=3D"TraininganActionClassifier-IntegratingtheClassifierintoYourApp">I=
+ntegrating the Classifier into Your App</h3>
+<p>Once satisfied with the classifier=E2=80=99s performance, export it as a=
+ Core ML&nbsp;<code>.mlmodel</code>&nbsp;file and add it to your Xcode proj=
+ect:</p>
+<p>Here's a Swift code example of integrating the model using the Vision fr=
+amework:</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: php; gutter: false; theme: Confluence" data-theme=3D"Confluence">import V=
+ision
+import CoreML
+
+let model =3D try VNCoreMLModel(for: ActionClassifier().model)
+
+let request =3D VNCoreMLRequest(model: model) { request, error in
+    guard let results =3D request.results as? [VNClassificationObservation]=
+,
+          let topResult =3D results.first else { return }
+
+    print("Action detected: \\(topResult.identifier) with confidence \\(top=
+Result.confidence)")
+}</pre>
+</div>
+</div>
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p>As this article has focus on training, lets not go deep into how to depl=
+oy the trained model.</p>
+</div>
+</div>
+<h3 id=3D"TraininganActionClassifier-Conclusion">Conclusion</h3>
+<p>Training an action classifier in Swift involves a detailed workflow from=
+ data preparation to model training and integration. By leveraging Create M=
+L for training and Core ML along with Vision for deployment, iOS developers=
+ can build powerful applications capable of real-time action recognition. T=
+his section provided a comprehensive guide, highlighting best practices and=
+ code examples that serve as a solid foundation for further exploration and=
+ refinement in computational vision projects.</p>
+<hr>
+</div>
+</div>
+</div>
+</div>
+    </div>
+</body>
+</html>
+------=_Part_32_1188616392.1780722668908--

@@ -1,0 +1,673 @@
+Date: Sat, 6 Jun 2026 05:10:45 +0000 (UTC)
+Message-ID: <464409004.29.1780722645341@efa658c78d26>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_28_1675585811.1780722645341"
+
+------=_Part_28_1675585811.1780722645341
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>Introduction to Vision Framework</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font: var(--ds-font-body-small, Arial, Helvetica, FreeSans, sans-se=
+rif);
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: var(--ds-surface, #fff) !important;
+        color: var(--ds-text, #000) !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: var(--ds-text, #000);
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        page-break-after: avoid;
+    }
+
+    pre {
+        font: var(--ds-font-code, Monaco, "Courier New", monospace);
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>Introduction to Vision Framework</h1>
+    <div class=3D"Section1">
+        <p>The Vision Framework is Apple=E2=80=99s main tool for recognizin=
+g patterns in images. It was launched in 2017 as part of iOS 11 and was cre=
+ated to supply developers with a set of tools for handling computer vision =
+tasks.</p>
+<p>It allows advanced features to be integrated directly into on-device app=
+s. Things like face detection and recognition, text identification, object =
+tracking, and pose analysis can all be done without needing to create algor=
+ithms from scratch.</p>
+<p>To make this possible, Apple added GPUs and the Neural Engine into its h=
+ardware, which is responsible for a big part of the energy efficiency when =
+running machine learning solutions natively.</p>
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p>Likewise, other hardware accelerators have also evolved and contribute i=
+n making this technology more powerful and efficient.</p>
+</div>
+</div>
+<h3 id=3D"IntroductiontoVisionFramework-StructureandFunctioning">Structure =
+and Functioning</h3>
+<p>The Vision Framework, just like CoreML, was built with a <strong>modular=
+ architecture</strong> that eases the implementation and customization of c=
+omputer vision tasks. Each feature =E2=80=93 whether it=E2=80=99s face dete=
+ction, text recognition, or object tracking =E2=80=93 is packed into a spec=
+ific request. These requests are processed by dedicated handlers, which let=
+s developers combine different tasks based on the application=E2=80=99s nee=
+ds. This modular approach not only makes development simpler, but also help=
+s reuse components and speeds up the process of building robust and customi=
+zed solutions.</p><span class=3D"confluence-embedded-file-wrapper image-cen=
+ter-wrapper confluence-embedded-manual-size"><img class=3D"confluence-embed=
+ded-image image-center" alt=3D"Untitled - Frame 1 (1).jpg" width=3D"468" lo=
+ading=3D"lazy" src=3D"8e06f0c16ca1ffbea03b90a71ec795fa66bcbe0611189b1288daf=
+e9b51fd613a" data-image-src=3D"https://developeracademy.atlassian.net/wiki/=
+download/attachments/1208877064/Untitled%20-%20Frame%201%20(1).jpg?version=
+=3D1&amp;modificationDate=3D1750692274175&amp;cacheVersion=3D1&amp;api=3Dv2=
+" data-height=3D"666" data-width=3D"1499" data-unresolved-comment-count=3D"=
+0" data-linked-resource-id=3D"1208877076" data-linked-resource-version=3D"1=
+" data-linked-resource-type=3D"attachment" data-linked-resource-default-ali=
+as=3D"Untitled - Frame 1 (1).jpg" data-base-url=3D"https://developeracademy=
+.atlassian.net/wiki" data-linked-resource-content-type=3D"image/jpeg" data-=
+linked-resource-container-id=3D"1208877064" data-linked-resource-container-=
+version=3D"1" data-media-id=3D"15fa5f4a-720d-4764-83e6-43579d673b80" data-m=
+edia-type=3D"file" height=3D"207"></span>
+<p>In the image above, we have an example of how the execution pipeline wor=
+ks when using the Vision Framework:</p>
+<ol start=3D"1">
+<li>
+<p><strong>Image Input</strong></p>
+<p>The user either takes a picture or selects one that has faces in it. The=
+ image gets loaded into the app and is sent for processing by the Vision Fr=
+amework.</p></li>
+<li>
+<p><strong>Request</strong></p>
+<p>The app creates a request (<code>VNDetectFaceRectanglesRequest</code>) t=
+o let the Vision Framework know it wants to find faces in the image.</p></l=
+i>
+<li>
+<p><strong>Handler</strong></p>
+<p>A handler (<code>VNImageRequestHandler</code>) receives the request and =
+processes the image using Vision=E2=80=99s internal algorithms to detect fa=
+ces.</p></li>
+<li>
+<p><strong>Response</strong></p>
+<p>The framework returns a response with the coordinates of the faces it fo=
+und in the image. These results can be used to highlight faces visually or =
+for further analysis.</p></li>
+<li>
+<p><strong>Visualization Result</strong></p>
+<p>The app can, for example, draw boxes around the detected faces and show =
+the processed image to the user.</p></li>
+</ol>
+<p>When it comes to <strong>processing images and videos</strong>, the fram=
+ework works in a highly optimized and real-time way. As soon as it gets vis=
+ual data, it applies advanced algorithms to analyze each frame or image, id=
+entifying patterns, recognizing text, and detecting objects.</p>
+<p>Its <strong>integration with machine learning and deep learning</strong>=
+ is another fundamental pillar of the Vision Framework. Models trained to i=
+nterpret and analyze visual information are incorporated into the process, =
+allowing the framework to perform complex analyses with high precision. Thi=
+s synergy between computer vision algorithms and machine learning enables t=
+he extraction of detailed information and the identification of nuances tha=
+t traditional methods would have a hard time to capture. As a result, devel=
+opers can focus on innovation and on creating smarter experiences, while th=
+e framework handles all the technical challenges of image and video analysi=
+s behind the scenes.</p>
+<p>In short, the combination of modular architecture, real-time processing,=
+ and advanced integration with machine learning makes the Vision Framework =
+a strong and flexible tool for building apps that rely on the interpretatio=
+n of visual content. This structure not only enables the creation of effici=
+ent solutions but also allows for continuous and seamless adaptation to new=
+ features.</p>
+<h3 id=3D"IntroductiontoVisionFramework-MainFeatures">Main Features</h3>
+<p>The Vision Framework offers a solid set of features focused on analyzing=
+ and interpreting images and videos. These tools allow developers to add ad=
+vanced computer vision resources to their apps, providing smarter and more =
+interactive experience for users. Some of the main features include:</p>
+<ul>
+<li>
+<p><strong>Face Detection and Recognition</strong></p></li>
+</ul>
+<p>Face detection is one of the most popular features in the Vision Framewo=
+rk. It can identify the presence and position of faces in images and videos=
+. On top of that, the framework also offers face recognition, which enables=
+ the differentiation between individuals, making it useful for authenticati=
+on and personalized experiences. Some practical uses include unlocking devi=
+ces, augmented reality (AR) filters, and security systems. It can be used w=
+ith <code>VNDetectFaceRectanglesRequest</code> (Face detection) and <code>V=
+NRecognizeFacesRequest</code> (Facial recognition).</p>
+<ul>
+<li>
+<p><strong>Text Recognition (OCR)</strong></p></li>
+</ul>
+<p>The Vision Framework includes an optical character recognition (OCR) sys=
+tem that pulls text from images and videos with high accuracy. This feature=
+ can be used to scan documents, read license plates, identify barcodes, or =
+even to auto-translate text captured by camera. It uses machine learning to=
+ ensure efficient interpretation, even under challenging conditions such as=
+ tilted or handwritten texts. It can be used with <code>VNRecognizeTextRequ=
+est</code>.</p>
+<ul>
+<li>
+<p><strong>Object Tracking and Pose Analysis</strong></p></li>
+</ul>
+<p>Object tracking allows an app to identify and follow specific elements a=
+s they move through a video. This feature is widely used in sports apps, mo=
+nitoring tools, and gesture-based interfaces. The framework also supports h=
+uman pose analysis, which helps detect body structure and movements in real=
+ time, something essential in fitness apps, games, and augmented reality ex=
+periences. It can be used with <code>VNTrackObjectRequest</code> (Object tr=
+acking) and <code>VNDetectHumanBodyPoseRequest</code> (Pose analysis).</p>
+<h3 id=3D"IntroductiontoVisionFramework-PerformanceandEfficiency">Performan=
+ce and Efficiency</h3>
+<p>The Vision Framework was built to deliver high <strong>performance and e=
+fficiency</strong>, making sure computer vision tasks run fast, accurately,=
+ and with optimal energy use. To do that, it takes advantage of the local p=
+rocessing power in Apple products, reducing the need to rely on outside ser=
+vers, which means better privacy and lower latency for apps. This setup is =
+perfect for apps that need to process visuals in real time.</p>
+<p>One of the main advantages of the Vision Framework is its ability to run=
+ computer vision tasks directly on the device <strong>(on-device processing=
+)</strong>. That means no internet connection is needed to analyze images a=
+nd videos, which leads to faster and more efficient performance. Further, o=
+n-device processing also enhances user privacy, since the visual data doesn=
+=E2=80=99t have to be sent to external servers. Applications such as facial=
+ recognition for Face ID unlocking, object tracking, and OCR benefit from t=
+his approach, delivering near-instant results.</p>
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p>To push performance even further, the Vision Framework integrates with t=
+he <strong>Apple Neural Engine (ANE)</strong>, which is a special component=
+ of Apple=E2=80=99s chips developed to boost machine learning tasks.</p>
+</div>
+</div>
+<p>The <strong>Apple Neural Engine</strong> makes it possible to run comput=
+er vision models with great energy efficiency. It reduces the load on the C=
+PU and GPU, which means that apps can perform complex tasks, like face dete=
+ction or text recognition, quickly and without compromising the device=E2=
+=80=99s battery life. Using the Neural Engine allows for faster and more ac=
+curate inference in custom machine learning models integrated into the fram=
+ework.</p>
+<p>This combination of performance tuning makes the Vision Framework a robu=
+st solution for a solid range of scenarios, from security and authenticatio=
+n applications to augmented reality and visual assistants. The efficiency i=
+n task execution means that developers can create sophisticated experiences=
+ without compromising the responsiveness or usability of their apps.</p>
+<h3 id=3D"IntroductiontoVisionFramework-VisionKitvsVisionFramework:WhichOne=
+toUse?">VisionKit vs Vision Framework: Which One to Use?</h3>
+<p><strong>VisionKit</strong> and <strong>Vision Framework</strong> are App=
+le=E2=80=99s frameworks built to analyze images and videos, both using mach=
+ine learning to interpret visual information. However, they serve different=
+ purposes: <strong>VisionKit</strong> is focused on scanning documents and =
+extracting structured information, like text and machine-readable codes. It=
+=E2=80=99s ideal for apps that need to scan receipts, read QR codes, or pul=
+l text from documents fast. <strong>Vision Framework</strong>, on the other=
+ hand, has a broader focus. It offers advanced tools like <strong>image cla=
+ssification, object detection, face detection, object tracking, and pose an=
+alysis</strong>, making it the go-to for apps that deal with AR, pattern re=
+cognition in images, or real-time visual monitoring.</p>
+<p>Even though they=E2=80=99re different, both frameworks share features li=
+ke <strong>text recognition (OCR)</strong> and can complement each other. F=
+or example, an app might use <strong>VisionKit</strong> to capture a docume=
+nt, then <strong>Vision Framework</strong> to check for signatures or water=
+marks.</p>
+<div class=3D"panel" style=3D"background-color: #E6FCFF;border-width: 1px;"=
+>
+<div class=3D"panelContent" style=3D"background-color: #E6FCFF;">
+<p>When it comes to compatibility, both use Apple=E2=80=99s machine learnin=
+g tech and can integrate with <strong>Core ML</strong>. That means custom m=
+odels can be used for more specific pattern recognition. The choice between=
+ them depends on how much control and flexibility is necessary: <strong>If =
+the main goal is document scanning with a smooth workflow, VisionKit is the=
+ best choice; For a more complex visual analysis, Vision Framework is more =
+powerful.</strong></p>
+</div>
+</div>
+<h3 id=3D"IntroductiontoVisionFramework-Conclusion">Conclusion</h3>
+<p>The <strong>Vision Framework</strong> is a must-have tool for developers=
+ who want to integrate advanced computer vision features to their apps. It =
+can handle things like pattern recognition in images and videos, text analy=
+sis, object tracking, and pose detection. Combined with efficient on-device=
+ processing and the use of the <strong>Neural Engine</strong>, it=E2=80=99s=
+ ideal for creating fast, accurate solutions with excellent energy performa=
+nce.</p>
+<p>Additionally, its modular architecture allows for flexibility and custom=
+ization, making it easier to implement complex solutions without the need t=
+o reinvent algorithms. The integration with <strong>deep learning and machi=
+ne learning</strong> models enhances the accuracy and sophistication of ana=
+lyses, allowing developers to focus on innovation.</p>
+<p>In the end, the Vision Framework represents an efficient and complete pl=
+atform for creating smart, interactive, and real-time visual experiences.</=
+p>
+<p></p>
+    </div>
+</body>
+</html>
+------=_Part_28_1675585811.1780722645341
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Location: file:///C:/8e06f0c16ca1ffbea03b90a71ec795fa66bcbe0611189b1288dafe9b51fd613a
+
+/9j/4AAQSkZJRgABAgAAAQABAAD/wAARCAD6AjMDAREAAhEBAxEB/9sAQwAIBgYHBgUIBwcHCQkI
+CgwUDQwLCwwZEhMPFB0aHx4dGhwcICQuJyAiLCMcHCg3KSwwMTQ0NB8nOT04MjwuMzQy/9sAQwEJ
+CQkMCwwYDQ0YMiEcITIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy
+MjIyMjIy/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA
+AAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3
+ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWm
+p6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEA
+AwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSEx
+BhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElK
+U1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3
+uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+gAo
+AKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgA
+oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACg
+AoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAC
+gAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKA
+CgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAK
+ACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA
+KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAo
+AKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgA
+oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACg
+AoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAC
+gAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKA
+CgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAK
+ACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA
+KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAo
+AKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgA
+oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgBNwHcUAG5fUUBcNy+ooC4bl9RQFw
+3L6igLhuX1FAXDcvqKAuG5fUUBcNy+ooC4bl9RQFw3L6igLhuX1FAXDcvqKAuG5fUUBcNy+ooC4b
+l9RQFw3L6igLhuX1FAXDcvqKAuG5fUUBcNy+ooC4bl9RQFw3L6igLhuX1FAXDcvqKAuG5fUUBcNy
++ooC4bl9RQFw3L6igLhuX1FAXDcvqKAuG5fUUBcNy+ooC4bl9RQFw3L6igLhuX1FAXDcvqKAuG5f
+UUBcNy+ooC4bl9RQFw3L6igLhuX1FAXDcvqKAuLnPSgAoAKACgAoAKACgAoAKACgAoAKACgAoAKA
+CgAoAKACgAoAKACgAoAKACgAoAKACgCu/wB41D3Ie4lIQZ5x3oAMg0AFABQAUAFABQAUAJkZAyMn
+tQAtABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFAB
+QBNH9wVa2LWw+mMKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgC
+B/vGoe5D3Od8Y2l9Nosd3pcTzahp9xHeQQo2DLtPzJ/wJSw/KhAjhpdI8W6RZO9it2L2Swgkllgi
+WR5J2mlklj3HlR8wGecccdaYya7TxvbpeS2lpfwGe4aQ/ZlhaVpPssQj3EjDJ5gcMfbsKANjSl8Z
+DxPBPqE1wbN7yWKa3Cp5KQ+QrK6nG7/W7gDmgNDObQPElrc+IdSsMwXd3qyxwSLFumFuZI9zgsxX
+Zt3HG3PFAEWpS+P4tW1WLTk1I2sVrLFbySeW/mSKE8uRTgct85I6evbAGhK8HxAs57z7JeXl2Q15
+Dbi6SLYVEatC5IA5LlgO3AGKA0KoHxIaxtfIuLtnn81XM0CI8Gza659dxDx59x6Zo0DQtwy/EA3e
+lyTLdgz+VK0SLF5UW6ZjLHMTyNsRULjuPWjQNCjdab46Eeh6or3tzqCw3P2zeIw8CM8Y2RDG3eUU
+kbs859qA0PV4zmJD83Kj7/3vx96Qh1IQUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUA
+FABQAUAFABQAUAFABQAUAFABQBNH9wVa2LWw+mMKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAjk
+nihGZZEQf7TAUAR/b7P/AJ+4P+/goAPt9n/z9wf9/BQAfb7P/n7g/wC/goAPt9n/AM/cH/fwUAOj
+u7aVtsdxE7eiuCaAJqACgAoAKACgCB/vGoe5D3G0hBTARmWNdzsFX1Y4FAyD7dZ/8/dv/wB/V/xo
+APt9n/z92/8A39X/ABoAPt1n/wA/dv8A9/V/xoAPt9n/AM/dv/39X/GgBRe2jHAuoCfQSr/jQBPQ
+AUAFIQUAFABQAUAFMA6DPYUAQG9tAcG7gB9DKv8AjQMT7fZ/8/dv/wB/V/xoAPt9n/z92/8A39X/
+ABoAPt9n/wA/dv8A9/V/xoAPt1n/AM/dv/39X/GgCdWV13KwZT3ByKQC0xBSAKACgAoAKACgAoAh
+e7to22vcwo3o0gBpjG/b7P8A5+7f/v6v+NAB9vs/+fu3/wC/q/40AH2+z/5+7f8A7+r/AI0AH2+z
+/wCfu3/7+r/jQBLHLHMMxSI49UYH+VAD6QBQIKACgAoAmj+4KtbFrYfTGFAEUlxBCcSzRof9pgKA
+Gfb7P/n7g/7+CgA+32f/AD9wf9/BQAfb7P8A5+4P+/goAPt9n/z9wf8AfwUAH2+z/wCfuD/v4KAJ
+kkSRdyMrL6qcigB1ABQAUAFABQAUAc9eanPeyvDZyGG1QlWnX70hHUJ6AdM9+3rW9OlzasynUtoi
+kthaqxY26O56vIN7H6sck11KKWyMXJsf9lt/+feL/vgU7IV2H2W3/wCfeL/vgUWQXYfZbf8A594v
+++BRZBdh9lt/+feL/vgUWQXYjWdq4w1tCR7xiiyC7HwS3OnENaO8kI+9bSOSCP8AYJ+6fbp9OtYz
+op6o0jUa3OjtLqK9to7iFt0bjIyMEeoI7EHjFcbVjoJqACgAoAgf7xqHuQ9xtIDH1XVpIpjZWW37
+QADJIwysIPTjux7D8T2B0hDmM6lRQ9TFa0ilfzLgG5l/56TnefwzwPoABW6ikccqkpbsd9lt/wDn
+3h/74FMm7D7Lb/8APvD/AN8CgLsPstv/AM+8P/fAoC7D7Lb/APPvD/3wKAuxDaWxGDbwkf8AXMUW
+C7HQpJZHdYSm3I/5ZjmNvYr0H1GDUSgmaRqyidFpmorqNuzFPKnjO2aInO0+x7g9Qf65rBqzOyMl
+JXRdqRhQAUAFABQBQ1TUhp8SBE825lJEUecA46knso7/AJdTVRi2xTkoq7Oelie8bffym5f+63Ea
+/wC6nT88n3roUEjjlVlIQWtsBgW8OP8ArmKozuxfstv/AM+8P/fAoC7D7Lb/APPvD/3wKAuw+y2/
+/PvD/wB8CgLsPstv/wA+8P8A37FAXY1LSOF/Mtd1rL/ftzs/MdD+INS4plRqSj1NzStVe4lNndhV
+ulXcjrwsy9yB2I7j3z9MJRsdlOopo1qk0CkIKACgAoAgvbyGwtHuZyQi9gMlieAoHck8U0rg3bU5
+m4lutRJa9crGelrGxCKPRiPvn68e1bxgkck6zfwka2dqgwttAB7RitLGN2L9lt/+feH/AL4FAXYf
+Zbf/AJ94f++BQF2H2W3/AOfeH/vgUBdh9lt/+feH/vgUBdjDY227esKxuOjxfIw+hXBpWTGpyWzN
+PT9Wmt547W9fzYpDtjuDwwbsr44OezfgfWsZ07ao6qdXm0e50FZmwUgCgAoAmj+4KtbFrYczBFLM
+QFAySTgAUxnNT6hcamSY5Ht7L+AIdryj+8T1UHsBz6ntXTTo9ZGM6nREC2VqnS2iz3JQEn8TXRyo
+yux32W3/AOfeL/vgU7IV2H2W3/594v8AvgUWQXYfZbf/AJ94v++BRZBdh9lt/wDn3i/74FFkF2H2
+W3/594v++BRZBdjPsUCtvhTyJO0kB2N+Y6/Q8VLhGW6KUmjV03VJfOSzvmDSvnypguBJjnBHZsc+
+h5+lclSm4ehvCfMbNZFhQAUAFAGfrc7waVL5TFJJCsSMOqliFyPpnP4VUFeSQpOyuY8aJFGscahU
+UAKB2Fehscg6mAUAFABQAUAFABQBY0STydRubb+CVROo9Gztb/2U/UmuOvGzub0npY3qwNQoAKAI
+H+8ah7kPcilkWGJ5X+6ilm+gGaAOQtN7W4ml/wBdOfOk/wB5ucfh0+grqirI8+cuaTZPTICgAoAK
+ACgAoAKAHWchttatJR0mJt5PcEFlP4EY/wCBGs6i0udFCWtjqa5zqCgAoAKACgDlLiX7Vqt5OeiO
+YI/ZU6/m279K6Ka0OSvK8rBWhgFABQAUAFABQAUAQXTtBELpOJLZhMp+nUfiuR+NTJXRdOXLJM7I
+EMAR0PIrmPQCkIKACgAoA53W5TNq0Nv/AMs7eLziPV2JUfkFb862pLqYYiVlYrVscgUAFABQAUAF
+ABQAyWJJ4nikGUcbTQNOzudBo1095pFvNKcy7Skh9WUlSfxIJrlas7HoJ3Vy9UjCgAoAmj+4KtbF
+rYyvEL7rSG0zxcyhX90ALMPxxj8a1pRvIU3ZFGu45QpgFABQAUAFABQAUAQ3cbyWz+Wdsq/PG3o4
+5B/OplHmVhxdnc6a0uBdWcFwowJY1cD6jNecdZNQAUAFAGT4h/487f8A6+Y/51pS+NET+FmfXecw
+UAFIDy1PGWtzWNhqNz4j0XSo9Td/sttJYvKyqHKjcwP05OBzWHPLe5ryrax039nePP8AoYdH/wDB
+c3/xdXafcm8SH7b4q0XW9Hh1a/02+tNQuTalYLVonjbYzBgdxz93pSvKLVw91p2OyrYgKAJNN/5D
+0f8A16yf+hR1zYjobUup0VcpsFABQBA/3jUPch7lLVf+QPff9e8n/oJoQjnIv9TH/uj+VdZ5rH0A
+FABQAUAFABQAUAMP/H1Y/wDX3F/6FUT+E1o/Gjrq5jtCgAoAKACgDj4fvXP/AF8zf+jGrqh8KOGt
+8bJaozCgAoAKACgAoAKAIL7/AJB91/1xf/0E0nsOO511v/x6w/8AXNf5VynpElIQUAFABQBzOpf8
+jBc/9cIf5vW9LY5cRuiKtTnCgAoAKACgAoAKACgDV8Of8gj/ALeJ/wD0Y1c0/iZ30/gRrVBYUAFA
+E0f3BVrYtbGNr3/H5p3+9J/6DW9D4iKuxVrtOcKACgAoAKACgAoAKACgDW0L/kAaf/17p/6CK817
+nWtjQpDCgAoAyfEP/Hnb/wDXzH/OtKXxoifwsz67zmCgDG8Ra2+jJpywwCe4vr2O0jjLY4bJZvwU
+E1E5WKirnmdguh3fhHw1bT6TdaxrCRyvHZ2kpRvJErMTIc42ZAwD1PSsNLLTU01uzpkv5/iPdLBY
+te2Hh62wbuYZhmnmx/qV7gL/ABH14q7uptsTbl9TOlu9TsfFHhjw1rJkuJ7bUvNtL8ji6g8qQZY9
+nUkA+uQaltpqLHo02j1CukyCgCTTf+Q9F/16yf8AoUdc2I2RrS6nRVym4UAFAED/AHjUPch7lLVf
++QPff9e0n/oJoW4jnIv9TH/uj+VdZ5rH0AFABQAUAFABQAUAMb/j6sf+vuL/ANCqJ/CzWj8aOurm
+O0KACgAoAKAOPh+9cf8AXzN/6MauqHwo4a3xslqjMKACgAoAMUAFABQBBff8g+6/64v/AOgmk9hr
+c663/wCPWH/rmv8AKuU9IkpCCgAoAKAOZ1L/AJGC5/64Q/zet6Wxy4jdEVanOFABQAUAFABQAUAF
+AGr4c/5BB/6+J/8A0Y1c0/iZ30/gRrVBYUAFAE0f3BVrYtbGNr3/AB+ad/vSf+g1vQ+IirsVDnBw
+MnsPWuw5zmE8bWkqWpjtpMzIjyB2A8ktN5QRsZ+bdu/75NR7QrkNC38U6PdBGhumZJHdEYxOA5RS
+zYJHIAU8+1NTQcrILzxhpVtbl0laSRrRruBDGyiZQm/AYjGdvOKTmg5WNh8Yadtzdb4czrbptR5A
+XZUYAkLgH5wMUc6DlY678ZaPaGZGkneWGaOGSJLd94LsVBAxyMg8j0+lPnQcrAeL9Kj3C6nEDCeS
+EDDNwjBSzYHyjJA54GetLnQcrLVl4j0rUNSk0+2ui9ym/KmNgDsba2CRg4JGcHvTU03YXK0rmrVi
+NbQv+QBp/wD17p/6CK817nWtjQpDCgAoAyfEP/Hnb/8AXzH/ADrSl8aIn8LM+u85goA5Dxat3beI
+tA1gabeahYWHnmWOzUPIkjqFVtuRkAbulZTvdMuOzRwnhaVdCnurPQvEuh2jzyliur2UsNyRnhW3
+EA49Bx3rGOj0ZpLXdHcx2nj9kDRax4cKNyClnJg578NWtp9zP3Sro9lrXiTUNP1PUdZ025stMu5G
+RbK0eNmmUNGQS5+6Mnp1pRTk7tjbSVju63MwoAqve3ljq9u9lpc2ou0EgaOKVEKjcnOXIFc2I2Rr
+S6lz/hINe/6E2/8A/Au2/wDjlcpuH/CQa9/0Jt//AOBdt/8AHKAE/wCEg17/AKE2/wD/AALtv/jl
+AETa/rm4/wDFHah/4F2//wAXUslnI6v438TL4pm0VfC872c1gXmTfGXtshh5hdWK7Tj7pweOKEgt
+odDF/qU/3R/Kuo8tnI/EK9vLO00dbOa+j+0aikUq2LBZZEKtlVzxnipkbUUm3cwLHxrrVp4c0VEx
+qF7qM1wYpJkaV0ijPCuseCX7H0pXdi3Ti5PyLl5481xIZGh0u0tpbTShqF3Des4bJYrtQD6Z59cU
+czEqUe/UnvfHl5aWOtzfZ7XfYJZNErE/OZgpbPPbJxinzCVJNr5jo/G2rXPiqextdI86wt737HIy
+xuWXjmQv90DPY845o5mDpRUb31My88ceIG8O6vI6WlhqdoYs27ROHiV5Nu7LZVx0wRx19qV2UqUe
+Zdj0ez+1fY4vtpgNzt/eGDOzP+znnFWc7tfQZezS24tpYLZ7qVLmIrCjKpc7ugLEAfiamfwmlH40
+af8Ab+uf9CdqH/gXb/8Axdcx3B/b+uf9CdqH/gXb/wDxdAB/b+uf9CdqH/gXb/8AxdAB/b+uf9Cd
+qH/gXb//ABdAHN+K/HHijRpNKNl4UuPMuLkxNaySRyNOu3OFMbEqR1yRj1p2HY0dPllntmlmt2t5
+XmlZ4XYMYyZGypI4OPauiHwo8+t8bIPEE0lt4b1SeF2jljtJXR1PKsEJBFN7EwV5I4bTPE+ryaj4
+TGoRXNlaPYzSzzSzq63W2ENvIXkY68+tTfY3cI2lYRPiRqS2uqyvaWkv2ewW+tnWOSNZFMgTBD8k
+c5BGKOYPYrQtXPjjWtPXUbW7srA38L2iwGN38oefnG/PPy45IxmnzMSpRdmjJt9S1Ua2iXl4xlHi
+cRSrbysY9vk5Krn+HPOKVy+VW0XQv6f8Q9ZvbO7v/wCx1FiLW4nhkEUgWNo87Vdzw2cfw4waOZkO
+lFaXOy8OXmp6jpEV7qcVrC9wqyxR27M22NlBAYn+Lk9OKpXMppJ2Rfvv+Qfdf9cX/wDQTQSty5Br
+2ti2iA8H35Gxeftdv6f79cp6RJ/b+uf9CdqH/gXb/wDxdAB/b+uf9CdqH/gXb/8AxdAB/b+uf9Cd
+qH/gXb//ABdAGR4o8XeIdL8NXt9B4ZubWWFAySzzQSIDuHBVX3HPTjnmmMg0fVtR1vN9qmkS6VdS
+W8W63kbJ6v8AMO4B9DzW1LY5MTujnviFqF5ZS6HHazaiiT3EgmTT2CyyKIycDPHbNVJkUUne5jW3
+jbXbXQdAgijj1LUb62luTMY2lyisQq4jx83QE9BS5nYv2UXJ9EjYHjDVhrul293p8WnWV7HDh7iN
+2LSsMtGGXhGB4AYc0+Z3J9nGztqZ+n/ETU2js7u/srJrW7gu3jS2dvNVoASdwPGDj8KXMN0Vsgb4
+g6vaadczXdnp7zHS01O2+zsxUIzhdj5789RRzMPYxb0LUni7xJCur2p0u0uNQshbyKttvZfLlBJO
+0nLFQOgxmnzMXs46O5UufiHqjLYRaVaW2oXE1m93I0MErK+HK7FX7ynjktwDS5ilRWtz0K0ma5s4
+J3iaJpY1cxt1QkZwfcVZzvRi6Vq+q2trJDbeGry8hW4m2zx3MKq/7xugZgfbkVzT+JnfT+BF7+39
+c/6E7UP/AALt/wD4upLD+39c/wChO1D/AMC7f/4ugA/t/XP+hO1D/wAC7f8A+LoAkHiDXREf+KPv
+1GOpu7bj/wAfqkUjkfCfizXfFUFrLrGjtbJE8iw3o+WO6GMZCnkfUZU9jW9D4iKvwnX12nOYI8Ia
+UrXzKsym9uo7uXD9HRt4C8cLuyce5qORFczKx8CaWRIftF8s0k5maZJQrZKFCOFxgqSDxk+tL2aH
+zsj/AOFe6KJfM33eRD5IBlHC+V5Xpn7v4Z5xS9nEXOyz/wAIbYLdQ3EV3fRPFP8AaFCSrjfsVMkF
+T/CuPxPrT9mg52V4PAWj263CwzXiySNG28SjfGUcyKRx1BJ5Oc0vZofOyafwRpVwXLyXYMjyNNtl
+x5qyMHZG4+7uUHjB96fs0LnZds/DljYXsV3CZvMia4ZQz5GZmDP29QMelNQSE5NmvViNbQv+QBp/
+/Xun/oIrzXuda2NCkMKACgDJ8Q/8edv/ANfMf860pfGiJ/CzPrvOYKACgCrfabY6nCYb+yt7qM/w
+zxBx+tS4p7gm0c4/w70eBzJo9xqOiyk5J0+6ZFP/AAA5X9Kj2S6aF876m9ouj2ug6Rb6ZZB/IgBA
+LnLMSSSxPckkmrjFRVkS3d3L9UIKAJNN/wCQ9F/16yf+hR1zYjZGtLqdFXKbhQAUAQP941D3Ie5R
+1Uf8Se/97aTP/fJoQjnYv9TH/uj+VdZ5rIrqwtb17d7mBJWtpRNCW/gcdGHvzQNNrYz5/Cug3MMk
+M2lW7RyTm4YYI/eHqw9Ce+KVkUqkl1Keu+CdH1nR2s1sraGdLZre1nMeTAD0xzyBQ4pjjVlF3J5P
+B+hXQge/0y1urmOBITM6csFAA/lRZC9pJbMsyeG9Gl1X+0302A32c+dtwScYyexOO9FkLnlaxFb+
+EvD9raXVrDpNssF0oWdNpO8DoDnsO1FkN1JN3uaVnZ2+n2cVpaQrDbxDaka9FFMltt3ZI3/H1Y/9
+fcX/AKFUT+FmlH40ddXMdoUAFABQAY5z3pgcfD964/6+Zv8A0Y1dMPhRw1vjYs8EV1byW86CSGVS
+joejKRgiqM07O5VOi6afsmbKEi0jaK3BGfLRl2lR7EcUrIrnl3KUPg7w5bwzQxaPapHNH5UihT86
+ZB2nnpkD8qLIftJdyzc6BpN59q+06fBL9qRI59658xU+6D9O1FkJTktmMtvDOiWYiFtplvEIphcI
+EXG2QDaG+uOKLIbqSfUYnhTQYprmaPSrZXuUdJiqkB1b7wx0Ge+KLIPaS7mrDDHbwRwQoEijUIij
+oqgYApkN3I77/kH3X/XF/wD0E0nsNbnXW/8Ax6w/9c1/lXKekSUhBQAUAGM0xnM6l/yMFz/1wh/m
+9bUtjkxG6KVxY2t1cW1xPAkktq5eB26xsRgkfhWpgm0rGdN4S8P3FstvLpNs0KytKq4I2u33iMHj
+PcDilZFe0l3HjwxoYv4b4aZb/aoVVYpMH5NowuB04HANFkHtJWtcz/C/gnTfDtrGTb28+oBXSS78
+vBdWYnGCT2OPfFCSQ51XL0LsHhLw/bW11bQ6Raxw3QAnRUwHAOQD7Z7dKLIXtJdyW88OaNfmdrrT
+4ZWn2eYTkFtmQnIPbJoshKckRT+E/D9za21tNpFq0NsCsK7cbAeoBHOD3oshqpJdTYRFjRURQqqA
+FA6ADtTINbw5/wAgg/8AXxP/AOjGrmn8TO+n8CNaoLCgAoAmj+4KtbFrYxtdGLvTgOmZP/Qa3ofE
+RV2KtdpzhQBh+MLK61DwteWllGZLiQxhVHceYpPccYzUTTcdCouzOTgsvF+nRWFla/aIYYp5vOaN
+A6FjKCuATnythOBnjnPQVlaa0KvFlyGfxbb3MsrwahcwR3+cYjVpISsg2qmeArFOc89fWneQe6UY
+9N8TFob25j1FZ2exa6NsyCSQKkgk9jglcjpStLcd1selVuZBTAKANbQv+QBp/wD17p/6CK817nWt
+jQpDCgAoAyfEP/Hnb/8AXzH/ADrSl8aIn8LM+u85jE13xB/YdzbCSDzLeSKWSRlb5xsA4VehzuHc
+VEpcrKUblB/HunRQXEk1peRNAD+7cIGfDsjBfm5IKN+XFT7RByMWTx9pUYkbyLtkUfKwRf3h3IuA
+M5BzIvXA60/aIfIya/8AFaWS2NwbVzaXNrJctn5ZVC7fl2Hv847joaHOwlG5CfHenJJ5clpeIy7h
+JlV/dsDIu0/NycxN0yOlHtEHIy1Z+K7bUNWgsLW2mcSBy0uVCptSNvXJ4kXpQp3dg5bI360JJNN/
+5D0X/XrJ/wChR1zYjZGtLqdFXKbhQAUAQP8AeNQ9yHuUtV/5A99/17Sf+gmhbiOci/1Mf+6P5V1n
+msfQAUAFABQAUAFABQAxv+Pqx/6+4v8A0Kon8LNaPxo66uY7QoAKACgAoA4+H71x/wBfM3/oxq6o
+fCjhrfGyWqMwoAKACgAoAKACgCC+/wCQfdf9cX/9BNJ7DW511v8A8esP/XNf5VynpElIQUAFABQB
+zOpf8jBc/wDXCH+b1vS2ObEboirU5goAKACgAoAKACgAoA1fDn/II/7eJ/8A0Y1c0/iZ30/gRrVB
+YUAFAE0f3BVrYtbGNr3/AB+ad/vSf+g1vQ+IirsVa7TnCgAoAKACgAoAKACgAoA1tC/5AGn/APXu
+n/oIrzXuda2NCkMKACgDK8Qr/wASsS9oZo5G/wB0MMn8iTV03aSJn8LM6vQOUrXGn2d5IklzaQTO
+gIVpIwxUHqBnpmk0mF2Ml0nTZgRLp9rICckNCpyclvT1JP1JpcqHdlOPwxpMeo3N6bZZJLiPynSQ
+AoE44C4x/COuelLkV7hzMuyaXp8vleZY2z+Unlx7olOxfQccD2p8qC7IV0LTF1R9R+xwm5ZNm4oC
+FGWJI44JLtk96OVXuHM7EsOk6bbeV5Gn2sXlMWj2QquxiMEjA4JHFFkK7LlUBLpKmTXHYdIbbB+r
+sMf+gVy4h7I2pI6GuY2CgAoAgf7xqHuQ9yvdwm5sriAdZYmQfiCKAOUtJPNs4X7lBkehxyPzrqWx
+5slZ2JqYgoAKACgAoAKACgBI0MupafEOSZw59goLZ/MD86ip8JtQXvnWVzHYFABQAUAFAHIhfKu7
+2E8MlzIfwY7x+jCumD904qytMfVmQUAFABQAUAFABQBXv/8AjwnUDLOhRR6s3AH5kUnsVBXkjsY0
+8uNE/uqF/KuU9EdSEFABQAUAc1qy+Xr7E9JrZCv/AAFmB/8AQl/Ot6XU5sQtmQ1qcwUAFABQAUAF
+ABQAUAbHh5CuiQMf+WrPMPo7lh+hFcstz0IK0UjTqSgoAKAJo/uCrWxa2MjX1Iewm/hWYo3tuUgf
+qAPxrai/fIqfCU67jnCgAoAKACgAoAKACgBk0qwQSSt91FLH8BSbsgN7S4GttJs4H+/HCit9QBmv
+Oe52FukAUAFADJYkmieKRQ0bqVZT3B6igDl2STT5xZ3THk4gmPSUdh/vDuO/Ue3bSqKSs9zmnCz0
+Ja2ICgAoAKACgAoAimm8sqio0sz8RxJ95z/Qe54FRKSirsai3sbulWBsbUiRg1xK3mTMOm70HsAA
+B9K4ZS5nc6oqysXqkYUAFAED/eNQ9yHuNoEcxqdodLuZJwp+wzMXZh0gc9c+ik857EnPUVrTn0Zz
+1qd/eRH1GR0NbHKFABQAUAFABQAyaaOCMySuFUcZPc+g9T7UDSbdkaui6fKkj390hSV12RRt1jTq
+c/7RIBPpgD1rnnK7O2lT5F5mzWZoFABQAUAFAGHrdhIJRqNtG0jBAk8SDLOo6MB3IyeO4PsK0hLl
+MqtPnWm5nRyJNGJI2DoehFdBxNW3HUAFABQAUAFACEhQSSABySe1AE+k2jahdRXjAiyhO+Injzn7
+MP8AZHUepweg5xqT6I66NNr3mdLWJ0BQIKACgAoAztY09r63R4SouoDviLHAPGCp9iPyOD2qoy5W
+TOPMrGDFMsu9cMkqHEkTjDIfQj+vQ9q6U7nDKLi7MkpkhQAUAFABQAUAMht21aZrSAnyQcXMw6KO
+6A92PT2HPpnOc7aG9Kk27vY61VVFCqAqqMADoBWB2C0hBQAUATR/cFWti1sRXtpHfWcltJkK46jq
+p6gj3Bwfwpp2dxtXOcVpYZvst2Al0o7cLIP7y+3t2rvp1FJHLKLRLWhIUAFABQAUAFABSASztjq1
+wmB/oMTBnk7SsDkKvqM8k9OMeuOetUXwo1pw6s6euU3CgAoAKACgCOeCK5iaKeNZI2GGVhkGgDMf
+w9Dn9xd3cC/3VcOB/wB9g1oqs11IdOLGf2A3/QTu/wDvmL/4in7eYvZxD+wG/wCgnd/98xf/ABFH
+t5h7KIf2A3/QTu/++Yv/AIij28w9lEP7Ab/oJ3f/AHzF/wDEUe3mHsoijw+D9/Urxh6Dy1/ULmj2
+0w9nEv2enWtgG+zxYZvvOxLO31Y8ms229y0kti1SGFABQAUAQP8AeNQ9yHuNpCAjIweQaYzJl8O2
+TNm3aa05yVgfC/8AfJBUfgBVKbRnKnGW6Iv+Ed/6il5/3zF/8RT9pIn2MA/4R3/qKXn/AHzF/wDE
+Ue0kHsIB/wAI7/1FLz/vmL/4ij2kg9hAP+Ed/wCopef98xf/ABFHtJB7CADw6O+p3h/4DEP/AGSj
+2kg9jAuWmjWVnKJlRpZx0lmYuw+meB+AFS5N7miio7F+kUFIQUAFABQAUAFMDOu9DsruZp9rwzt9
+6WB9hb69m/EGmpNbClFS3Kp8O+mp3n/fMX/xFV7SRn7GAf8ACO/9RS8/75i/+Io9pIPYQD/hHf8A
+qKXn/fMX/wARR7SQewgH/CO/9RS8/wC+Yv8A4ij2kg9hAP8AhHf+opef98xf/EUe0kHsIE0Ph6yR
+w85lumUgj7Q+VB9doAX9KTm2XGEY7I1aksKQgoAKACgAoAKYFS90yzvyrXEOZFGFlUlXX6MOfwpp
+tbA0nuUD4cX+DUr1R6Hy2/UpVe0kZexgJ/wjv/UUvP8AvmL/AOIo9pIPYQD/AIR3/qKXn/fMX/xF
+HtJB7CAf8I7/ANRS8/75i/8AiKPaSD2EA/4R3/qKXn/fMX/xFHtJB7CA9PDlsT/pFzd3C/3HkCqf
+qEAz+NJzkylSguhqxRRwRLFDGscaDCogwAPYVJY+kAUAFABQBNH9wVa2LWw+mMgurO3vYvKuIlkT
+ORnsfUHsfcUJ2Azm8Pxgnyr67jXsu5Xx+LKT+taqtNEOnEb/AGA3/QTu/wDvmL/4ij28xeyiH9gN
+/wBBO7/75i/+Io9vMPZRD+wG/wCgnd/98xf/ABFHt5h7KIf2A3/QTu/++Yv/AIij28w9lEP7Ab/o
+J3f/AHzF/wDEUe3mHs4ksfh+1BzcST3WP4ZX+X8VUAH8RUupJ7spQijUVQihVACgYAA6VBQtABQA
+UAFABQAUAFABQAUAFABQAUAFABQAUAFABQBA/wB41D3Ie42kIKACgAoAKACgAoAKACgAoAKACgAo
+AKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgCaP7gq1s
+Wth9MYUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFAED/eNQ9yHu
+NpCCgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgA
+oAKACgAoAKACgAoAKACgAoAmj+4KtbFrYfTGFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQA
+UAFABQAUAFABQAUAFABQBA/3jUPch7jaQgoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgA
+oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAJo/uCrWxa2H0xhQAUAFABQA
+UAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAJgelABtHoKADaPQUAG0egoANo
+9BQAbR6CgA2j0FABtHoKADaPQUAG0egoANo9BQAbR6CgA2j0FABtHoKADaPQUAG0egoANo9BQAbR
+6CgA2j0FABtHoKADaPQUAG0egoANo9BQAbR6CgA2j0FABtHoKADaPQUAG0egoANo9BQAbR6CgA2j
+0FABtHoKADaPQUAG0egoANo9BQAbR6CgA2j0FABtHoKADaPQUAG0egoANo9BQAbR6CgA2j0FAC0A
+FABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAU
+AFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQA
+UAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQ
+AUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFAB
+QAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFA
+BQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAF
+ABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUA
+FABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAU
+AFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQA
+UAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQ
+AUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFAB
+QAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFA
+BQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAF
+ABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUA
+FABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAU
+AFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAFABQAUAf/2Q==
+------=_Part_28_1675585811.1780722645341--

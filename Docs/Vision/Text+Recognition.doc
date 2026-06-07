@@ -1,0 +1,464 @@
+Date: Sat, 6 Jun 2026 05:11:35 +0000 (UTC)
+Message-ID: <471567471.57.1780722695476@bfabd7c34c51>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_56_964130712.1780722695476"
+
+------=_Part_56_964130712.1780722695476
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>Text Recognition</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font: var(--ds-font-body-small, Arial, Helvetica, FreeSans, sans-se=
+rif);
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: var(--ds-surface, #fff) !important;
+        color: var(--ds-text, #000) !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: var(--ds-text, #000);
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        page-break-after: avoid;
+    }
+
+    pre {
+        font: var(--ds-font-code, Monaco, "Courier New", monospace);
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>Text Recognition</h1>
+    <div class=3D"Section1">
+        <h2 id=3D"TextRecognition-Introduction">Introduction</h2>
+<p>Have you ever needed to scan a document or turn an image with text into =
+something you could edit on your computer? Maybe you=E2=80=99ve taken a pho=
+to of a piece of paper or used a printer with a scanner, but how does print=
+ed or handwritten text turn into an editable file? That=E2=80=99s where <st=
+rong>OCR</strong> and <strong>ICR</strong> technologies come in.</p>
+<p>These technologies help turn images with text, whether from printed docu=
+ments or even handwritten notes, into digital files that can be easily mani=
+pulated on a computer.</p>
+<p>For example, OCR can read and convert printed text, while ICR goes even =
+further by recognizing handwritten letters. This really helps in lots of ar=
+eas like accounting, document organization, reading forms filled out by han=
+d, and using that data in our apps.</p>
+<p>So let=E2=80=99s go into a more direct explanation of OCR:</p>
+<h3 id=3D"TextRecognition-1.What=E2=80=99sOCR?">1. What=E2=80=99s <strong>O=
+CR?</strong></h3>
+<ul>
+<li>
+<p><strong>OCR</strong> stands for <em>Optical Character Recognition</em>.<=
+/p></li>
+<li>
+<p>It=E2=80=99s a technology that converts <strong>text images</strong> (li=
+ke photos of documents or scans) into <strong>editable text</strong> on a c=
+omputer.</p></li>
+<li>
+<p><strong>Example:</strong> If you take a picture of a page from a book, O=
+CR can identify the words in the image and turn them into text you can copy=
+, paste, and edit on your computer.</p></li>
+</ul>
+<h3 id=3D"TextRecognition-2.HowdoesOCRwork?">2. How does <strong>OCR work?<=
+/strong></h3>
+<ul>
+<li>
+<p>OCR analyzes an image and <strong>recognizes the characters</strong> in =
+it by comparing the shapes of letters to a database of known fonts.</p></li=
+>
+<li>
+<p>Then, it turns the recognized shapes into digital characters that you ca=
+n manipulate like any regular text.</p></li>
+</ul>
+<h3 id=3D"TextRecognition-3.What=E2=80=99sOCRusedfor?">3. What=E2=80=99s <s=
+trong>OCR used for?</strong></h3>
+<ul>
+<li>
+<p><strong>Document scanning:</strong> Converting physical paper into digit=
+al files.</p></li>
+<li>
+<p><strong>License plate reading:</strong> Recognizing numbers on car plate=
+s.</p></li>
+<li>
+<p><strong>Form and invoice processing:</strong> Makes accounting and data =
+autofill easier.</p></li>
+</ul>
+<h3 id=3D"TextRecognition-4.AppleandOCR">4. Apple and OCR</h3>
+<p><strong>Text Recognition</strong> has been part of several technologies =
+developed by <strong>Apple</strong>, especially in products like the <stron=
+g>iPhone</strong>, <strong>iPad</strong>, and <strong>macOS</strong>. Here =
+are some examples of how Apple has built text recognition into their ecosys=
+tem:</p>
+<p><strong>Live Text</strong> Live Text was introduced in <strong>iOS 15</s=
+trong> and <strong>macOS Monterey</strong>. It lets users interact with tex=
+t inside images. Using OCR technology, <strong>Live Text</strong> recognize=
+s text in images and turns it into editable content.</p>
+<p>Users can, for example:</p>
+<ul>
+<li>
+<p><em>Copy:</em> Copy the text to paste into another app like Notes or Mes=
+sages.</p></li>
+<li>
+<p><em>Select All:</em> Select all the text in the frame.</p></li>
+<li>
+<p><em>Look Up:</em> See personalized web suggestions.</p></li>
+<li>
+<p><em>Translate:</em> Translate text.</p></li>
+<li>
+<p><em>Search the Web:</em> Search the selected text online.</p></li>
+<li>
+<p><em>Share:</em> Share the text using AirDrop, Messages, Mail, or other o=
+ptions.</p></li>
+</ul>
+<p><strong>Apple Notes and Photos</strong> In the <strong>Notes</strong> an=
+d <strong>Photos</strong> apps, Apple also uses OCR to detect text within i=
+mages. In the Photos app, if you take a picture of a handwritten list or a =
+poster, the text is recognized and becomes searchable.</p>
+<p><strong>Vision</strong> The <strong>Apple Vision Framework</strong>, int=
+roduced in <strong>iOS 11</strong>, offers developers a set of tools to bui=
+ld apps that involve image processing and text recognition. The framework i=
+ncludes <strong>OCR</strong>, making it easy for developers to integrate te=
+xt recognition features into their apps. This can be used to scan documents=
+, read text from signs, books, etc.</p>
+<h3 id=3D"TextRecognition-5.ImplementingLiveText">5. Implementing Live Text=
+</h3>
+<p>A quick example of how to use Live Text in our apps is by using VisionKi=
+t. With a few steps, we can capture text from images or recognize it throug=
+h the camera.</p>
+<p>To allow the app to use the camera, you=E2=80=99ll need to add a privacy=
+ setting in the app=E2=80=99s target by following these steps:</p>
+<ol start=3D"1">
+<li>
+<p>In Xcode, click on the application.</p></li>
+<li>
+<p>Next, click on the target and then go to Info.</p></li>
+<li>
+<p>Then, in the last option, add the field "Privacy - Camera Usage Descript=
+ion=E2=80=9D and next to it, write the message that=E2=80=99ll be shown whe=
+n asking for permission.</p></li>
+</ol>
+<p>To <strong>interact with text from an image</strong>, we need to impleme=
+nt an image analyzer that, through VisionKit, will extract the information =
+we need by recognizing the text from the image.</p>
+<p>In this example, we=E2=80=99re using a <code>UIViewRepresentable</code> =
+to display image on the main screen and let us select text using the analyz=
+er.</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: php; gutter: false; theme: Confluence" data-theme=3D"Confluence">struct L=
+iveTextUIImageView: UIViewRepresentable {
+    var image: UIImage
+    let analyzer =3D ImageAnalyzer()
+    let interaction =3D ImageAnalysisInteraction()
+    let imageView =3D ResizableImageView()
+    func makeUIView(context: Context) -&gt; UIImageView {
+        imageView.image =3D image
+        imageView.addInteraction(interaction)
+        imageView.contentMode =3D .scaleAspectFit
+        return imageView
+    }
+   =20
+    func updateUIView(_ uiView: UIImageView, context: Context) {
+        Task {
+            do {
+                let configuration =3D ImageAnalyzer.Configuration([.text])
+                if let image =3D imageView.image {
+                    let analysis =3D try await analyzer.analyze(image, conf=
+iguration: configuration)
+                    interaction.analysis =3D analysis
+                    interaction.preferredInteractionTypes =3D .textSelectio=
+n
+                }
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+    }
+}</pre>
+</div>
+</div>
+<p>Once the analyzer lets us select the text, we can send that text to the =
+pasteboard or use it for whatever purposes needed in our application.</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: php; gutter: false; theme: Confluence" data-theme=3D"Confluence">var body=
+: some View {
+      NavigationStack {
+          VStack {
+              LiveTextUIImageView(image: imageToScan)
+              Text("Select text and copy it")
+              Button("Dismiss") {
+                  if let string =3D pastboard.string {
+                      if !string.isEmpty {
+                          scannedText =3D string
+                      }
+                  }
+                  dismiss()
+              }
+              .buttonStyle(.borderedProminent)
+          }
+          .navigationTitle("Copy Text")
+          .navigationBarTitleDisplayMode(.inline)
+          .onAppear {
+              pastboard.string =3D ""
+          }
+      }
+  }</pre>
+</div>
+</div>
+<p>To <strong>interact with text from the camera</strong>, it=E2=80=99s nec=
+essary to implement a scanner that, through VisionKit, will extract the inf=
+ormation we need by recognizing the text that=E2=80=99s being shown live th=
+rough the camera.</p>
+<p>In this example, we=E2=80=99re using a <code>UIViewControllerRepresentab=
+le</code> to help manage the process of retrieving the information. It incl=
+udes a <code>Coordinator</code> to capture the information we want from the=
+ camera.</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: php; gutter: false; theme: Confluence" data-theme=3D"Confluence">struct D=
+ataScanner: UIViewControllerRepresentable {
+    @Binding var scannedText: String
+    @Binding var liveScan: Bool
+}
+</pre>
+</div>
+</div>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">
+<pre class=3D"syntaxhighlighter-pre" data-syntaxhighlighter-params=3D"brush=
+: php; gutter: false; theme: Confluence" data-theme=3D"Confluence">class Co=
+ordinator: NSObject, DataScannerViewControllerDelegate {
+    var parent: DataScanner
+    init(parent: DataScanner) {
+        self.parent =3D parent
+    }
+   =20
+    func dataScanner(_ dataScanner: DataScannerViewController, didTapOn ite=
+m: RecognizedItem) {
+        switch item {
+        case .text(let text):
+            parent.scannedText =3D text.transcript
+            parent.liveScan =3D false
+        default:
+            break
+        }
+    }
+}</pre>
+</div>
+</div>
+<p>For both methods, all you need to do is return the extracted information=
+ to the variables you want to use in your app and keep going.</p>
+<h2 id=3D"TextRecognition-Conclusion">Conclusion</h2>
+<p><strong>Text Recognition</strong> plays a big role in how we deal with s=
+canned documents and images. By turning visual content into editable and se=
+archable text, these technologies make it easier to organize, search, and w=
+ork with information. And when paired with smart code, they can speed up al=
+l kinds of data collection processes.</p>
+    </div>
+</body>
+</html>
+------=_Part_56_964130712.1780722695476--

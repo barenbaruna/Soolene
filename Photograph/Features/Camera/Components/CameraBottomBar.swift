@@ -1,0 +1,76 @@
+//
+//  CameraBottomBar.swift
+//  Photograph
+//
+//  Created by Baren Baruna Harahap on 05/06/26.
+//
+
+import SwiftUI
+
+/// Bottom bar of the camera HUD, containing gallery link, shutter button, and camera switcher.
+struct CameraBottomBar: View {
+    let viewModel: CameraViewModel
+    @Binding var isShowingGallery: Bool
+    let iconRotation: Double
+
+    var body: some View {
+        HStack(alignment: .center) {
+            // Gallery thumbnail
+            Button {
+                HapticManager.selection()
+                isShowingGallery = true
+            } label: {
+                Group {
+                    if let thumb = viewModel.lastSavedThumbnail {
+                        Image(uiImage: thumb)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .strokeBorder(.white.opacity(0.4), lineWidth: 1)
+                            )
+                    } else {
+                        Image(systemName: "photo.on.rectangle.angled")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .glassCircle()
+                    }
+                }
+                .rotationEffect(.degrees(iconRotation))
+            }
+            .accessibilityLabel("Gallery")
+
+            Spacer()
+
+            // Capture / Stop
+            if viewModel.isCountingDown {
+                Button(action: { viewModel.cancelCountdown() }) {
+                    ZStack {
+                        Circle()
+                            .strokeBorder(.white, lineWidth: 3)
+                            .frame(width: 76, height: 76)
+                        Image(systemName: "stop.fill")
+                            .font(.title)
+                            .foregroundStyle(.white)
+                    }
+                }
+            } else {
+                CaptureButton { viewModel.capturePhoto() }
+            }
+
+            Spacer()
+
+            // Flip camera
+            Button { viewModel.switchCamera() } label: {
+                Image(systemName: "camera.rotate.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                    .glassCircle()
+                    .rotationEffect(.degrees(iconRotation))
+            }
+            .accessibilityLabel("Switch Camera")
+        }
+    }
+}
