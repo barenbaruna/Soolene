@@ -64,10 +64,11 @@ struct CameraBottomBar: View {
 
             // Flip camera
             Button { viewModel.switchCamera() } label: {
-                Image(systemName: "camera.rotate.fill")
+                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
                     .font(.title3)
-                    .foregroundStyle(.white)
-                    .glassCircle()
+                    .foregroundStyle(AppColors.primary)
+                    .frame(width: 56, height: 56)
+                    .background(Color.black.opacity(0.41), in: Circle())
                     .rotationEffect(.degrees(iconRotation))
             }
             .accessibilityLabel("Switch Camera")

@@ -47,27 +47,18 @@ struct CameraControlsView: View {
                     .padding(.bottom, Spacing.large)
             }
 
-            // Lens Selector
-            if !viewModel.cameraManager.isUsingFrontCamera,
-               viewModel.cameraManager.availableLenses.count > 1,
+            // Lens Selector — dynamic based on device capabilities
+            if !viewModel.isFrontCamera,
                !viewModel.isCountingDown
             {
                 LensSelectorView(
-                    availableLenses: viewModel.cameraManager.availableLenses,
+                    availableLenses: LensType.availableOnDevice,
                     selectedLens: Binding(
-                        get: { viewModel.cameraManager.selectedLens },
-                        set: { viewModel.switchLens($0) }
+                        get: { LensType(rawValue: viewModel.selectedLens) ?? .wide },
+                        set: { viewModel.switchLens($0.rawValue) }
                     )
                 )
                 .padding(.bottom, Spacing.small)
-            }
-
-            // Focus Lock Status
-            if viewModel.isSubjectPinned {
-                PinnedSubjectBadge()
-                    .padding(.bottom, Spacing.small)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.isSubjectPinned)
             }
 
             // Composition Pill
@@ -119,7 +110,7 @@ struct CameraControlsView: View {
 
     private var compositionPill: some View {
         HStack(spacing: 6) {
-            Image(systemName: viewModel.resolvedComposition.symbolName)
+            Image(systemName: "camera.viewfinder")
                 .font(.caption)
             Text(viewModel.compositionLabel)
                 .textStyle(Typography.subheadline)

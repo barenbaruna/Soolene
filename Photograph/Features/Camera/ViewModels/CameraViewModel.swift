@@ -151,6 +151,11 @@ final class CameraViewModel {
         HapticManager.selection()
         cameraManager.switchLens(lens)
     }
+    
+    func switchLens(_ rawValue: String) {
+        guard let lens = LensType(rawValue: rawValue) else { return }
+        switchLens(lens)
+    }
 
     // MARK: - Tap-to-Guide
 
@@ -294,5 +299,21 @@ final class CameraViewModel {
         case .off: return "bolt.slash.fill"
         @unknown default: return "bolt.slash.fill"
         }
+    }
+
+    var isFrontCamera: Bool {
+        cameraManager.isUsingFrontCamera
+    }
+
+    var isFlashActive: Bool {
+        cameraManager.flashMode == .on
+    }
+
+    var exposureBias: Float {
+        cameraManager.exposureBias
+    }
+
+    var selectedLens: String {
+        cameraManager.selectedLens.rawValue
     }
 }

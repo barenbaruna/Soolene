@@ -10,6 +10,7 @@ import SwiftUI
 
 /// Main camera screen.
 struct CameraView: View {
+    @EnvironmentObject private var onboardingManager: OnboardingManager
     @State private var viewModel = CameraViewModel()
     @State private var isShowingGallery = false
     @State private var tapIndicatorPoint: CGPoint? = nil
@@ -92,6 +93,10 @@ struct CameraView: View {
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }
+
+            // MARK: Layer 8 — Walkthrough Overlay
+
+            WalkthroughOverlayView(context: .camera)
         }
         // Stop camera when gallery opens
         .onChange(of: isShowingGallery) { _, showing in
@@ -99,6 +104,12 @@ struct CameraView: View {
                 viewModel.pauseSession()
             } else {
                 viewModel.resumeSession()
+            }
+        }
+        // Dismiss gallery automatically if they finish walkthrough while inside it
+        .onChange(of: onboardingManager.hasCompletedWalkthrough) { _, completed in
+            if completed {
+                isShowingGallery = false
             }
         }
         // Gallery

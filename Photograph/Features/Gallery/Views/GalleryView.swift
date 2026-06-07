@@ -2,11 +2,15 @@
 //  GalleryView.swift
 //  Photograph
 //
-//  Gallery flow:
-//    1. Main screen  → Composition category cards (like Mid-Fi #7)
-//                      Each card shows a preview thumbnail from that category.
-//    2. Tap a card   → 3-column grid of photos in that composition (Mid-Fi #2)
-//    3. Tap a photo  → PhotoDetailView (full-screen)
+//  Gallery main screen — 2-column composition category cards.
+//  Presented as fullScreenCover from CameraView.
+//
+//  HIG §7.1: NavigationStack mandatory
+//  HIG §8.1: .toolbarTitleDisplayMode(.inline) + .toolbarRole(.editor) for leading title
+//  HIG §4.3: Nav bar auto-gets Liquid Glass — do NOT override toolbarBackground
+//  HIG §4.7: Button(role: .close) for dismiss
+//
+//  Uses Design System: Typography, Spacing, AppColors.
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
@@ -14,16 +18,12 @@
 import Photos
 import SwiftUI
 
-// MARK: - Gallery Main View
-
-/// Main gallery screen. Shows composition categories as cards.
 struct GalleryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var compositionCounts: [CompositionType: Int] = [:]
     @State private var previewAssets: [CompositionType: PHAsset] = [:]
     @State private var isLoading = true
 
-    /// 2-column grid for category cards
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.small),
         GridItem(.flexible(), spacing: Spacing.small)
@@ -36,19 +36,29 @@ struct GalleryView: View {
                     ProgressView("Loading…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if compositionCounts.values.reduce(0, +) == 0 {
-                    emptyState
+                    ContentUnavailableView(
+                        "No Photos Yet",
+                        systemImage: "camera.viewfinder",
+                        description: Text("Photos you take with Visula will appear here, organised by composition.")
+                    )
                 } else {
                     categoryGrid
                 }
             }
+            .background(Color(.systemBackground))
             .navigationTitle("Gallery")
-            .navigationBarTitleDisplayMode(.large)
+            .toolbarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .fontWeight(.semibold)
+                    }
+                    
                 }
             }
         }
+        .tint(AppColors.primary)
         .task { await loadData() }
     }
 
@@ -73,24 +83,10 @@ struct GalleryView: View {
                     }
                 }
             }
-            .padding(Spacing.standard)
+            .padding(.horizontal, Spacing.standard)
+            .padding(.top, Spacing.small)
         }
-    }
-
-    // MARK: - Empty State
-
-    private var emptyState: some View {
-        VStack(spacing: Spacing.standard) {
-            Image(systemName: "camera.viewfinder")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("No Photos Yet")
-                .textStyle(Typography.title)
-            Text("Photos you take with Photograph\nwill appear here, organised by composition.")
-                .textStyle(Typography.subheadline, color: .secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentMargins(.bottom, 30, for: .scrollContent)
     }
 
     // MARK: - Data Loading
@@ -98,18 +94,13 @@ struct GalleryView: View {
     private func loadData() async {
         let counts = await GalleryManager.shared.fetchCompositionCounts()
         var previews: [CompositionType: PHAsset] = [:]
-
-        // For each category, grab the newest photo to use as the card thumbnail
         for type in CompositionType.allCases {
             let identifiers = await GalleryManager.shared.fetchPhotoIdentifiers(for: type)
             if let firstID = identifiers.first {
                 let result = PHAsset.fetchAssets(withLocalIdentifiers: [firstID], options: nil)
-                if let asset = result.firstObject {
-                    previews[type] = asset
-                }
+                if let asset = result.firstObject { previews[type] = asset }
             }
         }
-
         await MainActor.run {
             compositionCounts = counts
             previewAssets = previews
