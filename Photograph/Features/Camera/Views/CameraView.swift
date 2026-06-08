@@ -288,6 +288,7 @@ private struct FocusBox: View {
 private struct ExposureRail: View {
     @Binding var value: Float
     let onReset: () -> Void
+    @State private var dragStartValue: Float? = nil
 
     var body: some View {
         ZStack {
@@ -309,7 +310,17 @@ private struct ExposureRail: View {
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { gesture in
-                    value = value(for: gesture.location.y)
+                    if dragStartValue == nil {
+                        dragStartValue = value
+                    }
+                    if let start = dragStartValue {
+                        // 100 points of drag = 1.0 exposure unit (less sensitive)
+                        let delta = Float(-gesture.translation.height / 100.0)
+                        value = min(max(start + delta, -2), 2)
+                    }
+                }
+                .onEnded { _ in
+                    dragStartValue = nil
                 }
         )
         .accessibilityElement(children: .combine)
@@ -330,12 +341,6 @@ private struct ExposureRail: View {
     private var knobOffset: CGFloat {
         let normalized = CGFloat((value + 2) / 4)
         return (0.5 - normalized) * ControlMetrics.exposureRailHeight
-    }
-
-    private func value(for locationY: CGFloat) -> Float {
-        let clampedY = min(max(locationY, 0), ControlMetrics.exposureRailHeight)
-        let normalized = 1 - (clampedY / ControlMetrics.exposureRailHeight)
-        return Float((normalized * 4) - 2)
     }
 
     private var formattedValue: String {
