@@ -45,7 +45,7 @@ struct GalleryView: View {
                     categoryGrid
                 }
             }
-            .background(Color(.systemBackground))
+            .background(AppColors.gallerySurface)
             .navigationTitle("Gallery")
             .toolbarTitleDisplayMode(.inline)
             .toolbar {
@@ -53,12 +53,17 @@ struct GalleryView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .fontWeight(.semibold)
+                            .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
+                            .background(.regularMaterial, in: Circle())
                     }
-                    
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Back")
                 }
             }
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .tint(AppColors.primary)
+        .preferredColorScheme(.dark)
         .task { await loadData() }
     }
 
@@ -83,9 +88,10 @@ struct GalleryView: View {
                     }
                 }
             }
-            .padding(.horizontal, Spacing.standard)
+            .padding(.horizontal, Spacing.medium)
             .padding(.top, Spacing.small)
         }
+        .background(AppColors.gallerySurface)
         .contentMargins(.bottom, 30, for: .scrollContent)
     }
 

@@ -23,7 +23,7 @@ struct CaptureButton: View {
                 // Outer ring (SystemGray2)
                 Circle()
                     .fill(Color(uiColor: .systemGray2))
-                    .frame(width: 76, height: 76)
+                    .frame(width: ControlMetrics.shutterOuter, height: ControlMetrics.shutterOuter)
 
                 // Inner filled circle with primary border
                 ZStack {
@@ -32,7 +32,7 @@ struct CaptureButton: View {
                     Circle()
                         .strokeBorder(AppColors.primary, lineWidth: 2)
                 }
-                .frame(width: Spacing.cornerRadiusXXLarge, height: Spacing.cornerRadiusXXLarge)
+                .frame(width: ControlMetrics.shutterInner, height: ControlMetrics.shutterInner)
                 .scaleEffect(isPressed ? 0.85 : 1.0)
                     .animation(.easeInOut(duration: 0.15), value: isPressed)
             }

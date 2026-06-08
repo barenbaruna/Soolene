@@ -19,48 +19,62 @@ import SwiftUI
 
 struct CameraSettingsSheet: View {
     @Bindable var viewModel: CameraViewModel
-
-    private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
+    @State private var isExposureExpanded = false
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: Spacing.medium) {
-            // Flash
-            settingItem(
-                icon: flashIcon,
-                label: "FLASH",
-                isActive: viewModel.isFlashActive,
-                action: { viewModel.cycleFlash() }
-            )
-            // Timer
-            settingItem(
-                icon: "timer",
-                label: timerLabel,
-                isActive: viewModel.timerLength > 0,
-                action: { viewModel.cycleTimer() }
-            )
-            // Exposure
-            settingItem(
-                icon: "plusminus",
-                label: exposureLabel,
-                isActive: viewModel.exposureBias != 0,
-                action: { viewModel.cycleExposure() }
-            )
-            // Aspect
-            VStack(spacing: Spacing.small) {
-                AspectRatioButton(selectedRatio: $viewModel.selectedAspectRatio)
-                    .frame(width: 56, height: 56)
-                    .background(Color(.tertiarySystemFill), in: Circle())
-                Text("ASPECT")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+        VStack(spacing: Spacing.medium) {
+            if isExposureExpanded {
+                ExposureControl(
+                    value: Binding(
+                        get: { viewModel.exposureBias },
+                        set: { viewModel.setExposure($0) }
+                    ),
+                    onReset: { 
+                        viewModel.resetExposure()
+                        withAnimation { isExposureExpanded = false }
+                    }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else {
+                HStack(spacing: Spacing.medium) {
+                    settingItem(
+                        icon: flashIcon,
+                        label: "FLASH",
+                        isActive: viewModel.isFlashActive,
+                        action: { viewModel.cycleFlash() }
+                    )
+
+                    settingItem(
+                        icon: "timer",
+                        label: timerLabel,
+                        isActive: viewModel.timerLength > 0,
+                        action: { viewModel.cycleTimer() }
+                    )
+
+                    settingItem(
+                        icon: "plus.forwardslash.minus",
+                        label: exposureLabel,
+                        isActive: viewModel.exposureBias != 0,
+                        action: { 
+                            withAnimation { isExposureExpanded = true } 
+                        }
+                    )
+
+                    VStack(spacing: Spacing.small) {
+                        AspectRatioButton(selectedRatio: $viewModel.selectedAspectRatio)
+                            .frame(width: ControlMetrics.settingsSheetIcon, height: ControlMetrics.settingsSheetIcon)
+                            .background(Color(.tertiarySystemFill), in: Circle())
+                        Text("ASPECT")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .padding(.horizontal, Spacing.large)
-        .padding(.vertical, Spacing.large)
+        .padding(.horizontal, Spacing.medium)
+        .padding(.vertical, Spacing.medium)
+        .presentationBackground(.regularMaterial)
     }
 
     // MARK: - Setting Item
@@ -77,10 +91,10 @@ struct CameraSettingsSheet: View {
         } label: {
             VStack(spacing: Spacing.small) {
                 Image(systemName: icon)
-                    .font(.system(size: 22))
-                    .foregroundStyle(isActive ? AppColors.primary : .primary)
-                    .frame(width: 56, height: 56)
-                    .background(Color(.tertiarySystemFill), in: Circle())
+                    .font(.title3)
+                    .foregroundStyle(isActive ? AppColors.primary : .white)
+                    .frame(width: ControlMetrics.settingsSheetIcon, height: ControlMetrics.settingsSheetIcon)
+                    .background(isActive ? AppColors.primary.opacity(0.15) : Color(.tertiarySystemFill), in: Circle())
                     .overlay(
                         Circle().strokeBorder(
                             isActive ? AppColors.primary.opacity(0.5) : .clear,
@@ -100,7 +114,12 @@ struct CameraSettingsSheet: View {
 
     private var flashIcon: String {
         if viewModel.isFrontCamera { return "bolt.slash.fill" }
-        return viewModel.isFlashActive ? "bolt.fill" : "bolt.slash.fill"
+        switch viewModel.flashMode {
+        case .on: return "bolt.fill"
+        case .auto: return "bolt.badge.automatic"
+        case .off: return "bolt.slash.fill"
+        @unknown default: return "bolt.slash.fill"
+        }
     }
 
     private var timerLabel: String {

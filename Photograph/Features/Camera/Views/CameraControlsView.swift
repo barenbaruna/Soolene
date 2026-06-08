@@ -23,62 +23,64 @@ struct CameraControlsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top Row: Guidance Tip + Settings
-            CameraTopRow(
-                viewModel: viewModel,
-                isCountingDown: viewModel.isCountingDown,
-                iconRotation: iconRotation,
-                onSettingsTapped: { isShowingSettingsSheet = true }
-            )
-            .padding(.top, Spacing.standard)
-            .padding(.horizontal, Spacing.standard)
-
-
+            // MARK: - Top Controls
+            VStack(spacing: 0) {
+                CameraTopRow(
+                    viewModel: viewModel,
+                    isCountingDown: viewModel.isCountingDown,
+                    iconRotation: iconRotation,
+                    onSettingsTapped: { isShowingSettingsSheet = true }
+                )
+                .padding(.top, Spacing.standard)
+                .padding(.horizontal, Spacing.standard)
+                .padding(.bottom, Spacing.medium)
+            }
+            .frame(maxWidth: .infinity)
 
             Spacer()
 
             // Countdown Overlay
             if viewModel.isCountingDown {
                 Text("\(viewModel.countdownValue)")
-                    .font(.system(size: 100, weight: .bold, design: .rounded))
+                    .font(.largeTitle.monospacedDigit().weight(.bold))
                     .foregroundStyle(.white)
                     .shadow(radius: 10)
                     .transition(.scale.combined(with: .opacity))
                     .padding(.bottom, Spacing.large)
             }
 
-            // Lens Selector — dynamic based on device capabilities
-            if !viewModel.isFrontCamera,
-               !viewModel.isCountingDown
-            {
-                LensSelectorView(
-                    availableLenses: LensType.availableOnDevice,
-                    selectedLens: Binding(
-                        get: { LensType(rawValue: viewModel.selectedLens) ?? .wide },
-                        set: { viewModel.switchLens($0.rawValue) }
+            // MARK: - Bottom Controls
+            VStack(spacing: 0) {
+                if !viewModel.isCountingDown {
+                    LensSelectorView(
+                        availableLenses: LensType.availableOnDevice,
+                        selectedLens: Binding(
+                            get: { LensType(rawValue: viewModel.selectedLens) ?? .wide },
+                            set: { viewModel.switchLens($0.rawValue) }
+                        ),
+                        iconRotation: iconRotation
                     )
+                    .padding(.top, Spacing.medium)
+                    .padding(.bottom, Spacing.small)
+
+                    compositionPill
+                }
+
+                CameraBottomBar(
+                    viewModel: viewModel,
+                    isShowingGallery: $isShowingGallery,
+                    iconRotation: iconRotation
                 )
-                .padding(.bottom, Spacing.small)
+                .padding(.horizontal, Spacing.medium)
+                .padding(.top, Spacing.standard)
+                .padding(.bottom, Spacing.large)
             }
-
-            // Composition Pill
-            if !viewModel.isCountingDown {
-                compositionPill
-            }
-
-            // Bottom Bar: Gallery / Shutter / Flip
-            CameraBottomBar(
-                viewModel: viewModel,
-                isShowingGallery: $isShowingGallery,
-                iconRotation: iconRotation
-            )
-            .padding(.horizontal, Spacing.medium)
-            .padding(.bottom, Spacing.medium)
+            .frame(maxWidth: .infinity)
         }
         // Settings Bottom Sheet
         .sheet(isPresented: $isShowingSettingsSheet) {
             CameraSettingsSheet(viewModel: viewModel)
-                .presentationDetents([.height(220)])
+                .presentationDetents([.height(ControlMetrics.settingsSheetHeight)])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(Spacing.cornerRadiusLarge)
         }

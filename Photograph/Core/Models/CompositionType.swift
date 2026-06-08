@@ -33,6 +33,22 @@ enum CompositionType: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// Camera HUD guidance shown while this composition is active.
+    var guidanceTip: String {
+        switch self {
+        case .ruleOfThirds:
+            return "Place key elements at the intersections"
+        case .center:
+            return "Place the subject inside the center guide"
+        case .horizontal:
+            return "Align elements along the horizontal lines"
+        case .vertical:
+            return "Align elements along the vertical lines"
+        case .diagonal:
+            return "Follow the diagonal lines for dynamic energy"
+        }
+    }
+
     /// Short description for onboarding or learning screens.
     var shortDescription: String {
         switch self {

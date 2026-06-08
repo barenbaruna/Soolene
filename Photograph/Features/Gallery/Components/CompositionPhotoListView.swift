@@ -43,9 +43,10 @@ struct CompositionPhotoListView: View {
                 photoGrid
             }
         }
-        .background(Color(.systemBackground))
+        .background(AppColors.gallerySurface)
         .navigationTitle(composition.rawValue)
         .toolbarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadPhotos() }
     }
 
@@ -65,9 +66,10 @@ struct CompositionPhotoListView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, Spacing.standard)
+            .padding(.horizontal, Spacing.medium)
             .padding(.top, Spacing.small)
         }
+        .background(AppColors.gallerySurface)
         .contentMargins(.bottom, 30, for: .scrollContent)
     }
 

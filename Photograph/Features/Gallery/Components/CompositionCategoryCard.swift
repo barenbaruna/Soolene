@@ -26,24 +26,23 @@ struct CompositionCategoryCard: View {
                         .fill(Color(.systemGray5))
                 }
             }
-            .clipped() // Prevents the image from bleeding outside the square
+            .clipped()
             .overlay(alignment: .bottom) {
-                // Gradient + label text constrained within the square bounds
                 ZStack(alignment: .bottom) {
                     LinearGradient(
                         colors: [.clear, .black.opacity(0.7)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
-                    .frame(height: 70) // Fixed height gradient so it doesn't cover the whole image
+                    .frame(height: ControlMetrics.galleryThumbnail + Spacing.standard)
 
-                        Text(composition.rawValue)
-                            .font(Typography.headline)
-                            .foregroundStyle(AppColors.primary)
-                            .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
-                    .padding(.bottom, Spacing.small)
+                    Text(composition.rawValue)
+                        .font(Typography.headline)
+                        .foregroundStyle(AppColors.primary)
+                        .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
+                        .padding(.bottom, Spacing.small)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
     }
 }

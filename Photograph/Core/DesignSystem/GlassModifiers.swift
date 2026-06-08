@@ -42,4 +42,16 @@ extension View {
             .frame(width: size, height: size)
             .background(.regularMaterial, in: Circle())
     }
+    
+    /// Full width liquid glass band for top/bottom camera controls
+    func liquidGlassBand() -> some View {
+        self
+            .background(.ultraThinMaterial)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(.white.opacity(0.15))
+                    .frame(height: 0.5)
+            }
+            // A subtle gradient or shadow could be added here for extra depth
+    }
 }

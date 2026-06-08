@@ -29,6 +29,8 @@ final class CameraViewModel {
     var timerLength: Int = 0 // 0, 3, 10
     var isCountingDown = false
     var countdownValue = 0
+    var isSwitchingCamera = false
+    var zoomFactor: CGFloat = 1
 
     // MARK: - Permissions
 
@@ -141,8 +143,13 @@ final class CameraViewModel {
     // MARK: - Camera Actions
 
     func switchCamera() {
+        guard !isSwitchingCamera else { return }
+
         HapticManager.selection()
-        cameraManager.switchCamera()
+        isSwitchingCamera = true
+        cameraManager.switchCamera { [weak self] in
+            self?.isSwitchingCamera = false
+        }
         // Immediately sync front-camera flag so Vision uses the correct orientation
         visionService.isFrontCamera = cameraManager.isUsingFrontCamera
     }
@@ -150,11 +157,29 @@ final class CameraViewModel {
     func switchLens(_ lens: LensType) {
         HapticManager.selection()
         cameraManager.switchLens(lens)
+        zoomFactor = lens.zoomFactor
     }
     
     func switchLens(_ rawValue: String) {
         guard let lens = LensType(rawValue: rawValue) else { return }
         switchLens(lens)
+    }
+
+    // MARK: - Preview Gestures
+
+    func focusAndExpose(at devicePoint: CGPoint) {
+        HapticManager.selection()
+        cameraManager.focusAndExpose(at: devicePoint)
+    }
+
+    func updateZoom(magnification: CGFloat, isFinal: Bool) {
+        let baseZoom = max(zoomFactor, 1)
+        let nextZoom = baseZoom * magnification
+        cameraManager.setZoomFactor(nextZoom)
+
+        if isFinal {
+            zoomFactor = min(max(nextZoom, 1), cameraManager.maximumZoomFactor)
+        }
     }
 
     // MARK: - Tap-to-Guide
@@ -191,6 +216,11 @@ final class CameraViewModel {
 
     func setExposure(_ bias: Float) {
         cameraManager.setExposureBias(bias)
+    }
+
+    func resetExposure() {
+        HapticManager.selection()
+        setExposure(0)
     }
 
     func cycleExposure() {
@@ -305,8 +335,12 @@ final class CameraViewModel {
         cameraManager.isUsingFrontCamera
     }
 
+    var flashMode: AVCaptureDevice.FlashMode {
+        cameraManager.flashMode
+    }
+
     var isFlashActive: Bool {
-        cameraManager.flashMode == .on
+        cameraManager.flashMode == .on || cameraManager.flashMode == .auto
     }
 
     var exposureBias: Float {

@@ -22,10 +22,11 @@ struct AspectRatioButton: View {
                     .font(.body)
                     .foregroundStyle(.white)
                 Text(selectedRatio.rawValue)
-                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .font(.caption2)
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
             }
-            .frame(width: 44, height: 44)
+            .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
             .aspectRatioButtonBackground()
         }
         .accessibilityLabel("Aspect Ratio: \(selectedRatio.rawValue)")

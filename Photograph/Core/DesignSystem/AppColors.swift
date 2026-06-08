@@ -15,6 +15,9 @@ enum AppColors {
     /// #2C2C2E — Screen / Base background
     static let screen = Color(hex: 0x2C2C2E)
 
+    /// Dark gallery surface used by camera-adjacent browsing flows.
+    static let gallerySurface = screen
+
     // MARK: - Text
 
     /// #FFFFFF — On-camera UI text, always white.

@@ -25,17 +25,17 @@ struct CameraBottomBar: View {
                         Image(uiImage: thumb)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 56, height: 56)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .frame(width: ControlMetrics.galleryThumbnail, height: ControlMetrics.galleryThumbnail)
+                            .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
+                                RoundedRectangle(cornerRadius: AppRadius.small)
                                     .strokeBorder(.white.opacity(0.4), lineWidth: 1)
                             )
                     } else {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.title3)
                             .foregroundStyle(.white)
-                            .glassCircle()
+                            .glassCircle(size: ControlMetrics.iconButton)
                     }
                 }
                 .rotationEffect(.degrees(iconRotation))
@@ -50,7 +50,7 @@ struct CameraBottomBar: View {
                     ZStack {
                         Circle()
                             .strokeBorder(.white, lineWidth: 3)
-                            .frame(width: 76, height: 76)
+                            .frame(width: ControlMetrics.shutterOuter, height: ControlMetrics.shutterOuter)
                         Image(systemName: "stop.fill")
                             .font(.title)
                             .foregroundStyle(.white)
@@ -64,13 +64,22 @@ struct CameraBottomBar: View {
 
             // Flip camera
             Button { viewModel.switchCamera() } label: {
-                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                    .font(.title3)
-                    .foregroundStyle(AppColors.primary)
-                    .frame(width: 56, height: 56)
-                    .background(Color.black.opacity(0.41), in: Circle())
-                    .rotationEffect(.degrees(iconRotation))
+                ZStack {
+                    Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                        .font(.title3)
+                        .opacity(viewModel.isSwitchingCamera ? 0 : 1)
+
+                    if viewModel.isSwitchingCamera {
+                        ProgressView()
+                            .tint(AppColors.primary)
+                    }
+                }
+                .foregroundStyle(AppColors.primary)
+                .frame(width: ControlMetrics.iconButton, height: ControlMetrics.iconButton)
+                .background(Color.black.opacity(0.41), in: Circle())
+                .rotationEffect(.degrees(iconRotation))
             }
+            .disabled(viewModel.isSwitchingCamera)
             .accessibilityLabel("Switch Camera")
         }
     }

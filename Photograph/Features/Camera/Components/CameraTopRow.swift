@@ -32,11 +32,16 @@ struct CameraTopRow: View {
                         HapticManager.selection()
                         onSettingsTapped()
                     } label: {
-                        Image(systemName: "circle.grid.2x3.fill")
-                            .font(.system(size: 14, weight: .semibold))
+                        Image(systemName: "circle.grid.3x3.fill")
+                            .font(.headline)
                             .foregroundStyle(.white)
                             .rotationEffect(.degrees(iconRotation))
-                            .glassCircle(size: 40)
+                            .frame(width: ControlMetrics.settingsButton, height: ControlMetrics.settingsButton)
+                            .background(.black.opacity(0.46), in: Circle())
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+                            )
                     }
                     .accessibilityLabel("Camera Settings")
                 }
@@ -44,32 +49,16 @@ struct CameraTopRow: View {
 
             // Guidance tip — fits text width, not full width
             if !isCountingDown {
-                Text(guidanceTip(for: viewModel.compositionLabel))
+                Text(viewModel.resolvedComposition.guidanceTip)
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Spacing.medium)
                     .padding(.vertical, Spacing.small + 2)
-                    .background(Color.black.opacity(0.65), in: Capsule())
-                    .animation(.spring(response: 0.5), value: viewModel.compositionLabel)
+                    .background(.regularMaterial, in: Capsule())
+                    .shadow(color: .black.opacity(0.16), radius: 8, x: 0, y: 4)
+                    .animation(.spring(response: 0.5), value: viewModel.resolvedComposition)
             }
-        }
-    }
-
-    private func guidanceTip(for label: String) -> String {
-        switch label {
-        case "Center":
-            return "Place the main object on one of circle"
-        case "Rule of Thirds":
-            return "Place key elements at the intersections"
-        case "Horizontal":
-            return "Align elements along the horizontal lines"
-        case "Vertical":
-            return "Align elements along the vertical lines"
-        case "Diagonal":
-            return "Follow the diagonal lines for dynamic energy"
-        default:
-            return "Follow the on-screen guides"
         }
     }
 }

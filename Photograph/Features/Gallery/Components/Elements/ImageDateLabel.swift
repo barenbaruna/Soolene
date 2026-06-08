@@ -19,7 +19,7 @@ struct ImageDateLabel: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, Spacing.medium)
+        .padding(.horizontal, Spacing.large)
         .padding(.vertical, Spacing.small)
         .background(.regularMaterial, in: Capsule())
     }

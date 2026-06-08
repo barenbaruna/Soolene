@@ -12,6 +12,7 @@ import SwiftUI
 struct LensSelectorView: View {
     let availableLenses: [LensType]
     @Binding var selectedLens: LensType
+    var iconRotation: Double = 0
 
     var body: some View {
         if self.availableLenses.count > 1 {
@@ -23,9 +24,12 @@ struct LensSelectorView: View {
                         }
                     } label: {
                         Text(lens.rawValue)
-                            .font(.system(size: 13, weight: self.selectedLens == lens ? .bold : .medium, design: .rounded))
+                            .font(.caption)
+                            .fontWeight(self.selectedLens == lens ? .bold : .medium)
+                            .monospacedDigit()
                             .foregroundStyle(self.selectedLens == lens ? AppColors.primary : .white)
-                            .frame(width: 40, height: 40)
+                            .rotationEffect(.degrees(iconRotation))
+                            .frame(width: ControlMetrics.settingsButton, height: ControlMetrics.settingsButton)
                     }
                     .lensChipBackground(isSelected: self.selectedLens == lens)
                     .accessibilityLabel("\(lens.rawValue) zoom")

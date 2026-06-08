@@ -28,7 +28,7 @@ struct PhotoDetailView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
+            AppColors.gallerySurface.ignoresSafeArea()
 
             // Photo + overlay
             if let fullImage {
@@ -53,7 +53,7 @@ struct PhotoDetailView: View {
                     }
                 }
             } else {
-                ProgressView().tint(.white)
+                ProgressView().tint(AppColors.primary)
             }
 
             // Bottom: delete bar — glass capsule
@@ -67,6 +67,7 @@ struct PhotoDetailView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             // Back
             ToolbarItem(placement: .topBarLeading) {
@@ -74,11 +75,11 @@ struct PhotoDetailView: View {
                     Image(systemName: "chevron.left")
                         .fontWeight(.semibold)
                         .foregroundStyle(AppColors.primary)
-                        .padding(8)
-//                        .background(.ultraThinMaterial, in: Circle())
-//                        .tint(AppColors.primary)
+                        .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
+                        .background(.regularMaterial, in: Circle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Back")
             }
             // Date pill — HIG §15.1 .regularMaterial
             ToolbarItem(placement: .principal) {
@@ -93,7 +94,7 @@ struct PhotoDetailView: View {
                     Image(systemName: "perspective")
                         .fontWeight(.medium)
                         .foregroundStyle(isShowingOverlay ? .black : AppColors.primary)
-                        .padding(8)
+                        .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
                         .background(
                             isShowingOverlay ? AnyShapeStyle(AppColors.primary) : AnyShapeStyle(.ultraThinMaterial),
                             in: Circle()
@@ -104,6 +105,7 @@ struct PhotoDetailView: View {
             }
         }
         .toolbarBackground(.hidden, for: .navigationBar)
+        .preferredColorScheme(.dark)
         .confirmationDialog(
             "Delete",
             isPresented: $isShowingDeleteConfirmation,
@@ -127,9 +129,9 @@ struct PhotoDetailView: View {
                 isShowingDeleteConfirmation = true
             } label: {
                 Image(systemName: "trash")
-                    .font(.system(size: 18))
+                    .font(.body)
                     .foregroundStyle(AppColors.primary)
-                    .padding(Spacing.standard)
+                    .frame(width: ControlMetrics.iconButton, height: ControlMetrics.iconButton)
                     .background(.regularMaterial, in: Circle())
             }
             .buttonStyle(.plain)

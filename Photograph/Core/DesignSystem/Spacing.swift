@@ -33,3 +33,22 @@ enum Spacing {
     /// 20pt — capsule/pill shape
     static let cornerRadiusCapsule: CGFloat   = 20
 }
+
+enum ControlMetrics {
+    static let iconButton: CGFloat = 56
+    static let compactIconButton: CGFloat = 44
+    static let settingsButton: CGFloat = 40
+    static let shutterOuter: CGFloat = 76
+    static let shutterInner: CGFloat = 62
+    static let galleryThumbnail: CGFloat = 56
+    static let cameraBottomBandHeight: CGFloat = 112
+    static let settingsSheetHeight: CGFloat = 240
+    static let settingsSheetIcon: CGFloat = 52
+    static let focusIndicator: CGFloat = 64
+    static let focusBox: CGFloat = 116
+    static let exposureRailWidth: CGFloat = 44
+    static let exposureRailHeight: CGFloat = 228
+    static let exposureControlHeight: CGFloat = 112
+    static let exposureControlWidth: CGFloat = 328
+    static let topScrimHeight: CGFloat = 128
+}

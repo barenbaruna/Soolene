@@ -11,11 +11,24 @@ import UIKit
 // MARK: - Capture & Settings
 
 extension CameraManager {
+    private var activeVideoDevice: AVCaptureDevice? {
+        session.inputs.compactMap { $0 as? AVCaptureDeviceInput }.first?.device
+    }
+
+    var currentZoomFactor: CGFloat {
+        activeVideoDevice?.videoZoomFactor ?? 1
+    }
+
+    var maximumZoomFactor: CGFloat {
+        guard let device = activeVideoDevice else { return 1 }
+        return min(device.maxAvailableVideoZoomFactor, 10)
+    }
+
     // MARK: - Exposure
 
     func setExposureBias(_ bias: Float) {
         sessionQueue.async { [weak self] in
-            guard let self, let device = self.session.inputs.compactMap({ $0 as? AVCaptureDeviceInput }).first?.device else { return }
+            guard let self, let device = self.activeVideoDevice else { return }
             do {
                 try device.lockForConfiguration()
 
@@ -34,9 +47,46 @@ extension CameraManager {
         }
     }
 
+    func setZoomFactor(_ factor: CGFloat) {
+        sessionQueue.async { [weak self] in
+            guard let self, let device = self.activeVideoDevice else { return }
+            do {
+                try device.lockForConfiguration()
+                let clampedFactor = min(max(factor, device.minAvailableVideoZoomFactor), min(device.maxAvailableVideoZoomFactor, 10))
+                device.videoZoomFactor = clampedFactor
+                device.unlockForConfiguration()
+            } catch {
+                // Ignore transient configuration failures.
+            }
+        }
+    }
+
+    func focusAndExpose(at devicePoint: CGPoint) {
+        sessionQueue.async { [weak self] in
+            guard let self, let device = self.activeVideoDevice else { return }
+            do {
+                try device.lockForConfiguration()
+
+                if device.isFocusPointOfInterestSupported {
+                    device.focusPointOfInterest = devicePoint
+                    device.focusMode = device.isFocusModeSupported(.continuousAutoFocus) ? .continuousAutoFocus : .autoFocus
+                }
+
+                if device.isExposurePointOfInterestSupported {
+                    device.exposurePointOfInterest = devicePoint
+                    device.exposureMode = device.isExposureModeSupported(.continuousAutoExposure) ? .continuousAutoExposure : .autoExpose
+                }
+
+                device.unlockForConfiguration()
+            } catch {
+                // Ignore transient configuration failures.
+            }
+        }
+    }
+
     // MARK: - Switch Camera
 
-    func switchCamera() {
+    func switchCamera(completion: (@MainActor () -> Void)? = nil) {
         let newValue = !isUsingFrontCamera
         DispatchQueue.main.async {
             self.isUsingFrontCamera = newValue
@@ -44,6 +94,11 @@ extension CameraManager {
         }
         sessionQueue.async { [weak self] in
             self?.configureSession(useFront: newValue, lens: .wide)
+            if let completion {
+                DispatchQueue.main.async {
+                    completion()
+                }
+            }
         }
     }
 
