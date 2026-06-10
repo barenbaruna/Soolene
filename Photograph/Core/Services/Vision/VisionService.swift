@@ -62,6 +62,15 @@ final class VisionService: @unchecked Sendable {
         currentAnalysis.sceneGeometry.lockedTargetPoint = nil
     }
 
+    // MARK: - ML Gating
+
+    /// When false, the slow-tier ML classification is skipped.
+    /// Set to false after the user selects a composition to prevent chaotic switching.
+    var isMLEnabled: Bool = true
+
+    /// Called on the main queue when a one-shot ML prediction completes.
+    var onMLSuggestionReady: (([CompositionPrediction]) -> Void)?
+
     // MARK: - Throttling
     
     private var frameCounter = 0
@@ -140,8 +149,8 @@ final class VisionService: @unchecked Sendable {
                 VisionRequestManager.runMediumRequests(handler: handler, geometry: &updated.sceneGeometry, isFrontCamera: isFrontCamera)
             }
             
-            // Slow tier (every 60 frames): ML classification
-            if counter % 60 == 0, let model = self.compositionModel {
+            // Slow tier (every 60 frames): ML classification — only when enabled
+            if counter % 60 == 0, let model = self.compositionModel, self.isMLEnabled {
                 VisionRequestManager.runSlowRequests(handler: handler, model: model, analysis: &updated)
             }
             

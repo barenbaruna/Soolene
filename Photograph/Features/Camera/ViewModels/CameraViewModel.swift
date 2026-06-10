@@ -19,6 +19,20 @@ final class CameraViewModel {
     var analysis = CompositionAnalysis()
     var selectedAspectRatio: AspectRatioMode = .free
 
+    // MARK: - Guidance Phase
+
+    /// The current phase of the composition guidance system.
+    /// Drives all UI state: overlays, picker visibility, tip text, animations.
+    var guidancePhase: GuidancePhase = .scanning
+
+    /// ML-suggested composition, shown as "★ Recommended" in the picker.
+    /// Set ONCE when the user locks a subject.
+    var mlSuggestion: CompositionType? = nil
+
+    /// The composition chosen by the user via the picker.
+    /// This is the authoritative source for grid overlay and guidance.
+    var userSelectedComposition: CompositionType? = nil
+
     // MARK: - Capture State
 
     var showShutterFlash = false
@@ -59,6 +73,38 @@ final class CameraViewModel {
         visionService.onAnalysisUpdated = { [weak self] result in
             guard let self else { return }
             self.analysis = result
+
+            // Tracking-lost detection: if subject was pinned but tracker cleared it
+            if self.isSubjectPinned,
+               self.guidancePhase.isLocked,
+               result.sceneGeometry.userPinnedSubject == nil {
+                // Vision lost the tracked subject — gracefully reset
+                HapticManager.notification(.warning)
+                self.isSubjectPinned = false
+                self.guidancePhase = .scanning
+                self.userSelectedComposition = nil
+                self.mlSuggestion = nil
+                self.visionService.isMLEnabled = true
+                return
+            }
+
+            // Auto-transition to perfect/guiding based on alignment
+            if case .guiding(let comp) = self.guidancePhase {
+                if result.isCompositionPerfect {
+                    self.guidancePhase = .perfect(composition: comp)
+                    HapticManager.notification(.success)
+                }
+            } else if case .perfect(let comp) = self.guidancePhase {
+                if !result.isCompositionPerfect {
+                    self.guidancePhase = .guiding(composition: comp)
+                }
+            }
+        }
+
+        // One-shot ML suggestion callback
+        visionService.onMLSuggestionReady = { [weak self] predictions in
+            guard let self else { return }
+            self.mlSuggestion = GuidanceEngine.suggestComposition(predictions: predictions)
         }
 
         let visionService = self.visionService
@@ -182,21 +228,59 @@ final class CameraViewModel {
         }
     }
 
-    // MARK: - Tap-to-Guide
+    // MARK: - Tap-to-Compose
 
-    /// Called when user taps on the camera preview to declare the subject.
-    /// `normalisedPoint` is in UIKit 0–1 coordinate space (tap.x / viewWidth, tap.y / viewHeight).
+    /// Called when user long-presses on the camera preview to declare the subject.
+    /// Transitions to `.subjectLocked` phase and triggers one-shot ML prediction.
     func pinSubject(at normalisedPoint: CGPoint) {
         HapticManager.selection()
         isSubjectPinned = true
         visionService.pinSubject(at: normalisedPoint)
+
+        // Transition to subjectLocked phase
+        guidancePhase = .subjectLocked(subjectPoint: normalisedPoint)
+        mlSuggestion = nil
+
+        // ML runs once to suggest a composition
+        // The onMLSuggestionReady callback will fire after the next slow-tier pass.
+        // For faster response, check if we already have predictions from a recent frame.
+        if !analysis.mlPredictions.isEmpty {
+            mlSuggestion = GuidanceEngine.suggestComposition(predictions: analysis.mlPredictions)
+        }
+        // Keep ML enabled briefly so the next slow-tier cycle fires the suggestion
+        visionService.isMLEnabled = true
     }
 
-    /// Clears the pinned subject (double-tap to reset), restoring Vision auto-detection.
+    /// User selects a composition from the picker.
+    /// Transitions to `.guiding` phase and disables ML to prevent interference.
+    func selectComposition(_ composition: CompositionType) {
+        HapticManager.selection()
+        userSelectedComposition = composition
+        guidancePhase = .guiding(composition: composition)
+
+        // Disable ML slow tier — the user has declared their intent
+        visionService.isMLEnabled = false
+
+        // Update analysis to use the user-selected composition for alignment calculation
+        analysis.detectedComposition = composition
+
+        // Reset locked target so AlignmentAnalyzer recalculates for the new composition
+        analysis.sceneGeometry.lockedTargetPoint = nil
+    }
+
+    /// Clears the pinned subject (double-tap to reset), restoring scanning mode.
     func clearPinnedSubject() {
         HapticManager.selection()
         isSubjectPinned = false
         visionService.clearPinnedSubject()
+
+        // Reset to scanning
+        guidancePhase = .scanning
+        userSelectedComposition = nil
+        mlSuggestion = nil
+
+        // Re-enable ML for the next subject lock
+        visionService.isMLEnabled = true
     }
 
     func cycleFlash() {
@@ -287,7 +371,7 @@ final class CameraViewModel {
         guard let data = cameraManager.capturedPhotoData else { return }
 
         do {
-            try await GalleryManager.shared.savePhoto(data, composition: analysis.detectedComposition)
+            try await GalleryManager.shared.savePhoto(data, composition: resolvedComposition)
 
             // Generate thumbnail for the gallery button
             if let image = UIImage(data: data) {
@@ -305,18 +389,28 @@ final class CameraViewModel {
 
     // MARK: - Resolved Composition
 
-    /// Returns the currently detected composition type.
+    /// Returns the currently active composition type.
+    /// Priority: user-selected > ML-detected > default.
     var resolvedComposition: CompositionType {
-        analysis.detectedComposition
+        userSelectedComposition ?? analysis.detectedComposition
     }
 
-    var activeTechnique: CompositionTechnique? {
-        analysis.activeTechnique
-    }
-
-    /// Label for the top badge (e.g., "Rule of Thirds").
-    var compositionLabel: String {
-        analysis.detectedComposition.rawValue
+    /// The guidance tip text for the current phase.
+    var guidanceTip: String {
+        switch guidancePhase {
+        case .scanning:
+            return "Long-press your subject"
+        case .subjectLocked:
+            return "Choose a composition"
+        case .guiding(let comp):
+            let technique = GuidanceEngine.techniqueForUserSelection(
+                composition: comp,
+                geometry: analysis.sceneGeometry
+            )
+            return technique.tip
+        case .perfect:
+            return "Perfect. Capture now."
+        }
     }
 
     // MARK: - Computed UI Properties

@@ -4,16 +4,29 @@
 //
 //  Dual-Anchor guidance overlay rendered on top of the camera preview.
 //
-//  Visual design (Apple HIG Alignment):
-//  - Subject Anchor: A corner bracket [ ] (familiar standard for focus/AE lock).
-//  - Target Socket: A pulsing circle (standard for destinations).
-//  - Connector: A solid line with a drop shadow to ensure visibility across
-//    all light/dark backgrounds.
+//  Visual design — Three proximity states:
 //
-//  States:
-//    Far       — guidanceDistance > 0.12. Both anchors + connector visible.
-//    Close     — guidanceDistance 0.06–0.12. Connector hidden, socket turns gold.
-//    Perfect   — guidanceDistance < 0.06. Both anchors turn green, socket glows.
+//  ┌─────────────────────────────────────────────────────────┐
+//  │ FAR (distance > 0.12)                                   │
+//  │   Subject Bracket [ ]  ─ ─ ─ ─ ─ ➤ ─ ─ ─  ○ Target    │
+//  │        white            dashed connector     white      │
+//  │   Directional arrow at connector midpoint               │
+//  ├─────────────────────────────────────────────────────────┤
+//  │ CLOSE (distance 0.06–0.12)                              │
+//  │   Subject Bracket [ ]              ◉ Target             │
+//  │        golden             connector fades     golden    │
+//  │   Golden glow halo behind target socket                 │
+//  ├─────────────────────────────────────────────────────────┤
+//  │ PERFECT (distance < 0.06)                               │
+//  │               ✓  merged green checkmark                 │
+//  │          green glow ring expanding outward               │
+//  └─────────────────────────────────────────────────────────┘
+//
+//  Spring parameters:
+//  - Subject bracket: stiffness 180, damping 18 (momentum-preserving)
+//  - Target socket:   stiffness 120, damping 14 (slightly softer, "magnetic")
+//  - Color:           .easeInOut(0.35) (smooth, no bounce)
+//  - Size:            spring(0.25, 0.65) (quick with subtle overshoot)
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
@@ -32,12 +45,50 @@ struct CompositionDirectionOverlay: View {
     let alignmentScore: Float
     let guidanceDistance: CGFloat
 
+    // MARK: - Proximity State
+
+    private enum ProximityState {
+        case far, close, perfect
+    }
+
+    private var proximity: ProximityState {
+        if isPerfect || guidanceDistance < 0.06 { return .perfect }
+        if guidanceDistance < 0.12 { return .close }
+        return .far
+    }
+
     // MARK: - Anchor Colours
 
     private var anchorColor: Color {
-        if isPerfect { return AppColors.gridlineGreen }
-        if guidanceDistance < 0.12 { return AppColors.primary }
-        return Color.white.opacity(0.85)
+        switch proximity {
+        case .perfect: return AppColors.gridlineGreen
+        case .close:   return AppColors.primary
+        case .far:     return Color.white.opacity(0.85)
+        }
+    }
+
+    private var bracketLineWidth: CGFloat {
+        switch proximity {
+        case .perfect: return 2.5
+        case .close:   return 2.0
+        case .far:     return 1.5
+        }
+    }
+
+    private var socketSize: CGFloat {
+        switch proximity {
+        case .perfect: return ControlMetrics.dualAnchorSocketClose
+        case .close:   return ControlMetrics.dualAnchorSocketClose
+        case .far:     return ControlMetrics.dualAnchorSocketFar
+        }
+    }
+
+    private var dotSize: CGFloat {
+        switch proximity {
+        case .perfect: return 12
+        case .close:   return 10
+        case .far:     return 6
+        }
     }
 
     // MARK: - Body
@@ -55,33 +106,90 @@ struct CompositionDirectionOverlay: View {
                     let targetPx  = toPixel(targetNorm,  width: w, height: h)
 
                     ZStack {
-                        // Connector line — visible only when far from target.
-                        // Solid line with shadow for high contrast.
-                        if !isPerfect && guidanceDistance > 0.12 {
-                            ConnectorLine(from: subjectPx, to: targetPx, color: anchorColor)
-                                .allowsHitTesting(false)
+                        // --- Layer 1: Connector Line ---
+                        if proximity == .far {
+                            DashedConnectorLine(
+                                from: subjectPx,
+                                to: targetPx,
+                                color: anchorColor
+                            )
+                            .transition(.opacity)
+
+                            // Directional arrow at midpoint
+                            DirectionArrow(from: subjectPx, to: targetPx, color: anchorColor)
                         }
 
-                        // Target socket (Circle) — marks the destination.
-                        let socketSize: CGFloat = guidanceDistance < 0.12 ? 72 : 60
-                        TargetSocket(color: anchorColor, isPerfect: isPerfect)
-                            .frame(width: socketSize, height: socketSize)
-                            .position(targetPx)
-                            .allowsHitTesting(false)
+                        // --- Layer 2: Glow Halo (close + perfect) ---
+                        if proximity == .close {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [AppColors.lockGlow, .clear],
+                                        center: .center,
+                                        startRadius: 0,
+                                        endRadius: socketSize
+                                    )
+                                )
+                                .frame(width: socketSize * 2, height: socketSize * 2)
+                                .position(targetPx)
+                                .transition(.opacity)
+                        }
 
-                        // Subject anchor (Bracket) — marks the current object.
-                        SubjectReticle(color: anchorColor, isPerfect: isPerfect)
-                            .frame(width: 44, height: 44)
+                        if proximity == .perfect {
+                            // Green celebration burst
+                            PerfectBurstRing()
+                                .position(targetPx)
+
+                            // Green glow halo
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [AppColors.perfectGlow, .clear],
+                                        center: .center,
+                                        startRadius: 0,
+                                        endRadius: socketSize * 1.2
+                                    )
+                                )
+                                .frame(width: socketSize * 2.5, height: socketSize * 2.5)
+                                .position(targetPx)
+                        }
+
+                        // --- Layer 3: Target Socket ---
+                        EnhancedTargetSocket(
+                            color: anchorColor,
+                            isPerfect: proximity == .perfect,
+                            dotSize: dotSize
+                        )
+                        .frame(width: socketSize, height: socketSize)
+                        .position(targetPx)
+                        .allowsHitTesting(false)
+
+                        // --- Layer 4: Subject Bracket ---
+                        if proximity == .perfect {
+                            // Perfect state: show checkmark instead of bracket
+                            PerfectCheckmark(color: anchorColor)
+                                .frame(width: ControlMetrics.dualAnchorBracketSize,
+                                       height: ControlMetrics.dualAnchorBracketSize)
+                                .position(subjectPx)
+                                .transition(.scale(scale: 0.5).combined(with: .opacity))
+                        } else {
+                            SubjectReticle(
+                                color: anchorColor,
+                                isPerfect: false,
+                                lineWidth: bracketLineWidth
+                            )
+                            .frame(width: ControlMetrics.dualAnchorBracketSize,
+                                   height: ControlMetrics.dualAnchorBracketSize)
                             .position(subjectPx)
                             .allowsHitTesting(false)
+                        }
                     }
-                    // Physics-based fluid tracking (HCI best practice).
-                    // .interpolatingSpring preserves velocity momentum across frequent 60fps updates,
-                    // preventing the stuttering caused by standard .spring() which resets every frame.
-                    .animation(.interpolatingSpring(stiffness: 150, damping: 15), value: targetPx)
-                    .animation(.interpolatingSpring(stiffness: 150, damping: 15), value: subjectPx)
-                    .animation(.easeInOut(duration: 0.3), value: isPerfect)
-                    .animation(.easeInOut(duration: 0.3), value: guidanceDistance < 0.12)
+                    // Differentiated spring parameters for subject vs target
+                    .animation(.interpolatingSpring(stiffness: 180, damping: 18), value: subjectPx)
+                    .animation(.interpolatingSpring(stiffness: 120, damping: 14), value: targetPx)
+                    .animation(.easeInOut(duration: 0.35), value: anchorColor)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.65), value: socketSize)
+                    .animation(.easeInOut(duration: 0.3), value: proximity == .perfect)
                 }
             }
             .allowsHitTesting(false)
@@ -95,23 +203,16 @@ struct CompositionDirectionOverlay: View {
 
 // MARK: - SubjectReticle
 
-/// A corner bracket [ ] that marks the current subject position,
-/// mimicking the native iOS camera focus lock indicator.
+/// Corner bracket [ ] marking the current subject position.
 private struct SubjectReticle: View {
     let color: Color
     let isPerfect: Bool
+    var lineWidth: CGFloat = 1.5
 
     var body: some View {
-        ZStack {
-            if isPerfect {
-                Color.clear // Removing fill to keep the bracket clean
-            }
-            
-            // Corner brackets using a custom shape
-            BracketShape()
-                .stroke(color, style: StrokeStyle(lineWidth: isPerfect ? 2.5 : 1.5, lineCap: .square, lineJoin: .miter))
-                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
-        }
+        BracketShape()
+            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .square, lineJoin: .miter))
+            .shadow(color: .black.opacity(0.35), radius: 1.5, x: 0, y: 1)
     }
 }
 
@@ -119,7 +220,7 @@ private struct SubjectReticle: View {
 private struct BracketShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let length: CGFloat = rect.width * 0.25 // Length of each corner arm
+        let length: CGFloat = rect.width * 0.25
 
         // Top Left
         path.move(to: CGPoint(x: rect.minX, y: rect.minY + length))
@@ -145,48 +246,106 @@ private struct BracketShape: Shape {
     }
 }
 
-// MARK: - TargetSocket
+// MARK: - EnhancedTargetSocket
 
-/// A pulsing ring at the ideal composition position.
-private struct TargetSocket: View {
+/// Pulsing ring at the ideal composition position with proximity-aware visuals.
+private struct EnhancedTargetSocket: View {
     let color: Color
     let isPerfect: Bool
+    let dotSize: CGFloat
 
     @State private var isPulsing = false
 
     var body: some View {
         ZStack {
-            // Outer pulse ring
-            if isPerfect {
-                Circle()
-                    .strokeBorder(color.opacity(isPulsing ? 0 : 0.5), lineWidth: 2)
-                    .scaleEffect(isPulsing ? 1.4 : 1.0)
-                    .animation(
-                        .easeOut(duration: 0.8).repeatForever(autoreverses: false),
-                        value: isPulsing
-                    )
-                    .onAppear { isPulsing = true }
-                    .onDisappear { isPulsing = false }
-            }
+            // Outer pulse ring — continuous for perfect state
+            Circle()
+                .strokeBorder(color.opacity(isPulsing ? 0 : 0.5), lineWidth: 2)
+                .scaleEffect(isPulsing ? 1.5 : 1.0)
+                .animation(
+                    .easeOut(duration: 1.0).repeatForever(autoreverses: false),
+                    value: isPulsing
+                )
 
             // Inner socket ring
             Circle()
                 .strokeBorder(color, lineWidth: isPerfect ? 2.5 : 1.5)
-                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                .shadow(color: .black.opacity(0.35), radius: 1.5, x: 0, y: 1)
 
-            // Centre dot
+            // Centre dot — grows on close/perfect
             Circle()
                 .fill(color)
-                .frame(width: 6, height: 6)
+                .frame(width: dotSize, height: dotSize)
                 .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: dotSize)
+        }
+        .onAppear { isPulsing = true }
+    }
+}
+
+// MARK: - PerfectCheckmark
+
+/// Green checkmark shown when composition is perfectly aligned.
+/// Replaces the subject bracket with a satisfying morph.
+private struct PerfectCheckmark: View {
+    let color: Color
+    @State private var checkScale: CGFloat = 0.3
+
+    var body: some View {
+        ZStack {
+            // Soft glow background
+            Circle()
+                .fill(color.opacity(0.2))
+                .scaleEffect(1.3)
+                .blur(radius: 6)
+
+            // Checkmark circle
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(color)
+                .scaleEffect(checkScale)
+                .shadow(color: color.opacity(0.5), radius: 6)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.55)) {
+                checkScale = 1.0
+            }
         }
     }
 }
 
-// MARK: - ConnectorLine
+// MARK: - PerfectBurstRing
 
-/// A solid line between the subject reticle and the target socket.
-private struct ConnectorLine: View {
+/// Expanding ring that bursts outward when perfect alignment is achieved.
+private struct PerfectBurstRing: View {
+    @State private var burst = false
+
+    var body: some View {
+        ZStack {
+            // Primary burst
+            Circle()
+                .strokeBorder(AppColors.gridlineGreen.opacity(burst ? 0 : 0.6), lineWidth: 2)
+                .frame(width: 80, height: 80)
+                .scaleEffect(burst ? 2.2 : 0.8)
+
+            // Secondary burst (delayed)
+            Circle()
+                .strokeBorder(AppColors.gridlineGreen.opacity(burst ? 0 : 0.3), lineWidth: 1.5)
+                .frame(width: 60, height: 60)
+                .scaleEffect(burst ? 1.8 : 0.6)
+        }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.7)) {
+                burst = true
+            }
+        }
+    }
+}
+
+// MARK: - DashedConnectorLine
+
+/// A dashed line with shadow between subject and target, shown when far.
+private struct DashedConnectorLine: View {
     let from: CGPoint
     let to: CGPoint
     let color: Color
@@ -197,18 +356,40 @@ private struct ConnectorLine: View {
             path.move(to: from)
             path.addLine(to: to)
 
-            // Shadow for contrast
+            // Shadow for contrast on any background
             context.stroke(
                 path,
-                with: .color(.black.opacity(0.3)),
-                style: StrokeStyle(lineWidth: 2.5)
+                with: .color(.black.opacity(0.25)),
+                style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
             )
-            // Main line
+            // Dashed main line
             context.stroke(
                 path,
-                with: .color(color.opacity(0.6)),
-                style: StrokeStyle(lineWidth: 1.5)
+                with: .color(color.opacity(0.4)),
+                style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: [6, 4])
             )
         }
+    }
+}
+
+// MARK: - DirectionArrow
+
+/// A small chevron arrow at the midpoint of the connector, pointing toward the target.
+private struct DirectionArrow: View {
+    let from: CGPoint
+    let to: CGPoint
+    let color: Color
+
+    var body: some View {
+        let midX = (from.x + to.x) / 2
+        let midY = (from.y + to.y) / 2
+        let angle = atan2(to.y - from.y, to.x - from.x)
+
+        Image(systemName: "chevron.forward")
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(color.opacity(0.6))
+            .rotationEffect(.radians(angle))
+            .position(x: midX, y: midY)
+            .shadow(color: .black.opacity(0.3), radius: 1)
     }
 }

@@ -33,6 +33,20 @@ enum AppColors {
     
     /// White at 60% — fallback when Vision has no data.
     static let gridlineWhite = Color.white.opacity(0.6)
+
+    // MARK: - Phase Animation
+
+    /// Golden glow behind subject bracket when locked.
+    static let lockGlow = primary.opacity(0.3)
+
+    /// Green glow behind merged checkmark on perfect alignment.
+    static let perfectGlow = gridlineGreen.opacity(0.25)
+
+    /// Subtle hint circles during scanning phase.
+    static let scanningHint = Color.white.opacity(0.15)
+
+    /// Selected composition pill tint.
+    static let pickerSelected = primary.opacity(0.85)
 }
 
 // MARK: - Hex Init

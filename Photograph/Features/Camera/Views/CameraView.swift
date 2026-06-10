@@ -19,6 +19,11 @@ struct CameraView: View {
     @State private var focusedPoint: CGPoint?
     @State private var isShowingFocusExposure = false
 
+    // Lock animation state
+    @State private var lockRingPoint: CGPoint? = nil
+    @State private var lockRingAnimating = false
+    @State private var showLockIcon = false
+
     var body: some View {
         ZStack {
             // MARK: Layer 1 — Camera Preview
@@ -55,24 +60,47 @@ struct CameraView: View {
             )
             .ignoresSafeArea()
             .allowsHitTesting(false)
+            // Ghost grid during scanning (15% opacity), full during guidance
+            .opacity(viewModel.guidancePhase.isActive ? 1.0 : 0.15)
+            .animation(.easeInOut(duration: 0.5), value: viewModel.guidancePhase.isActive)
+
+            // MARK: Layer 2.5 — Scanning Phase Hints
+
+            if !viewModel.guidancePhase.isActive {
+                ScanningHintOverlay(
+                    saliencyCentroid: viewModel.analysis.sceneGeometry.saliencyCentroid,
+                    faceDetected: !viewModel.analysis.sceneGeometry.faceRects.isEmpty
+                )
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.4), value: viewModel.guidancePhase.isActive)
+            }
 
             // MARK: Layer 3 — Animated Dual-Anchor Guidance Overlay (SwiftUI)
 
-            // Drawn in SwiftUI so it can use spring animations and Canvas.
-            // Suppressed until the ML model produces its first prediction (hasMLData).
-            // Shows: subject anchor, target socket, faint connector line.
+            // Only shown when guidance phase is active (user has selected a composition).
+            if viewModel.guidancePhase.isActive {
+                CompositionDirectionOverlay(
+                    composition: viewModel.resolvedComposition,
+                    subjectPoint: viewModel.analysis.bestSubjectPoint,
+                    targetPoint: viewModel.analysis.sceneGeometry.lockedTargetPoint,
+                    isPerfect: viewModel.analysis.isCompositionPerfect,
+                    hasSceneData: viewModel.analysis.hasSceneData,
+                    hasMLData: viewModel.analysis.hasMLData,
+                    alignmentScore: viewModel.analysis.sceneAlignmentScore,
+                    guidanceDistance: viewModel.analysis.guidanceDistance
+                )
+                .ignoresSafeArea()
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.3), value: viewModel.guidancePhase.isActive)
+            }
 
-            CompositionDirectionOverlay(
-                composition: viewModel.resolvedComposition,
-                subjectPoint: viewModel.analysis.bestSubjectPoint,
-                targetPoint: viewModel.analysis.sceneGeometry.lockedTargetPoint,
-                isPerfect: viewModel.analysis.isCompositionPerfect,
-                hasSceneData: viewModel.analysis.hasSceneData,
-                hasMLData: viewModel.analysis.hasMLData,
-                alignmentScore: viewModel.analysis.sceneAlignmentScore,
-                guidanceDistance: viewModel.analysis.guidanceDistance
-            )
-            .ignoresSafeArea()
+            // MARK: Layer 3.5 — Lock Animation Ring
+
+            if let lockPoint = lockRingPoint {
+                LockAnimationRing(isAnimating: lockRingAnimating, showIcon: showLockIcon)
+                    .position(lockPoint)
+                    .allowsHitTesting(false)
+            }
 
             // MARK: Layer 4 — Tap / Focus Indicator
 
@@ -168,6 +196,9 @@ struct CameraView: View {
             y: screenPoint.y / screenSize.height
         )
         viewModel.pinSubject(at: normalisedPoint)
+
+        // Play lock animation at tap point
+        playLockAnimation(at: screenPoint)
         showIndicator(at: screenPoint, style: .pin)
     }
 
@@ -177,6 +208,33 @@ struct CameraView: View {
         tapIndicatorPoint = nil
         isShowingFocusExposure = false
         focusedPoint = nil
+        lockRingPoint = nil
+    }
+
+    /// Plays the lock-in ring burst animation at the pinned point.
+    private func playLockAnimation(at point: CGPoint) {
+        lockRingPoint = point
+        lockRingAnimating = false
+        showLockIcon = false
+
+        // Ring burst
+        withAnimation(.easeOut(duration: 0.35)) {
+            lockRingAnimating = true
+        }
+
+        // Lock icon appear
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.15)) {
+            showLockIcon = true
+        }
+
+        // Fade out after a beat
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                lockRingPoint = nil
+                showLockIcon = false
+                lockRingAnimating = false
+            }
+        }
     }
 
     private func showFocusExposure(at screenPoint: CGPoint) {

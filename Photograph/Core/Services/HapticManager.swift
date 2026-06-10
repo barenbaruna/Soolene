@@ -29,4 +29,11 @@ enum HapticManager {
         generator.prepare()
         generator.selectionChanged()
     }
+
+    /// General-purpose notification feedback (success, warning, error).
+    static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(type)
+    }
 }

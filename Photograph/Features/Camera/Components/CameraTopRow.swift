@@ -4,12 +4,12 @@
 //
 //  Top area of the camera HUD:
 //  - Settings button (6-dot grid icon, top-right)
-//  - Guidance tip label (fits text width, dark capsule)
+//  - Phase-aware guidance tip (icon + text + contextual color)
 //
 //  HIG §15.1: .regularMaterial for pill backgrounds
 //  HIG §2.2: .subheadline for secondary label
 //
-//  Uses Design System: Spacing, Typography.
+//  Uses Design System: Spacing, Typography, GuidanceTipView.
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
@@ -47,17 +47,13 @@ struct CameraTopRow: View {
                 }
             }
 
-            // Guidance tip — fits text width, not full width
+            // Phase-aware guidance tip
             if !isCountingDown {
-                Text(viewModel.resolvedComposition.guidanceTip)
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.85))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Spacing.medium)
-                    .padding(.vertical, Spacing.small + 2)
-                    .background(.regularMaterial, in: Capsule())
-                    .shadow(color: .black.opacity(0.16), radius: 8, x: 0, y: 4)
-                    .animation(.spring(response: 0.5), value: viewModel.resolvedComposition)
+                GuidanceTipView(
+                    phase: viewModel.guidancePhase,
+                    tip: viewModel.guidanceTip,
+                    composition: viewModel.userSelectedComposition
+                )
             }
         }
     }

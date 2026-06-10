@@ -41,6 +41,27 @@ enum GuidanceEngine {
         return CompositionTechnique(composition: top.type, tip: tip)
     }
 
+    /// Returns the ML-suggested composition type from predictions.
+    /// Called ONCE when the user locks a subject — the result is shown
+    /// as "★ Recommended" in the Composition Picker.
+    ///
+    /// Does NOT modify any app state. Pure function.
+    static func suggestComposition(
+        predictions: [CompositionPrediction]
+    ) -> CompositionType? {
+        predictions.first?.type
+    }
+
+    /// Generates a technique for a user-selected composition.
+    /// Used when the user picks from the Composition Picker.
+    static func techniqueForUserSelection(
+        composition: CompositionType,
+        geometry: SceneGeometry
+    ) -> CompositionTechnique {
+        let tip = generateTip(for: composition, geometry: geometry)
+        return CompositionTechnique(composition: composition, tip: tip)
+    }
+
     // MARK: - Tip Generation
 
     /// Generates a concise, human-readable guidance tip for the given composition type.

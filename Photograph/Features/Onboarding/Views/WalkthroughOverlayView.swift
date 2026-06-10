@@ -61,8 +61,8 @@ struct WalkthroughOverlayView: View {
         // Left side, vertically centered near the overlay circle
         case .compositionSuggestion where context == .camera:
             TooltipView(
-                title: "Composition Suggestion",
-                description: "Get composition recommendations based on the scene in your camera and follow the on-screen guides",
+                title: "Lock Your Subject",
+                description: "Long-press on any subject to lock focus. The app will suggest the best composition for your scene.",
                 anchor: .bottom,
                 onPrimary: { manager.advanceStep() },
                 onSecondary: { manager.skipWalkthrough() }
@@ -74,8 +74,8 @@ struct WalkthroughOverlayView: View {
         // Below the guidance tip pill, horizontally centered
         case .followGuide where context == .camera:
             TooltipView(
-                title: "Follow the Guide",
-                description: "Follow the on-screen directions and adjust your framing",
+                title: "Choose & Follow",
+                description: "Pick a composition style, then align the bracket with the target circle on screen.",
                 anchor: .top,
                 onPrimary: { manager.advanceStep() },
                 onSecondary: { manager.skipWalkthrough() }
@@ -87,8 +87,8 @@ struct WalkthroughOverlayView: View {
         // Just above the capture button (bottom center)
         case .readyToShoot where context == .camera:
             TooltipView(
-                title: "Ready to Shoot",
-                description: "Tap this button to capture your photo once you've lined up the perfect composition guidelines.",
+                title: "Perfect Shot",
+                description: "When the guides turn green, your composition is aligned. Tap the shutter to capture!",
                 anchor: .bottom,
                 onPrimary: { manager.advanceStep() },
                 onSecondary: { manager.skipWalkthrough() }

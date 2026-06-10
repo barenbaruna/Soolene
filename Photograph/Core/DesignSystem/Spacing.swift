@@ -51,4 +51,16 @@ enum ControlMetrics {
     static let exposureControlHeight: CGFloat = 112
     static let exposureControlWidth: CGFloat = 328
     static let topScrimHeight: CGFloat = 128
+
+    // MARK: - Composition Picker
+
+    static let compositionPillWidth: CGFloat = 72
+    static let compositionPillHeight: CGFloat = 80
+    static let compositionPickerHeight: CGFloat = 96
+
+    // MARK: - Dual-Anchor Overlay
+
+    static let dualAnchorBracketSize: CGFloat = 48
+    static let dualAnchorSocketFar: CGFloat = 60
+    static let dualAnchorSocketClose: CGFloat = 72
 }

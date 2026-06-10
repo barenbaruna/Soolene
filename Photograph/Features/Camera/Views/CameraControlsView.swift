@@ -4,9 +4,13 @@
 //
 //  Camera layout (portrait):
 //  Organizes the decomposed components:
-//  - CameraTopRow (Guidance tip + settings sheet trigger)
-//  - LensSelectorView + Composition Pill
+//  - CameraTopRow (Phase-aware guidance tip + settings sheet trigger)
+//  - LensSelectorView + CompositionPickerView
+//  - PinnedSubjectBadge (phase-aware status)
 //  - CameraBottomBar (Gallery + Shutter + Flip)
+//
+//  The composition picker slides up when the user locks a subject,
+//  replacing the static composition pill with an interactive selection strip.
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
@@ -63,7 +67,36 @@ struct CameraControlsView: View {
                     .padding(.top, Spacing.medium)
                     .padding(.bottom, Spacing.small)
 
-                    compositionPill
+                    // Phase-driven composition area
+                    if viewModel.guidancePhase.showPicker {
+                        // Composition Picker — slides up with staggered pills
+                        CompositionPickerView(
+                            selectedComposition: viewModel.userSelectedComposition,
+                            mlSuggestion: viewModel.mlSuggestion,
+                            onSelect: { composition in
+                                viewModel.selectComposition(composition)
+                            }
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.spring(response: 0.5, dampingFraction: 0.78), value: viewModel.guidancePhase.showPicker)
+                        .padding(.bottom, Spacing.small)
+
+                        // Phase status badge
+                        PinnedSubjectBadge(
+                            phase: viewModel.guidancePhase,
+                            composition: viewModel.userSelectedComposition
+                        )
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: viewModel.guidancePhase)
+                    } else {
+                        // Scanning state: show scanning hint badge
+                        PinnedSubjectBadge(
+                            phase: .scanning,
+                            composition: nil
+                        )
+                        .transition(.opacity)
+                        .padding(.bottom, Spacing.standard)
+                    }
                 }
 
                 CameraBottomBar(
@@ -106,20 +139,5 @@ struct CameraControlsView: View {
                 }
             }
         }
-    }
-
-    // MARK: - Components
-
-    private var compositionPill: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "camera.viewfinder")
-                .font(.caption)
-            Text(viewModel.compositionLabel)
-                .textStyle(Typography.subheadline)
-        }
-        .foregroundStyle(.white)
-        .glassPill()
-        .animation(.easeInOut(duration: 0.3), value: viewModel.compositionLabel)
-        .padding(.bottom, Spacing.standard)
     }
 }

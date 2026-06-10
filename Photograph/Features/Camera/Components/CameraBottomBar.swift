@@ -57,7 +57,10 @@ struct CameraBottomBar: View {
                     }
                 }
             } else {
-                CaptureButton { viewModel.capturePhoto() }
+                CaptureButton(
+                    action: { viewModel.capturePhoto() },
+                    isPerfect: viewModel.guidancePhase.isPerfect
+                )
             }
 
             Spacer()
