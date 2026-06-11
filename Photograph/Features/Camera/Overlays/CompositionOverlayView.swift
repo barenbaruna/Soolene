@@ -25,12 +25,12 @@ struct CompositionOverlayView: View {
     
     /// Returns the current guide color based on scene alignment score.
     ///
-    /// - White:  No Vision data yet (score == 0.0)
-    /// - Red:    Vision data present, composition not yet aligned (score < 0.8)
-    /// - Green:  Vision data present, composition is aligned (score >= 0.8)
+    /// - White:  No Vision data yet
+    /// - Green:  Composition is perfect (aligned with frozen target / level horizon)
+    /// - Red:    Scene data present but not yet perfect
     private var guideColor: Color {
         if !hasSceneData { return Color(uiColor: .gridlineWhite) }
-        return sceneAlignmentScore >= 0.8 ? Color(uiColor: .gridlineGreen) : Color(uiColor: .gridlineRed)
+        return isPerfect ? Color(uiColor: .gridlineGreen) : Color(uiColor: .gridlineRed)
     }
     
     // MARK: - Body
@@ -49,7 +49,13 @@ struct CompositionOverlayView: View {
                 // Draw the per-composition guide
                 switch composition {
                 case .ruleOfThirds:
-                    RuleOfThirdsGrid(rect: drawRect, color: guideColor, geometry: geometry, isPerfect: isPerfect)
+                    RuleOfThirdsGrid(
+                        rect: drawRect,
+                        color: guideColor,
+                        geometry: geometry,
+                        lockedTarget: geometry.lockedTargetPoint,
+                        isPerfect: isPerfect
+                    )
                 case .center:
                     CenterGrid(rect: drawRect, color: guideColor, isPerfect: isPerfect)
                 case .horizontal:

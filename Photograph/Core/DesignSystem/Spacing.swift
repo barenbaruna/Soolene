@@ -38,8 +38,8 @@ enum ControlMetrics {
     static let iconButton: CGFloat = 56
     static let compactIconButton: CGFloat = 44
     static let settingsButton: CGFloat = 40
-    static let shutterOuter: CGFloat = 76
-    static let shutterInner: CGFloat = 62
+    static let shutterOuter: CGFloat = 80
+    static let shutterInner: CGFloat = 64
     static let galleryThumbnail: CGFloat = 56
     static let cameraBottomBandHeight: CGFloat = 112
     static let settingsSheetHeight: CGFloat = 240

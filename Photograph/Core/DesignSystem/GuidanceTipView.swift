@@ -2,90 +2,84 @@
 //  GuidanceTipView.swift
 //  Photograph
 //
-//  Phase-aware guidance tip displayed at the top of the camera HUD.
-//  Changes icon, text, border color, and shadow based on the current GuidancePhase.
-//
-//  Animations:
-//  - Icon swaps use .contentTransition(.symbolEffect(.replace))
-//  - Text swaps use .contentTransition(.numericText)
-//  - Whole-pill entrance uses .transition(.blurReplace)
-//
-//  Created by Baren Baruna Harahap on 10/06/26.
+//  Centered guidance label matching design references.
 //
 
 import SwiftUI
 
-/// Displays a composition guidance tip in a phase-aware glass pill.
 struct GuidanceTipView: View {
     let phase: GuidancePhase
     let tip: String
     let composition: CompositionType?
 
     var body: some View {
-        HStack(spacing: 8) {
-            // Phase-appropriate icon with symbol animation
-            Image(systemName: phaseIcon)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(phaseIconColor)
-                .contentTransition(.symbolEffect(.replace))
-
-            Text(tip)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.white.opacity(0.9))
-                .contentTransition(.interpolate)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(
-            Capsule()
-                .strokeBorder(phaseStrokeColor, lineWidth: 1)
-        )
-        .shadow(color: phaseShadowColor, radius: 8, x: 0, y: 4)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: tip)
-        .id(tip)
-        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+        Text(displayText)
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(foregroundColor)
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, Spacing.standard)
+            .padding(.vertical, Spacing.small)
+            .background {
+                if showsPillBackground {
+                    Capsule()
+                        .fill(Color.black.opacity(0.45))
+                }
+            }
+            .animation(.spring(response: 0.45, dampingFraction: 0.82), value: displayText)
+            .accessibilityLabel(displayText)
     }
 
-    // MARK: - Phase Visuals
-
-    private var phaseIcon: String {
+    private var displayText: String {
         switch phase {
         case .scanning:
-            return "viewfinder"
+            return tip
         case .subjectLocked:
-            return "lock.fill"
+            if let composition {
+                return composition.shortLabel
+            }
+            return tip
         case .guiding:
-            return composition?.symbolName ?? "camera.viewfinder"
+            return guidingCopy
         case .perfect:
-            return "checkmark.circle.fill"
+            return "You're all set!"
         }
     }
 
-    private var phaseIconColor: Color {
-        switch phase {
-        case .scanning:       return .white.opacity(0.6)
-        case .subjectLocked:  return AppColors.primary
-        case .guiding:        return .white
-        case .perfect:        return AppColors.gridlineGreen
+    private var guidingCopy: String {
+        guard let composition else { return tip }
+        switch composition {
+        case .horizontal:
+            return "Align the object with horizontal guide lines"
+        case .vertical:
+            return "Align the object with the vertical guide line"
+        case .ruleOfThirds:
+            return "Align the object with the guide lines"
+        case .center:
+            return "Center the object in the frame"
+        case .diagonal:
+            return "Align the object with the diagonal guide lines"
         }
     }
 
-    private var phaseStrokeColor: Color {
+    private var foregroundColor: Color {
         switch phase {
-        case .scanning:       return .white.opacity(0.1)
-        case .subjectLocked:  return AppColors.primary.opacity(0.4)
-        case .guiding:        return .white.opacity(0.15)
-        case .perfect:        return AppColors.gridlineGreen.opacity(0.5)
+        case .perfect:
+            return AppColors.gridlineGreen
+        case .guiding:
+            return AppColors.textOnCamera
+        default:
+            return AppColors.textGuide
         }
     }
 
-    private var phaseShadowColor: Color {
+    private var showsPillBackground: Bool {
         switch phase {
-        case .perfect:  return AppColors.gridlineGreen.opacity(0.3)
-        default:        return .black.opacity(0.16)
+        case .subjectLocked, .scanning:
+            return true
+        default:
+            return false
         }
     }
 }

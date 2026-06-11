@@ -18,6 +18,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     var isSessionRunning = false
     var isUsingFrontCamera = false
+    var isCapturingPhoto = false
     var flashMode: AVCaptureDevice.FlashMode = .off
     var exposureBias: Float = 0.0
 
@@ -26,6 +27,9 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     /// The raw JPEG data including EXIF, already cropped to the target aspect ratio
     var capturedPhotoData: Data?
+
+    /// User-facing capture failure message (front camera path).
+    var captureError: String?
 
     var availableLenses: [LensType] = [.wide]
     var selectedLens: LensType = .wide
@@ -54,6 +58,9 @@ final class CameraManager: NSObject, @unchecked Sendable {
     // MARK: - Frame callback
 
     var onFrameCaptured: (@Sendable (CMSampleBuffer, AVDepthData?) -> Void)?
+    var onPreviewFrameReady: (@Sendable () -> Void)?
+
+    private var hasDeliveredPreviewFrame = false
 
     // MARK: - Setup
 
@@ -117,7 +124,11 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     func configureSession(useFront: Bool, lens: LensType = .wide) {
         session.beginConfiguration()
-        session.sessionPreset = .photo // Highest quality for photo
+        session.sessionPreset = useFront ? .high : .photo
+
+        DispatchQueue.main.async { [weak self] in
+            self?.isUsingFrontCamera = useFront
+        }
 
         session.inputs.forEach { session.removeInput($0) }
 
@@ -159,26 +170,26 @@ final class CameraManager: NSObject, @unchecked Sendable {
             session.addOutput(videoDataOutput)
         }
 
-        if session.canAddOutput(depthDataOutput) {
+        outputSynchronizer = nil
+        if !useFront, session.canAddOutput(depthDataOutput) {
             session.addOutput(depthDataOutput)
-            depthDataOutput.isFilteringEnabled = false // Raw depth for precise alignment
+            depthDataOutput.isFilteringEnabled = false
         }
 
-        // Setup Synchronizer if depth is supported by this device format
-        if device.activeFormat.supportedDepthDataFormats.isEmpty == false {
+        if !useFront, device.activeFormat.supportedDepthDataFormats.isEmpty == false {
             outputSynchronizer = AVCaptureDataOutputSynchronizer(dataOutputs: [videoDataOutput, depthDataOutput])
             outputSynchronizer?.setDelegate(
                 self,
                 queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
             )
         } else {
-            // Fallback for non-LiDAR/non-depth devices
-            outputSynchronizer = nil
             videoDataOutput.setSampleBufferDelegate(
                 self,
                 queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
             )
         }
+
+        hasDeliveredPreviewFrame = false
 
         if session.canAddOutput(photoOutput) {
             session.addOutput(photoOutput)
@@ -239,5 +250,29 @@ final class CameraManager: NSObject, @unchecked Sendable {
             self.session.stopRunning()
             DispatchQueue.main.async { self.isSessionRunning = false }
         }
+    }
+
+    func stopSessionAndWait() async {
+        await withCheckedContinuation { continuation in
+            sessionQueue.async { [weak self] in
+                guard let self else {
+                    continuation.resume()
+                    return
+                }
+                if self.session.isRunning {
+                    self.session.stopRunning()
+                }
+                DispatchQueue.main.async {
+                    self.isSessionRunning = false
+                    continuation.resume()
+                }
+            }
+        }
+    }
+
+    func notifyPreviewFrameIfNeeded() {
+        guard !hasDeliveredPreviewFrame else { return }
+        hasDeliveredPreviewFrame = true
+        onPreviewFrameReady?()
     }
 }

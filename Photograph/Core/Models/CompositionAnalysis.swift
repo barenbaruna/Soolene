@@ -74,7 +74,9 @@ struct CompositionAnalysis: Equatable {
         case .ruleOfThirds, .center, .diagonal:
             return sceneGeometry.saliencyCentroid != nil || !sceneGeometry.faceRects.isEmpty
         case .horizontal:
-            return sceneGeometry.horizonAngle != 0
+            return sceneGeometry.horizonDetected
+                || sceneGeometry.deviceRollDegrees != nil
+                || sceneGeometry.userPinnedSubject != nil
         case .vertical:
             return sceneGeometry.saliencyBounds != nil || sceneGeometry.hasStrongVerticals
         }
@@ -87,8 +89,10 @@ struct CompositionAnalysis: Equatable {
     var saliencyCentroid: CGPoint? { sceneGeometry.saliencyCentroid }
 
     /// The best available subject position in normalised coordinates (0–1, UIKit).
-    /// Priority: userPinnedSubject > face centroid > body center > saliency centroid.
+    /// Priority: smoothed > userPinned > face centroid > body center > saliency centroid.
     var bestSubjectPoint: CGPoint? {
+        // FIX 4: Prefer smoothed point over raw pinned point for stable overlay rendering
+        if let smoothed = sceneGeometry.smoothedSubjectPoint { return smoothed }
         if let pinned = sceneGeometry.userPinnedSubject { return pinned }
         if let face = sceneGeometry.faceRects.first {
             return CGPoint(x: face.midX, y: face.midY)

@@ -23,9 +23,8 @@ struct CompositionPhotoListView: View {
     @State private var isLoading = true
 
     private let columns = [
-        GridItem(.flexible(), spacing: Spacing.tiny),
-        GridItem(.flexible(), spacing: Spacing.tiny),
-        GridItem(.flexible(), spacing: Spacing.tiny)
+        GridItem(.flexible(), spacing: Spacing.small),
+        GridItem(.flexible(), spacing: Spacing.small)
     ]
 
     var body: some View {
@@ -44,7 +43,7 @@ struct CompositionPhotoListView: View {
             }
         }
         .background(AppColors.gallerySurface)
-        .navigationTitle(composition.rawValue)
+        .navigationTitle(composition.galleryLabel)
         .toolbarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadPhotos() }

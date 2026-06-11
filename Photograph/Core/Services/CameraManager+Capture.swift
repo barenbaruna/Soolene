@@ -123,26 +123,36 @@ extension CameraManager {
     // MARK: - Capture Photo
 
     func capturePhoto(aspectRatio: AspectRatioMode = .free) {
-        let settings = AVCapturePhotoSettings()
-        settings.photoQualityPrioritization = .quality
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
 
-        pendingAspectRatio = aspectRatio
-
-        if !isUsingFrontCamera {
-            settings.flashMode = flashMode
-        } else {
             DispatchQueue.main.async {
-                UIApplication.shared
-                    .connectedScenes
-                    .compactMap { $0 as? UIWindowScene }
-                    .first?
-                    .windows
-                    .first?
-                    .screen
-                    .brightness = 1.0
+                self.isCapturingPhoto = true
+                self.captureError = nil
+                self.capturedImage = nil
+                self.capturedPhotoData = nil
             }
-        }
 
-        photoOutput.capturePhoto(with: settings, delegate: self)
+            let settings = AVCapturePhotoSettings()
+            settings.photoQualityPrioritization = .quality
+            self.pendingAspectRatio = aspectRatio
+
+            if !self.isUsingFrontCamera {
+                settings.flashMode = self.flashMode
+            } else {
+                DispatchQueue.main.async {
+                    UIApplication.shared
+                        .connectedScenes
+                        .compactMap { $0 as? UIWindowScene }
+                        .first?
+                        .windows
+                        .first?
+                        .screen
+                        .brightness = 1.0
+                }
+            }
+
+            self.photoOutput.capturePhoto(with: settings, delegate: self)
+        }
     }
 }

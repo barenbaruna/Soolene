@@ -2,100 +2,84 @@
 //  CameraControlsView.swift
 //  Photograph
 //
-//  Camera layout (portrait):
-//  Organizes the decomposed components:
-//  - CameraTopRow (Phase-aware guidance tip + settings sheet trigger)
-//  - LensSelectorView + CompositionPickerView
-//  - PinnedSubjectBadge (phase-aware status)
-//  - CameraBottomBar (Gallery + Shutter + Flip)
-//
-//  The composition picker slides up when the user locks a subject,
-//  replacing the static composition pill with an interactive selection strip.
-//
-//  Created by Baren Baruna Harahap on 05/06/26.
+//  Camera HUD: top toolbar, guidance, zoom ruler, composition picker, bottom band.
 //
 
 import SwiftUI
 
-/// Full camera HUD template/container.
 struct CameraControlsView: View {
     @Bindable var viewModel: CameraViewModel
     @Binding var isShowingGallery: Bool
 
-    @State private var isShowingSettingsSheet = false
     @State private var iconRotation: Double = 0
+    @State private var activePanel: CameraControlPanel?
 
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - Top Controls
-            VStack(spacing: 0) {
+            VStack(spacing: Spacing.small) {
+                CameraTopToolbar(
+                    viewModel: viewModel,
+                    iconRotation: iconRotation,
+                    activePanel: activePanel,
+                    onPanelTapped: handlePanelTap
+                )
+                .padding(.top, Spacing.small)
+
                 CameraTopRow(
                     viewModel: viewModel,
-                    isCountingDown: viewModel.isCountingDown,
-                    iconRotation: iconRotation,
-                    onSettingsTapped: { isShowingSettingsSheet = true }
+                    isCountingDown: viewModel.isCountingDown
                 )
-                .padding(.top, Spacing.standard)
-                .padding(.horizontal, Spacing.standard)
-                .padding(.bottom, Spacing.medium)
             }
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, Spacing.standard)
 
             Spacer()
 
-            // Countdown Overlay
             if viewModel.isCountingDown {
                 Text("\(viewModel.countdownValue)")
-                    .font(.largeTitle.monospacedDigit().weight(.bold))
-                    .foregroundStyle(.white)
-                    .shadow(radius: 10)
+                    .font(.system(size: 72, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(AppColors.primary)
+                    .shadow(color: .black.opacity(0.4), radius: 8)
                     .transition(.scale.combined(with: .opacity))
-                    .padding(.bottom, Spacing.large)
             }
 
-            // MARK: - Bottom Controls
-            VStack(spacing: 0) {
+            if activePanel == .exposure {
+                ViewfinderExposureScale(
+                    exposureBias: Binding(
+                        get: { viewModel.exposureBias },
+                        set: { viewModel.setExposure($0) }
+                    ),
+                    onDismiss: { withAnimation { activePanel = nil } }
+                )
+                .padding(.bottom, Spacing.standard)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            VStack(spacing: Spacing.small) {
                 if !viewModel.isCountingDown {
-                    LensSelectorView(
-                        availableLenses: LensType.availableOnDevice,
-                        selectedLens: Binding(
-                            get: { LensType(rawValue: viewModel.selectedLens) ?? .wide },
-                            set: { viewModel.switchLens($0.rawValue) }
-                        ),
-                        iconRotation: iconRotation
+                    ZoomRulerView(
+                        lenses: viewModel.availableLenses,
+                        selectedLens: LensType(rawValue: viewModel.selectedLens) ?? .wide,
+                        onSelect: { viewModel.switchLens($0) }
                     )
-                    .padding(.top, Spacing.medium)
+                    .disabled(viewModel.isSwitchingCamera)
+                    .opacity(viewModel.isSwitchingCamera ? 0.5 : 1)
                     .padding(.bottom, Spacing.small)
 
-                    // Phase-driven composition area
                     if viewModel.guidancePhase.showPicker {
-                        // Composition Picker — slides up with staggered pills
                         CompositionPickerView(
                             selectedComposition: viewModel.userSelectedComposition,
                             mlSuggestion: viewModel.mlSuggestion,
-                            onSelect: { composition in
-                                viewModel.selectComposition(composition)
-                            }
+                            compositions: viewModel.sortedPickerCompositions,
+                            onSelect: { viewModel.selectComposition($0) }
                         )
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .animation(.spring(response: 0.5, dampingFraction: 0.78), value: viewModel.guidancePhase.showPicker)
-                        .padding(.bottom, Spacing.small)
 
-                        // Phase status badge
-                        PinnedSubjectBadge(
-                            phase: viewModel.guidancePhase,
-                            composition: viewModel.userSelectedComposition
-                        )
-                        .transition(.scale(scale: 0.8).combined(with: .opacity))
-                        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: viewModel.guidancePhase)
-                    } else {
-                        // Scanning state: show scanning hint badge
-                        PinnedSubjectBadge(
-                            phase: .scanning,
-                            composition: nil
-                        )
-                        .transition(.opacity)
-                        .padding(.bottom, Spacing.standard)
+                        if case .subjectLocked = viewModel.guidancePhase {
+                            Text("Double-tap to unlock subject")
+                                .font(.caption2)
+                                .foregroundStyle(AppColors.textGuide)
+                        }
                     }
                 }
 
@@ -104,22 +88,8 @@ struct CameraControlsView: View {
                     isShowingGallery: $isShowingGallery,
                     iconRotation: iconRotation
                 )
-                .padding(.horizontal, Spacing.medium)
-                .padding(.top, Spacing.standard)
-                .padding(.bottom, Spacing.large)
             }
-            .frame(maxWidth: .infinity)
         }
-        // Settings Bottom Sheet
-        .sheet(isPresented: $isShowingSettingsSheet) {
-            CameraSettingsSheet(viewModel: viewModel)
-                .presentationDetents([.height(ControlMetrics.settingsSheetHeight)])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(Spacing.cornerRadiusLarge)
-        }
-
-        // MARK: - Orientation Tracking
-
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
         }
@@ -139,5 +109,31 @@ struct CameraControlsView: View {
                 }
             }
         }
+    }
+
+    private func handlePanelTap(_ panel: CameraControlPanel) {
+        switch panel {
+        case .flash:
+            activePanel = nil
+            viewModel.cycleFlash()
+        case .timer:
+            withAnimation { activePanel = activePanel == .timer ? nil : .timer }
+            viewModel.cycleTimer()
+        case .aspect:
+            withAnimation { activePanel = activePanel == .aspect ? nil : .aspect }
+            cycleAspectRatio()
+        case .exposure:
+            withAnimation {
+                activePanel = activePanel == .exposure ? nil : .exposure
+            }
+        }
+    }
+
+    private func cycleAspectRatio() {
+        let all = AspectRatioMode.allCases
+        guard let idx = all.firstIndex(of: viewModel.selectedAspectRatio) else { return }
+        let next = all.index(after: idx)
+        viewModel.selectedAspectRatio = next < all.endIndex ? all[next] : all[all.startIndex]
+        HapticManager.selection()
     }
 }

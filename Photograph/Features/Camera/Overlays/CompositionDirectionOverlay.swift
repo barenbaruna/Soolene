@@ -45,6 +45,8 @@ struct CompositionDirectionOverlay: View {
     let alignmentScore: Float
     let guidanceDistance: CGFloat
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     // MARK: - Proximity State
 
     private enum ProximityState {
@@ -94,7 +96,7 @@ struct CompositionDirectionOverlay: View {
     // MARK: - Body
 
     var body: some View {
-        guard hasMLData, hasSceneData else { return AnyView(EmptyView()) }
+        guard hasSceneData, targetPoint != nil else { return AnyView(EmptyView()) }
 
         return AnyView(
             GeometryReader { geo in
@@ -184,16 +186,27 @@ struct CompositionDirectionOverlay: View {
                             .allowsHitTesting(false)
                         }
                     }
-                    // Differentiated spring parameters for subject vs target
-                    .animation(.interpolatingSpring(stiffness: 180, damping: 18), value: subjectPx)
-                    .animation(.interpolatingSpring(stiffness: 120, damping: 14), value: targetPx)
-                    .animation(.easeInOut(duration: 0.35), value: anchorColor)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.65), value: socketSize)
-                    .animation(.easeInOut(duration: 0.3), value: proximity == .perfect)
+                    .animation(subjectSpring, value: subjectPx)
+                    .animation(targetSpring, value: targetPx)
+                    .animation(reduceMotion ? .linear(duration: 0.15) : .easeInOut(duration: 0.35), value: anchorColor)
+                    .animation(reduceMotion ? .linear(duration: 0.15) : .spring(response: 0.25, dampingFraction: 0.65), value: socketSize)
+                    .animation(reduceMotion ? .linear(duration: 0.15) : .easeInOut(duration: 0.3), value: proximity == .perfect)
                 }
             }
             .allowsHitTesting(false)
         )
+    }
+
+    private var subjectSpring: Animation {
+        reduceMotion
+            ? .linear(duration: 0.15)
+            : .interpolatingSpring(stiffness: 180, damping: 18)
+    }
+
+    private var targetSpring: Animation {
+        reduceMotion
+            ? .linear(duration: 0.15)
+            : .interpolatingSpring(stiffness: 120, damping: 14)
     }
 
     private func toPixel(_ norm: CGPoint, width: CGFloat, height: CGFloat) -> CGPoint {

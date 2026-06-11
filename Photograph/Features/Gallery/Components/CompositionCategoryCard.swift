@@ -2,47 +2,38 @@
 //  CompositionCategoryCard.swift
 //  Photograph
 //
-//  Created by Baren Baruna Harahap on 05/06/26.
-//
 
 import Photos
 import SwiftUI
 
-/// Card showing a composition category, with a real photo preview and count.
+/// Composition category tile with label above preview (design reference).
 struct CompositionCategoryCard: View {
     let composition: CompositionType
     let count: Int
     let previewAsset: PHAsset?
 
     var body: some View {
-        Color.clear
-            .aspectRatio(1, contentMode: .fit)
-            .overlay {
-                // Background image
-                if let asset = previewAsset {
-                    PhotoThumbnailView(asset: asset)
-                } else {
-                    Rectangle()
-                        .fill(Color(.systemGray5))
-                }
-            }
-            .clipped()
-            .overlay(alignment: .bottom) {
-                ZStack(alignment: .bottom) {
-                    LinearGradient(
-                        colors: [.clear, .black.opacity(0.7)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: ControlMetrics.galleryThumbnail + Spacing.standard)
+        VStack(alignment: .leading, spacing: Spacing.small) {
+            Text(composition.galleryLabel)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppColors.textGuide)
+                .textCase(.uppercase)
 
-                    Text(composition.rawValue)
-                        .font(Typography.headline)
-                        .foregroundStyle(AppColors.primary)
-                        .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
-                        .padding(.bottom, Spacing.small)
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    if let asset = previewAsset {
+                        PhotoThumbnailView(asset: asset)
+                    } else {
+                        Rectangle().fill(Color.white.opacity(0.12))
+                    }
                 }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.small)
+                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                )
+        }
+        .accessibilityLabel("\(composition.rawValue), \(count) photos")
     }
 }

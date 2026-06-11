@@ -24,6 +24,9 @@ struct GeometryExtractor {
     ) {
         if let obs = horizonObs {
             geometry.horizonAngle = obs.angle * (180.0 / .pi)
+            geometry.horizonDetected = true
+        } else {
+            geometry.horizonDetected = false
         }
 
         if let faces = faces {

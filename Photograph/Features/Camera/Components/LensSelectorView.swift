@@ -27,7 +27,7 @@ struct LensSelectorView: View {
                             .font(.caption)
                             .fontWeight(self.selectedLens == lens ? .bold : .medium)
                             .monospacedDigit()
-                            .foregroundStyle(self.selectedLens == lens ? AppColors.primary : .white)
+                            .foregroundStyle(self.selectedLens == lens ? AppColors.controlActive : .white)
                             .rotationEffect(.degrees(iconRotation))
                             .frame(width: ControlMetrics.settingsButton, height: ControlMetrics.settingsButton)
                     }
@@ -47,7 +47,7 @@ private extension View {
     func lensChipBackground(isSelected: Bool) -> some View {
         if #available(iOS 26, *) {
             self.glassEffect(
-                isSelected ? .regular.tint(AppColors.primary.opacity(0.15)).interactive() : .regular.interactive(),
+                isSelected ? .regular.tint(AppColors.controlActive.opacity(0.15)).interactive() : .regular.interactive(),
                 in: .circle
             )
         } else {
@@ -60,7 +60,7 @@ private extension View {
                 )
                 .overlay(
                     Circle()
-                        .strokeBorder(isSelected ? AppColors.primary.opacity(0.6) : Color.clear, lineWidth: 1)
+                        .strokeBorder(isSelected ? AppColors.controlActive.opacity(0.6) : Color.clear, lineWidth: 1)
                 )
         }
     }

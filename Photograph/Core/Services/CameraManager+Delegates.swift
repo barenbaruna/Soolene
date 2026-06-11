@@ -16,6 +16,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
+        notifyPreviewFrameIfNeeded()
         onFrameCaptured?(sampleBuffer, nil)
     }
 }
@@ -36,6 +37,7 @@ extension CameraManager: AVCaptureDataOutputSynchronizerDelegate {
             depthData = syncedDepthData.depthData
         }
         
+        notifyPreviewFrameIfNeeded()
         onFrameCaptured?(syncedVideoData.sampleBuffer, depthData)
     }
 }
@@ -59,18 +61,37 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
                 .brightness = 0.5
         }
 
-        guard error == nil, let photoData = photo.fileDataRepresentation() else { return }
+        if let error {
+            DispatchQueue.main.async {
+                self.isCapturingPhoto = false
+                self.captureError = error.localizedDescription
+            }
+            return
+        }
+
+        guard let photoData = photo.fileDataRepresentation() else {
+            DispatchQueue.main.async {
+                self.isCapturingPhoto = false
+                self.captureError = "Photo capture returned no image."
+            }
+            return
+        }
 
         // Process crop and metadata on background queue
         processingQueue.async {
             let ratio = self.pendingAspectRatio
 
             guard let croppedData = ImageCropHelper.cropImageWithMetadata(imageData: photoData, ratio: ratio) else {
-                // Fallback to original if crop fails
                 if let image = UIImage(data: photoData) {
                     DispatchQueue.main.async {
                         self.capturedImage = image
                         self.capturedPhotoData = photoData
+                        self.isCapturingPhoto = false
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.isCapturingPhoto = false
+                        self.captureError = "Could not process captured image."
                     }
                 }
                 return
@@ -80,6 +101,12 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
                 DispatchQueue.main.async {
                     self.capturedImage = image
                     self.capturedPhotoData = croppedData
+                    self.isCapturingPhoto = false
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.isCapturingPhoto = false
+                    self.captureError = "Could not process captured image."
                 }
             }
         }

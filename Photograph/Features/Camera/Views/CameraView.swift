@@ -5,7 +5,7 @@
 //  Created by Baren Baruna Harahap on 18/05/26.
 //
 
-import AVFoundation
+import ARKit
 import SwiftUI
 
 /// Main camera screen.
@@ -28,21 +28,41 @@ struct CameraView: View {
         ZStack {
             // MARK: Layer 1 — Camera Preview
 
-            CameraPreviewView(
-                session: viewModel.cameraManager.session,
-                onTap: { viewPoint, devicePoint in
-                    handleFocusTap(at: viewPoint, devicePoint: devicePoint)
-                },
-                onLongPress: { viewPoint, _ in
-                    handleSubjectPin(at: viewPoint)
-                },
-                onDoubleTap: {
-                    clearPinnedSubject()
-                },
-                onPinch: { magnification, isFinal in
-                    viewModel.updateZoom(magnification: magnification, isFinal: isFinal)
+            Group {
+                if viewModel.cameraMode == .rearSpatial {
+                    SpatialCameraView(
+                        engine: viewModel.spatialEngine,
+                        onTap: { viewPoint, normalizedPoint in
+                            handleFocusTap(at: viewPoint, normalizedPoint: normalizedPoint)
+                        },
+                        onLongPress: { viewPoint, normalizedPoint in
+                            handleSubjectPin(at: viewPoint, normalizedPoint: normalizedPoint)
+                        },
+                        onDoubleTap: {
+                            clearPinnedSubject()
+                        },
+                        onPinch: { magnification, isFinal in
+                            viewModel.updateZoom(magnification: magnification, isFinal: isFinal)
+                        }
+                    )
+                } else {
+                    CameraPreviewView(
+                        session: viewModel.cameraManager.session,
+                        onTap: { viewPoint, normalizedPoint in
+                            handleFocusTap(at: viewPoint, normalizedPoint: normalizedPoint)
+                        },
+                        onLongPress: { viewPoint, normalizedPoint in
+                            handleSubjectPin(at: viewPoint, normalizedPoint: normalizedPoint)
+                        },
+                        onDoubleTap: {
+                            clearPinnedSubject()
+                        },
+                        onPinch: { magnification, isFinal in
+                            viewModel.updateZoom(magnification: magnification, isFinal: isFinal)
+                        }
+                    )
                 }
-            )
+            }
                 .ignoresSafeArea()
                 .task { await viewModel.onAppear() }
                 .onDisappear { viewModel.onDisappear() }
@@ -64,6 +84,16 @@ struct CameraView: View {
             .opacity(viewModel.guidancePhase.isActive ? 1.0 : 0.15)
             .animation(.easeInOut(duration: 0.5), value: viewModel.guidancePhase.isActive)
 
+            // MARK: Layer 2.25 — Active guidance frame (design reference)
+
+            if case .guiding = viewModel.guidancePhase, !viewModel.analysis.isCompositionPerfect {
+                Rectangle()
+                    .strokeBorder(AppColors.accent, lineWidth: 2)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+
             // MARK: Layer 2.5 — Scanning Phase Hints
 
             if !viewModel.guidancePhase.isActive {
@@ -78,7 +108,7 @@ struct CameraView: View {
             // MARK: Layer 3 — Animated Dual-Anchor Guidance Overlay (SwiftUI)
 
             // Only shown when guidance phase is active (user has selected a composition).
-            if viewModel.guidancePhase.isActive {
+            if viewModel.showsDualAnchorGuidance {
                 CompositionDirectionOverlay(
                     composition: viewModel.resolvedComposition,
                     subjectPoint: viewModel.analysis.bestSubjectPoint,
@@ -163,9 +193,28 @@ struct CameraView: View {
             GalleryView()
         }
         // Auto-save on capture
+        .onChange(of: viewModel.spatialEngine.capturedPhotoData) { _, newData in
+            if newData != nil {
+                Task { await viewModel.savePhoto() }
+            }
+        }
         .onChange(of: viewModel.cameraManager.capturedPhotoData) { _, newData in
             if newData != nil {
                 Task { await viewModel.savePhoto() }
+            }
+        }
+        .onChange(of: viewModel.spatialEngine.trackingState) { _, state in
+            guard viewModel.cameraMode == .rearSpatial else { return }
+            switch state {
+            case .limited(let reason):
+                viewModel.trackingQualityWarning = limitedTrackingMessage(reason)
+            case .notAvailable:
+                viewModel.trackingQualityWarning = "Move the device slowly to restore tracking."
+            case .normal:
+                if viewModel.trackingQualityWarning?.contains("approximate") != true
+                    && viewModel.trackingQualityWarning?.contains("world lock") != true {
+                    viewModel.trackingQualityWarning = nil
+                }
             }
         }
         .alert("Could Not Save", isPresented: Binding(
@@ -176,26 +225,25 @@ struct CameraView: View {
         } message: {
             Text(viewModel.saveError ?? "")
         }
+        .alert("Could Not Capture", isPresented: Binding(
+            get: { viewModel.captureError != nil },
+            set: { if !$0 { viewModel.clearCaptureError() } }
+        )) {
+            Button("OK", role: .cancel) { viewModel.clearCaptureError() }
+        } message: {
+            Text(viewModel.captureError ?? "")
+        }
     }
 
     // MARK: - Tap Handling
 
-    private func handleFocusTap(at screenPoint: CGPoint, devicePoint: CGPoint) {
-        viewModel.focusAndExpose(at: devicePoint)
+    private func handleFocusTap(at screenPoint: CGPoint, normalizedPoint: CGPoint) {
+        viewModel.focusAndExpose(at: normalizedPoint)
         showFocusExposure(at: screenPoint)
     }
 
-    private func handleSubjectPin(at screenPoint: CGPoint) {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first
-        else { return }
-
-        let screenSize = window.bounds.size
-        let normalisedPoint = CGPoint(
-            x: screenPoint.x / screenSize.width,
-            y: screenPoint.y / screenSize.height
-        )
-        viewModel.pinSubject(at: normalisedPoint)
+    private func handleSubjectPin(at screenPoint: CGPoint, normalizedPoint: CGPoint) {
+        viewModel.pinSubject(at: normalizedPoint)
 
         // Play lock animation at tap point
         playLockAnimation(at: screenPoint)
@@ -247,6 +295,21 @@ struct CameraView: View {
             withAnimation(.easeOut(duration: 0.2)) {
                 isShowingFocusExposure = false
             }
+        }
+    }
+
+    private func limitedTrackingMessage(_ reason: ARCamera.TrackingState.Reason) -> String {
+        switch reason {
+        case .excessiveMotion:
+            return "Move the device more slowly."
+        case .insufficientFeatures:
+            return "Point at a textured surface for better tracking."
+        case .initializing:
+            return "Initializing spatial tracking…"
+        case .relocalizing:
+            return "Relocalizing — hold steady."
+        @unknown default:
+            return "Tracking is limited — hold steady."
         }
     }
 
@@ -314,7 +377,7 @@ private struct FocusBox: View {
     var body: some View {
         ZStack {
             Rectangle()
-                .strokeBorder(AppColors.primary, lineWidth: 1)
+                .strokeBorder(AppColors.controlActive, lineWidth: 1)
                 .frame(width: ControlMetrics.focusBox, height: ControlMetrics.focusBox)
 
             // Top and Bottom ticks
@@ -338,7 +401,7 @@ private struct FocusBox: View {
 
     private var tick: some View {
         Rectangle()
-            .fill(AppColors.primary)
+            .fill(AppColors.controlActive)
             .frame(width: Spacing.medium, height: 1)
     }
 }

@@ -1,52 +1,49 @@
 import SwiftUI
 
+/// Brand and semantic colors from the C3Photograph design system.
 enum AppColors {
     // MARK: - Brand
 
-    /// #EFC44F — Primary action color (golden yellow).
-    /// Used for active states, selected lenses, active flash, and CTA elements.
-    static let primary = Color(hex: 0xEFC44F)
+    /// #506139 — Shutter fill, primary brand (olive green).
+    static let primary = Color(hex: 0x506139)
 
-    /// #12A0FF — Accent / interactive highlight.
+    /// #B6A71A — Active control highlight, zoom ticks, selected states (gold).
+    static let secondary = Color(hex: 0xB6A71A)
+
+    /// #12A0FF — Interactive accent (level indicator, tracking border).
     static let accent = Color(hex: 0x12A0FF)
 
     // MARK: - Surface
 
-    /// #2C2C2E — Screen / Base background
-    static let screen = Color(hex: 0x2C2C2E)
+    /// #000000 — Camera chrome and library background.
+    static let surface = Color(hex: 0x000000)
 
-    /// Dark gallery surface used by camera-adjacent browsing flows.
-    static let gallerySurface = screen
+    static let screen = surface
+    static let gallerySurface = surface
 
     // MARK: - Text
 
-    /// #FFFFFF — On-camera UI text, always white.
+    /// #FFFFFF — On-camera labels and icons.
     static let textOnCamera = Color(hex: 0xFFFFFF)
+
+    /// #BCB9B8 — Guidance copy, section labels.
+    static let textGuide = Color(hex: 0xBCB9B8)
 
     // MARK: - Gridline
 
-    /// #D94A3D — Composition guide lines when NOT yet aligned.
     static let gridlineRed = Color(hex: 0xD94A3D)
-
-    /// #35C75A — Composition guide lines when the scene IS aligned.
     static let gridlineGreen = Color(hex: 0x35C75A)
-    
-    /// White at 60% — fallback when Vision has no data.
     static let gridlineWhite = Color.white.opacity(0.6)
 
     // MARK: - Phase Animation
 
-    /// Golden glow behind subject bracket when locked.
-    static let lockGlow = primary.opacity(0.3)
-
-    /// Green glow behind merged checkmark on perfect alignment.
+    static let lockGlow = secondary.opacity(0.35)
     static let perfectGlow = gridlineGreen.opacity(0.25)
-
-    /// Subtle hint circles during scanning phase.
     static let scanningHint = Color.white.opacity(0.15)
+    static let pickerSelected = secondary.opacity(0.9)
 
-    /// Selected composition pill tint.
-    static let pickerSelected = primary.opacity(0.85)
+    /// Active toolbar icon tint (flash, timer, EV, aspect).
+    static let controlActive = secondary
 }
 
 // MARK: - Hex Init

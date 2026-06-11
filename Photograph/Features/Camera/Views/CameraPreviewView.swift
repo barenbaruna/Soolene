@@ -120,8 +120,8 @@ struct CameraPreviewView: UIViewRepresentable {
             else { return }
 
             let viewPoint = recognizer.location(in: view)
-            let devicePoint = view.previewLayer.captureDevicePointConverted(fromLayerPoint: viewPoint)
-            onLongPress?(viewPoint, devicePoint)
+            let normalized = CoordinateMapper.normalizedPoint(in: view.bounds.size, viewPoint: viewPoint)
+            onLongPress?(viewPoint, normalized)
         }
 
         @objc private func handlePinch(_ recognizer: UIPinchGestureRecognizer) {

@@ -41,11 +41,33 @@ enum CompositionType: String, CaseIterable, Identifiable, Codable {
         case .center:
             return "Place the subject inside the center guide"
         case .horizontal:
-            return "Align elements along the horizontal lines"
+            return "Level the horizon"
         case .vertical:
-            return "Align elements along the vertical lines"
+            return "Align subject on the center axis"
         case .diagonal:
             return "Follow the diagonal lines for dynamic energy"
+        }
+    }
+
+    /// Uppercase gallery grid label (design reference).
+    var galleryLabel: String {
+        switch self {
+        case .ruleOfThirds: return "RULE OF THIRD"
+        case .center:       return "CENTER"
+        case .horizontal:   return "HORIZONTAL"
+        case .vertical:     return "VERTICAL"
+        case .diagonal:     return "DIAGONAL"
+        }
+    }
+
+    /// Short label for the composition picker pill.
+    var shortLabel: String {
+        switch self {
+        case .ruleOfThirds: return "Thirds"
+        case .center:       return "Center"
+        case .horizontal:   return "Horizon"
+        case .vertical:     return "Vertical"
+        case .diagonal:     return "Diagonal"
         }
     }
 

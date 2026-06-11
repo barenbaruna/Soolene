@@ -24,6 +24,9 @@ struct AlignmentAnalyzer {
     /// Below this normalised distance, the subject is considered "perfectly placed".
     private static let perfectThreshold: CGFloat = 0.06
 
+    /// Horizon must be within this many degrees to count as level.
+    private static let horizontalPerfectAngleThreshold: Double = 2.0
+
     // MARK: - Subject Point Resolution
 
     /// Returns the best available subject position using the priority chain:
@@ -83,10 +86,59 @@ struct AlignmentAnalyzer {
         return geometry.saliencyCentroid
     }
 
-    // MARK: - Target Position per Composition
+    // MARK: - Fixed Target (Frozen Geometry)
+
+    /// Computes a FIXED target point based on the composition template.
+    /// Called ONCE when the user selects a composition via the picker.
+    /// After this, the target is frozen — never recalculated per frame.
+    ///
+    /// The `subjectAtLockTime` parameter is only used to decide WHICH
+    /// intersection/diagonal to pick. Once chosen, the target never moves.
+    static func computeFixedTarget(
+        for composition: CompositionType,
+        subjectAtLockTime subject: CGPoint
+    ) -> CGPoint {
+        switch composition {
+        case .center:
+            // Always dead center — regardless of where the subject is
+            return CGPoint(x: 0.5, y: 0.5)
+
+        case .ruleOfThirds:
+            // Pick the NEAREST intersection at lock time, then freeze it
+            let intersections: [CGPoint] = [
+                CGPoint(x: 1.0/3.0, y: 1.0/3.0),
+                CGPoint(x: 2.0/3.0, y: 1.0/3.0),
+                CGPoint(x: 1.0/3.0, y: 2.0/3.0),
+                CGPoint(x: 2.0/3.0, y: 2.0/3.0)
+            ]
+            return intersections.min(by: {
+                distanceSquared($0, subject) < distanceSquared($1, subject)
+            }) ?? CGPoint(x: 1.0/3.0, y: 1.0/3.0)
+
+        case .horizontal:
+            // Horizontal center line, preserve initial X
+            return CGPoint(x: subject.x, y: 0.5)
+
+        case .vertical:
+            // Vertical center axis, preserve initial Y
+            return CGPoint(x: 0.5, y: subject.y)
+
+        case .diagonal:
+            // Nearest point on the nearest diagonal at lock time
+            let onDiag1 = nearestPointOnSegment(from: CGPoint(x: 0, y: 0), to: CGPoint(x: 1, y: 1), point: subject)
+            let onDiag2 = nearestPointOnSegment(from: CGPoint(x: 1, y: 0), to: CGPoint(x: 0, y: 1), point: subject)
+            let d1 = distance(onDiag1, subject)
+            let d2 = distance(onDiag2, subject)
+            return d1 <= d2 ? onDiag1 : onDiag2
+        }
+    }
+
+    // MARK: - Target Position per Composition (Legacy — used during scanning only)
 
     /// Returns the ideal normalised target position for the subject,
     /// given the current composition type and the subject's current position.
+    /// NOTE: When `lockedTargetPoint` is set (after user picks composition),
+    /// this method returns the locked value immediately — no recalculation.
     static func targetPoint(for composition: CompositionType, subject: CGPoint, geometry: SceneGeometry) -> CGPoint? {
         if let locked = geometry.lockedTargetPoint {
             return locked
@@ -131,22 +183,32 @@ struct AlignmentAnalyzer {
     // MARK: - Subject Offset
 
     /// Returns the vector FROM the subject TO its ideal target position,
-    /// and whether the subject is within the perfect threshold.
+    /// whether the subject is within the perfect threshold, and a normalized guidance metric.
     static func computeSubjectOffset(
         for composition: CompositionType,
         geometry: SceneGeometry,
         depthData: AVDepthData? = nil
-    ) -> (vector: CGVector, isPerfect: Bool) {
-        guard let subject = geometry.smoothedSubjectPoint ?? resolveSubjectPoint(from: geometry, depthData: depthData),
-              let target  = targetPoint(for: composition, subject: subject, geometry: geometry)
-        else {
-            return (.zero, false)
-        }
+    ) -> (vector: CGVector, isPerfect: Bool, guidanceDistance: CGFloat) {
+        switch composition {
+        case .horizontal:
+            let angleDeg = effectiveHorizonAngle(geometry: geometry)
+            let isPerfect = abs(angleDeg) < horizontalPerfectAngleThreshold
+            let dy = CGFloat(angleDeg / 15.0) * 0.25
+            let guidanceDistance = CGFloat(min(abs(angleDeg) / 15.0, 1.0))
+            return (CGVector(dx: 0, dy: dy), isPerfect, guidanceDistance)
 
-        let dx = target.x - subject.x
-        let dy = target.y - subject.y
-        let dist = hypot(dx, dy)
-        return (CGVector(dx: dx, dy: dy), dist < perfectThreshold)
+        case .ruleOfThirds, .center, .diagonal, .vertical:
+            guard let subject = geometry.smoothedSubjectPoint ?? resolveSubjectPoint(from: geometry, depthData: depthData),
+                  let target = targetPoint(for: composition, subject: subject, geometry: geometry)
+            else {
+                return (.zero, false, 1.0)
+            }
+
+            let dx = target.x - subject.x
+            let dy = target.y - subject.y
+            let dist = hypot(dx, dy)
+            return (CGVector(dx: dx, dy: dy), dist < perfectThreshold, dist)
+        }
     }
 
     // MARK: - Scene Alignment Score
@@ -163,9 +225,10 @@ struct AlignmentAnalyzer {
         switch composition {
 
         case .horizontal:
-            guard geometry.horizonAngle != 0 else { return 0.0 }
-            let angleDeg = abs(geometry.horizonAngle)
-            // Smooth score: 1.0 at 0°, decays to 0 at ±15°
+            guard geometry.horizonDetected || geometry.deviceRollDegrees != nil || geometry.userPinnedSubject != nil else {
+                return 0.0
+            }
+            let angleDeg = abs(effectiveHorizonAngle(geometry: geometry))
             return Float(max(0.0, 1.0 - (angleDeg / 15.0)))
 
         case .ruleOfThirds, .center, .diagonal, .vertical:
@@ -178,6 +241,17 @@ struct AlignmentAnalyzer {
             let score = Float(max(0.0, 1.0 - (dist / 0.5)))
             return score
         }
+    }
+
+    /// Horizon angle in degrees; prefers Vision detection, falls back to device roll.
+    static func effectiveHorizonAngle(geometry: SceneGeometry) -> Double {
+        if geometry.horizonDetected {
+            return geometry.horizonAngle
+        }
+        if let roll = geometry.deviceRollDegrees {
+            return roll
+        }
+        return geometry.horizonAngle
     }
 
     // MARK: - Geometry Helpers

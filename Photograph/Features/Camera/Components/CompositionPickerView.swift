@@ -4,7 +4,7 @@
 //
 //  Horizontal composition picker that appears when the user locks a subject.
 //  Each composition is a Liquid Glass pill with SF Symbol icon and label.
-//  The ML-suggested composition gets a ★ badge.
+//  The ML-suggested composition gets a "Best fit" badge.
 //
 //  Design: iOS 26 HIG — .glassEffect(.regular.interactive()),
 //  GlassEffectContainer for morphing, staggered entrance animation.
@@ -19,14 +19,27 @@ import SwiftUI
 struct CompositionPickerView: View {
     let selectedComposition: CompositionType?
     let mlSuggestion: CompositionType?
+    let compositions: [CompositionType]
     let onSelect: (CompositionType) -> Void
 
     @State private var hasAppeared = false
 
+    init(
+        selectedComposition: CompositionType?,
+        mlSuggestion: CompositionType?,
+        compositions: [CompositionType] = Array(CompositionType.allCases),
+        onSelect: @escaping (CompositionType) -> Void
+    ) {
+        self.selectedComposition = selectedComposition
+        self.mlSuggestion = mlSuggestion
+        self.compositions = compositions
+        self.onSelect = onSelect
+    }
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Spacing.small) {
-                ForEach(Array(CompositionType.allCases.enumerated()), id: \.element) { index, comp in
+                ForEach(Array(compositions.enumerated()), id: \.element) { index, comp in
                     CompositionPill(
                         composition: comp,
                         isSelected: selectedComposition == comp,
@@ -74,20 +87,19 @@ private struct CompositionPill: View {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: composition.symbolName)
                         .font(.title3)
-                        .foregroundStyle(isSelected ? AppColors.primary : .white.opacity(0.8))
+                        .foregroundStyle(isSelected ? AppColors.controlActive : .white.opacity(0.8))
                         .contentTransition(.symbolEffect(.replace))
                         .frame(width: 32, height: 32)
 
-                    // ML recommendation badge
                     if isRecommended {
                         RecommendationBadge()
-                            .offset(x: 8, y: -4)
+                            .offset(x: 0, y: -18)
                     }
                 }
 
                 Text(composition.shortLabel)
                     .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+                    .foregroundStyle(isSelected ? AppColors.textOnCamera : AppColors.textGuide)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -97,7 +109,7 @@ private struct CompositionPill: View {
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.medium)
                     .strokeBorder(
-                        isSelected ? AppColors.primary.opacity(0.6) : .white.opacity(0.1),
+                        isSelected ? AppColors.controlActive.opacity(0.6) : .white.opacity(0.1),
                         lineWidth: isSelected ? 1.5 : 0.5
                     )
             )
@@ -113,7 +125,7 @@ private struct CompositionPill: View {
         )
         .accessibilityLabel("\(composition.rawValue) composition")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(isRecommended ? "AI recommended" : "")
+        .accessibilityHint(isRecommended ? "Best fit recommendation" : "")
     }
 
     @ViewBuilder
@@ -123,7 +135,7 @@ private struct CompositionPill: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppRadius.medium)
-                        .fill(AppColors.primary.opacity(0.12))
+                        .fill(AppColors.controlActive.opacity(0.12))
                 )
         } else {
             RoundedRectangle(cornerRadius: AppRadius.medium)
@@ -134,42 +146,19 @@ private struct CompositionPill: View {
 
 // MARK: - RecommendationBadge
 
-/// Shimmering ★ badge for the ML-suggested composition.
+/// Explicit "Best fit" label for the ML-suggested composition.
 private struct RecommendationBadge: View {
-    @State private var shimmer = false
-
     var body: some View {
-        Text("★")
-            .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(AppColors.primary)
-            .padding(3)
+        Text("Best fit")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
             .background(
-                Circle()
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        Circle()
-                            .fill(AppColors.primary.opacity(shimmer ? 0.3 : 0.1))
-                    )
+                Capsule()
+                    .fill(AppColors.primary)
             )
-            .onAppear {
-                withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-                    shimmer = true
-                }
-            }
+            .accessibilityLabel("Best fit recommendation")
     }
 }
 
-// MARK: - Short Label Extension
-
-extension CompositionType {
-    /// Short label for the composition picker pill.
-    var shortLabel: String {
-        switch self {
-        case .ruleOfThirds: return "Thirds"
-        case .center:       return "Center"
-        case .horizontal:   return "Horizon"
-        case .vertical:     return "Vertical"
-        case .diagonal:     return "Diagonal"
-        }
-    }
-}

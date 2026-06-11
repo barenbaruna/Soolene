@@ -32,6 +32,12 @@ struct SceneGeometry: Equatable {
     /// Horizon angle in degrees. 0 = perfectly level; positive = clockwise tilt.
     var horizonAngle: Double = 0.0
 
+    /// True when the latest Vision horizon request returned a valid observation.
+    var horizonDetected: Bool = false
+
+    /// Device roll from CoreMotion (degrees), used as horizontal fallback when Vision has no horizon.
+    var deviceRollDegrees: Double? = nil
+
     // MARK: - Faces
 
     /// Normalized CGRects of all detected faces (UIKit coords).

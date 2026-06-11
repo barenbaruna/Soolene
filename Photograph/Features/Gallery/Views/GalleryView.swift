@@ -2,17 +2,7 @@
 //  GalleryView.swift
 //  Photograph
 //
-//  Gallery main screen — 2-column composition category cards.
-//  Presented as fullScreenCover from CameraView.
-//
-//  HIG §7.1: NavigationStack mandatory
-//  HIG §8.1: .toolbarTitleDisplayMode(.inline) + .toolbarRole(.editor) for leading title
-//  HIG §4.3: Nav bar auto-gets Liquid Glass — do NOT override toolbarBackground
-//  HIG §4.7: Button(role: .close) for dismiss
-//
-//  Uses Design System: Typography, Spacing, AppColors.
-//
-//  Created by Baren Baruna Harahap on 05/06/26.
+//  Library home — Recent strip + Composition category grid (design reference).
 //
 
 import Photos
@@ -22,11 +12,13 @@ struct GalleryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var compositionCounts: [CompositionType: Int] = [:]
     @State private var previewAssets: [CompositionType: PHAsset] = [:]
+    @State private var recentAsset: PHAsset?
+    @State private var recentComposition: CompositionType = .ruleOfThirds
     @State private var isLoading = true
 
     private let columns = [
-        GridItem(.flexible(), spacing: Spacing.small),
-        GridItem(.flexible(), spacing: Spacing.small)
+        GridItem(.flexible(), spacing: Spacing.standard),
+        GridItem(.flexible(), spacing: Spacing.standard)
     ]
 
     var body: some View {
@@ -39,63 +31,91 @@ struct GalleryView: View {
                     ContentUnavailableView(
                         "No Photos Yet",
                         systemImage: "camera.viewfinder",
-                        description: Text("Photos you take with Visula will appear here, organised by composition.")
+                        description: Text("Open the camera to start capturing guided compositions.")
                     )
                 } else {
-                    categoryGrid
+                    libraryContent
                 }
             }
             .background(AppColors.gallerySurface)
-            .navigationTitle("Gallery")
-            .toolbarTitleDisplayMode(.inline)
+            .navigationTitle("Library")
+            .toolbarTitleDisplayMode(.inlineLarge)
+            .toolbarRole(.editor)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .fontWeight(.semibold)
-                            .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
-                            .background(.regularMaterial, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Back")
+                    Button(role: .close) { dismiss() }
+                        .accessibilityLabel("Close Library")
                 }
             }
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
-        .tint(AppColors.primary)
+        .tint(AppColors.secondary)
         .preferredColorScheme(.dark)
         .task { await loadData() }
     }
 
-    // MARK: - Category Grid
-
-    private var categoryGrid: some View {
+    private var libraryContent: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: Spacing.small) {
-                ForEach(CompositionType.allCases) { type in
-                    let count = compositionCounts[type] ?? 0
-                    if count > 0 {
-                        NavigationLink {
-                            CompositionPhotoListView(composition: type)
-                        } label: {
-                            CompositionCategoryCard(
-                                composition: type,
-                                count: count,
-                                previewAsset: previewAssets[type]
-                            )
+            VStack(alignment: .leading, spacing: Spacing.medium) {
+                sectionHeader("RECENT")
+
+                recentStrip
+                    .padding(.horizontal, Spacing.standard)
+
+                sectionHeader("COMPOSITION")
+                    .padding(.top, Spacing.small)
+
+                LazyVGrid(columns: columns, spacing: Spacing.standard) {
+                    ForEach(CompositionType.allCases) { type in
+                        let count = compositionCounts[type] ?? 0
+                        if count > 0 {
+                            NavigationLink {
+                                CompositionPhotoListView(composition: type)
+                            } label: {
+                                CompositionCategoryCard(
+                                    composition: type,
+                                    count: count,
+                                    previewAsset: previewAssets[type]
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, Spacing.standard)
             }
-            .padding(.horizontal, Spacing.medium)
             .padding(.top, Spacing.small)
         }
-        .background(AppColors.gallerySurface)
-        .contentMargins(.bottom, 30, for: .scrollContent)
+        .contentMargins(.bottom, Spacing.large, for: .scrollContent)
     }
 
-    // MARK: - Data Loading
+    private var recentStrip: some View {
+        Group {
+            if let asset = recentAsset {
+                NavigationLink {
+                    PhotoDetailView(asset: asset, composition: recentComposition)
+                } label: {
+                    Color.clear
+                        .frame(height: 120)
+                        .overlay { PhotoThumbnailView(asset: asset) }
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
+                }
+                .buttonStyle(.plain)
+            } else {
+                RoundedRectangle(cornerRadius: AppRadius.small)
+                    .fill(Color.white.opacity(0.08))
+                    .frame(height: 120)
+            }
+        }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(AppColors.textGuide)
+            .textCase(.uppercase)
+            .padding(.horizontal, Spacing.standard)
+    }
 
     private func loadData() async {
         let counts = await GalleryManager.shared.fetchCompositionCounts()
@@ -107,9 +127,19 @@ struct GalleryView: View {
                 if let asset = result.firstObject { previews[type] = asset }
             }
         }
+        let recent = await GalleryManager.shared.fetchAllPhotos()?.firstObject
+        var recentComp = CompositionType.ruleOfThirds
+        if let recent {
+            let metadata = await GalleryManager.shared.fetchAllCompositionMetadata()
+            if let match = metadata.first(where: { $0.assetIdentifier == recent.localIdentifier }) {
+                recentComp = match.composition
+            }
+        }
         await MainActor.run {
             compositionCounts = counts
             previewAssets = previews
+            recentAsset = recent
+            recentComposition = recentComp
             isLoading = false
         }
     }

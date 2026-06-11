@@ -11,6 +11,7 @@ struct RuleOfThirdsGrid: View {
     let rect: CGRect
     let color: Color
     let geometry: SceneGeometry
+    var lockedTarget: CGPoint?
     let isPerfect: Bool
     
     var body: some View {
@@ -59,9 +60,23 @@ struct RuleOfThirdsGrid: View {
     }
     
     private var nearestIndex: Int? {
+        if let lockedTarget {
+            var nearest: Int? = nil
+            var minDist = CGFloat.greatestFiniteMagnitude
+            for (i, ip) in intersections.enumerated() {
+                let normIP = CGPoint(
+                    x: (ip.x - rect.minX) / rect.width,
+                    y: (ip.y - rect.minY) / rect.height
+                )
+                let d = hypot(normIP.x - lockedTarget.x, normIP.y - lockedTarget.y)
+                if d < minDist { minDist = d; nearest = i }
+            }
+            return nearest
+        }
+
         let pt = geometry.saliencyCentroid ?? faceCenter
         guard let subject = pt else { return nil }
-        
+
         var nearest: Int? = nil
         var minDist = CGFloat.greatestFiniteMagnitude
         for (i, ip) in intersections.enumerated() {

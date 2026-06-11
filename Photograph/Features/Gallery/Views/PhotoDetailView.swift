@@ -66,37 +66,31 @@ struct PhotoDetailView: View {
             WalkthroughOverlayView(context: .detail)
         }
         .navigationBarBackButtonHidden(true)
+        .navigationTitle(composition.galleryLabel)
         .toolbarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
-            // Back
             ToolbarItem(placement: .topBarLeading) {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .fontWeight(.semibold)
-                        .foregroundStyle(AppColors.primary)
-                        .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
-                        .background(.regularMaterial, in: Circle())
+                        .foregroundStyle(AppColors.textOnCamera)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Back")
             }
-            // Date pill — HIG §15.1 .regularMaterial
-            ToolbarItem(placement: .principal) {
-                ImageDateLabel(dateText: dateParts.date, timeText: dateParts.time)
-            }
-            // Grid toggle
+
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     HapticManager.selection()
                     withAnimation(.easeInOut(duration: 0.2)) { isShowingOverlay.toggle() }
                 } label: {
-                    Image(systemName: "perspective")
+                    Image(systemName: "square.grid.3x3")
                         .fontWeight(.medium)
-                        .foregroundStyle(isShowingOverlay ? .black : AppColors.primary)
+                        .foregroundStyle(isShowingOverlay ? AppColors.surface : AppColors.controlActive)
                         .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
                         .background(
-                            isShowingOverlay ? AnyShapeStyle(AppColors.primary) : AnyShapeStyle(.ultraThinMaterial),
+                            isShowingOverlay ? AnyShapeStyle(AppColors.controlActive) : AnyShapeStyle(Color.white.opacity(0.12)),
                             in: Circle()
                         )
                 }
@@ -130,7 +124,7 @@ struct PhotoDetailView: View {
             } label: {
                 Image(systemName: "trash")
                     .font(.body)
-                    .foregroundStyle(AppColors.primary)
+                    .foregroundStyle(AppColors.controlActive)
                     .frame(width: ControlMetrics.iconButton, height: ControlMetrics.iconButton)
                     .background(.regularMaterial, in: Circle())
             }

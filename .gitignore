@@ -1,3 +1,9 @@
-HIG_REFERENCE.md
+# HIG_REFERENCE.md
 PRD.md
 prompt_ios_app_build.md
+CODE_AUDIT.md
+specs/
+
+# Xcode user state
+*.xcuserstate
+**/xcuserdata/

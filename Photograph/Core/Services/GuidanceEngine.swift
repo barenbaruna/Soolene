@@ -24,6 +24,15 @@ import Foundation
 ///   3. Returns nil if the model has not produced any predictions yet.
 enum GuidanceEngine {
 
+    /// Minimum ML confidence required to auto-select a composition on subject lock.
+    static let autoSelectConfidenceThreshold: Float = 0.55
+
+    /// ML label must exceed the incumbent by this delta before switching during scanning.
+    static let mlHysteresisMinDelta: Float = 0.20
+
+    /// Frames a challenger label must persist before replacing the incumbent.
+    static let mlHysteresisFrames = 15
+
     // MARK: - Public API
 
     /// Returns the best composition technique based on ML predictions alone.
@@ -50,6 +59,31 @@ enum GuidanceEngine {
         predictions: [CompositionPrediction]
     ) -> CompositionType? {
         predictions.first?.type
+    }
+
+    /// Returns the top recommendation when confidence meets the auto-select threshold.
+    static func recommendForAutoSelect(
+        predictions: [CompositionPrediction]
+    ) -> (type: CompositionType, confidence: Float)? {
+        guard let top = predictions.first,
+              top.confidence >= autoSelectConfidenceThreshold
+        else { return nil }
+        return (top.type, top.confidence)
+    }
+
+    /// Orders picker pills by ML confidence (highest first), then remaining types.
+    static func sortedPickerOrder(predictions: [CompositionPrediction]) -> [CompositionType] {
+        var seen = Set<CompositionType>()
+        var ordered: [CompositionType] = []
+        for prediction in predictions {
+            if seen.insert(prediction.type).inserted {
+                ordered.append(prediction.type)
+            }
+        }
+        for type in CompositionType.allCases where !seen.contains(type) {
+            ordered.append(type)
+        }
+        return ordered
     }
 
     /// Generates a technique for a user-selected composition.
@@ -96,8 +130,7 @@ enum GuidanceEngine {
             return "Move the square to the center."
 
         case .horizontal:
-            let angle = abs(geometry.horizonAngle)
-            if geometry.horizonAngle == 0 { return "Level the camera." }
+            let angle = abs(AlignmentAnalyzer.effectiveHorizonAngle(geometry: geometry))
             if angle < 2.0 { return "Perfect. Hold steady." }
             if angle < 6.0 { return "Almost there." }
             return "Level the camera."
