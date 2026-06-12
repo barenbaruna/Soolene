@@ -2,23 +2,20 @@
 //  CompositionCoordinator.swift
 //  Photograph
 //
-//  Owns subject lock, composition selection, and guidance phase transitions.
-//
 
 import CoreGraphics
+import SwiftUI
 import UIKit
 
+/// Subject lock, composition selection, and guidance phase transitions.
 @MainActor
+@Observable
 final class CompositionCoordinator {
 
     private let visionService: VisionService
     private let spatialEngine: SpatialCameraEngine
 
-    var guidancePhase: GuidancePhase = .scanning
-    var mlSuggestion: CompositionType? = nil
-    var userSelectedComposition: CompositionType? = nil
-    var isSubjectPinned = false
-    var recommendedCompositionLabel: String? = nil
+    var uiState = CompositionUIState()
 
     init(visionService: VisionService, spatialEngine: SpatialCameraEngine) {
         self.visionService = visionService
@@ -26,26 +23,26 @@ final class CompositionCoordinator {
     }
 
     func resetGuidanceState() {
-        isSubjectPinned = false
+        uiState.isSubjectPinned = false
         visionService.clearPinnedSubject()
-        guidancePhase = .scanning
-        userSelectedComposition = nil
-        mlSuggestion = nil
-        recommendedCompositionLabel = nil
+        uiState.phase = .scanning
+        uiState.userSelectedComposition = nil
+        uiState.mlSuggestion = nil
+        uiState.recommendedLabel = nil
         visionService.isMLEnabled = true
     }
 
     func clearPinnedSubject(cameraMode: CameraMode) {
         HapticManager.selection()
-        isSubjectPinned = false
+        uiState.isSubjectPinned = false
         visionService.clearPinnedSubject()
         if cameraMode == .rearSpatial {
             spatialEngine.clearSubjectAnchor()
         }
-        guidancePhase = .scanning
-        userSelectedComposition = nil
-        mlSuggestion = nil
-        recommendedCompositionLabel = nil
+        uiState.phase = .scanning
+        uiState.userSelectedComposition = nil
+        uiState.mlSuggestion = nil
+        uiState.recommendedLabel = nil
         visionService.isMLEnabled = true
     }
 
@@ -54,11 +51,11 @@ final class CompositionCoordinator {
         cameraMode: CameraMode,
         analysis: inout CompositionAnalysis
     ) {
-        if isSubjectPinned {
+        if uiState.isSubjectPinned {
             visionService.clearPinnedSubject()
-            userSelectedComposition = nil
-            mlSuggestion = nil
-            recommendedCompositionLabel = nil
+            uiState.userSelectedComposition = nil
+            uiState.mlSuggestion = nil
+            uiState.recommendedLabel = nil
             analysis.mlPredictions = []
             analysis.detectedComposition = .ruleOfThirds
             visionService.resetScanningState()
@@ -70,18 +67,18 @@ final class CompositionCoordinator {
         )
 
         HapticManager.lock()
-        isSubjectPinned = true
+        uiState.isSubjectPinned = true
         visionService.pinSubject(at: resolvedPoint)
         if cameraMode == .rearSpatial {
             spatialEngine.lockSubject(at: resolvedPoint)
         }
 
-        guidancePhase = .subjectLocked(subjectPoint: resolvedPoint)
-        mlSuggestion = nil
-        recommendedCompositionLabel = nil
+        uiState.phase = .subjectLocked(subjectPoint: resolvedPoint)
+        uiState.mlSuggestion = nil
+        uiState.recommendedLabel = nil
 
         if !analysis.mlPredictions.isEmpty {
-            mlSuggestion = GuidanceEngine.suggestComposition(predictions: analysis.mlPredictions)
+            uiState.mlSuggestion = GuidanceEngine.suggestComposition(predictions: analysis.mlPredictions)
             tryAutoSelect(predictions: analysis.mlPredictions, analysis: &analysis)
         } else {
             visionService.isMLEnabled = true
@@ -89,18 +86,18 @@ final class CompositionCoordinator {
     }
 
     func handleMLSuggestion(_ predictions: [CompositionPrediction], analysis: inout CompositionAnalysis) {
-        guard case .subjectLocked = guidancePhase else { return }
-        mlSuggestion = GuidanceEngine.suggestComposition(predictions: predictions)
+        guard case .subjectLocked = uiState.phase else { return }
+        uiState.mlSuggestion = GuidanceEngine.suggestComposition(predictions: predictions)
         tryAutoSelect(predictions: predictions, analysis: &analysis)
     }
 
     func selectComposition(_ composition: CompositionType, analysis: inout CompositionAnalysis) {
         HapticManager.selection()
-        userSelectedComposition = composition
-        guidancePhase = .guiding(composition: composition)
+        uiState.userSelectedComposition = composition
+        uiState.phase = .guiding(composition: composition)
         visionService.isMLEnabled = false
         analysis.detectedComposition = composition
-        recommendedCompositionLabel = nil
+        uiState.recommendedLabel = nil
 
         if let subject = analysis.sceneGeometry.smoothedSubjectPoint
                       ?? analysis.sceneGeometry.userPinnedSubject {
@@ -121,26 +118,26 @@ final class CompositionCoordinator {
     }
 
     func updatePhaseFromAnalysis(_ analysis: CompositionAnalysis) {
-        if case .guiding(let comp) = guidancePhase {
+        if case .guiding(let comp) = uiState.phase {
             if analysis.isCompositionPerfect {
-                guidancePhase = .perfect(composition: comp)
+                uiState.phase = .perfect(composition: comp)
                 HapticManager.notification(.success)
             }
-        } else if case .perfect(let comp) = guidancePhase {
+        } else if case .perfect(let comp) = uiState.phase {
             if !analysis.isCompositionPerfect {
-                guidancePhase = .guiding(composition: comp)
+                uiState.phase = .guiding(composition: comp)
             }
         }
     }
 
     private func tryAutoSelect(predictions: [CompositionPrediction], analysis: inout CompositionAnalysis) {
-        guard userSelectedComposition == nil else { return }
+        guard uiState.userSelectedComposition == nil else { return }
         guard let recommendation = GuidanceEngine.recommendForAutoSelect(predictions: predictions) else {
             visionService.isMLEnabled = true
             return
         }
 
         selectComposition(recommendation.type, analysis: &analysis)
-        recommendedCompositionLabel = "Recommended: \(recommendation.type.shortLabel)"
+        uiState.recommendedLabel = "Recommended: \(recommendation.type.shortLabel)"
     }
 }
