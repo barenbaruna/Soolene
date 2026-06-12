@@ -12,6 +12,20 @@ extension CameraViewModel {
         if let warning = trackingQualityWarning {
             return warning
         }
+
+        switch captureReadiness {
+        case .capturing:
+            return "Capturing…"
+        case .handoffRecovering:
+            return "Realigning guidance…"
+        case .compositionReady:
+            return "Hold steady — stabilizing tracking for capture"
+        case .captureReady:
+            return "Perfect. Capture now."
+        default:
+            break
+        }
+
         if let label = recommendedCompositionLabel,
            case .guiding = guidancePhase {
             return label
@@ -33,9 +47,6 @@ extension CameraViewModel {
             )
             return technique.tip
         case .perfect:
-            if isCaptureReady {
-                return "Perfect. Capture now."
-            }
             return "Hold steady — stabilizing tracking for capture"
         }
     }
@@ -47,14 +58,28 @@ extension CameraViewModel {
     }
 
     var showsTrackingStabilityMeter: Bool {
-        cameraMode == .rearSpatial && isStabilizingForCapture
+        guard cameraMode == .rearSpatial else { return false }
+        switch captureReadiness {
+        case .compositionReady, .handoffRecovering:
+            return true
+        default:
+            return false
+        }
     }
 
     var trackingStabilityProgress: Float {
         spatialEngine.trackingStabilityProgress
     }
 
+    func syncHandoffRecovery() {
+        captureCoordinator.clearHandoffRecoveryIfTrackingStable(
+            trackingState: spatialEngine.trackingState,
+            stabilityProgress: spatialEngine.trackingStabilityProgress
+        )
+    }
+
     func updateTrackingWarning(for state: ARCamera.TrackingState) {
+        syncHandoffRecovery()
         guard cameraMode == .rearSpatial else { return }
         switch state {
         case .limited(let reason):

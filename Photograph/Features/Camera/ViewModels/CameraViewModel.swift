@@ -27,8 +27,9 @@ final class CameraViewModel {
     var isCountingDown = false
     var countdownValue = 0
     var isSwitchingCamera = false
-    var zoomFactor: CGFloat = 1
     var lastZoomApplyTime: CFAbsoluteTime = 0
+    var pinchStartMultiplier: CGFloat?
+    let zoomController = ZoomController()
 
     // MARK: - Permissions
 
@@ -58,6 +59,7 @@ final class CameraViewModel {
     let captureCoordinator: CaptureCoordinator
     let sessionCoordinator: CameraSessionCoordinator
     let compositionCoordinator: CompositionCoordinator
+    let captureSettings = CaptureSettings.shared
 
     // MARK: - Motion State
 
@@ -74,15 +76,17 @@ final class CameraViewModel {
         self.spatialEngine = spatialEngine
         self.cameraManager = cameraManager
 
-        self.captureCoordinator = CaptureCoordinator(
+        let sessionCoordinator = CameraSessionCoordinator(
             spatialEngine: spatialEngine,
             cameraManager: cameraManager,
             visionService: visionService
         )
-        self.sessionCoordinator = CameraSessionCoordinator(
+        self.sessionCoordinator = sessionCoordinator
+        self.captureCoordinator = CaptureCoordinator(
             spatialEngine: spatialEngine,
             cameraManager: cameraManager,
-            visionService: visionService
+            visionService: visionService,
+            sessionCoordinator: sessionCoordinator
         )
         self.compositionCoordinator = CompositionCoordinator(
             visionService: visionService,
@@ -141,6 +145,12 @@ final class CameraViewModel {
         spatialEngine.onTrackingStateChanged = { [weak self] state in
             Task { @MainActor in
                 self?.updateTrackingWarning(for: state)
+            }
+        }
+
+        spatialEngine.onSessionConfigured = { [weak self] in
+            Task { @MainActor in
+                self?.refreshARZoomAfterSessionStart()
             }
         }
     }

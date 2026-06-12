@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import OSLog
 import UIKit
 
 // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
@@ -45,6 +46,9 @@ extension CameraManager: AVCaptureDataOutputSynchronizerDelegate {
 // MARK: - AVCapturePhotoCaptureDelegate
 
 extension CameraManager: AVCapturePhotoCaptureDelegate {
+
+    private static let photoDelegateLog = Logger(subsystem: "com.barenbaruna.Photograph", category: "AVCapture")
+
     nonisolated func photoOutput(
         _ output: AVCapturePhotoOutput,
         didFinishProcessingPhoto photo: AVCapturePhoto,
@@ -75,6 +79,12 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
                 self.captureError = "Photo capture returned no image."
             }
             return
+        }
+
+        if let image = UIImage(data: photoData)?.cgImage {
+            Self.photoDelegateLog.info(
+                "AV photo processed \(image.width)x\(image.height) bytes=\(photoData.count)"
+            )
         }
 
         // Process crop and metadata on background queue

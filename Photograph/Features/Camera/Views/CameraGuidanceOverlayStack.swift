@@ -16,8 +16,8 @@ struct CameraGuidanceOverlayStack: View {
                 geometry: viewModel.analysis.sceneGeometry,
                 aspectRatio: viewModel.selectedAspectRatio,
                 subjectOffset: viewModel.analysis.subjectOffset,
-                isPerfect: viewModel.shutterIsPerfect,
-                isStabilizing: viewModel.isStabilizingForCapture,
+                isPerfect: viewModel.captureReadiness.showsGreenCelebration,
+                isStabilizing: viewModel.captureReadiness.showsStabilizingUI,
                 sceneAlignmentScore: viewModel.analysis.sceneAlignmentScore,
                 hasSceneData: viewModel.analysis.hasSceneData
             )
@@ -49,7 +49,7 @@ struct CameraGuidanceOverlayStack: View {
                     subjectPoint: viewModel.analysis.bestSubjectPoint,
                     targetPoint: viewModel.analysis.sceneGeometry.lockedTargetPoint,
                     isPerfect: viewModel.analysis.isCompositionPerfect,
-                    isCaptureReady: viewModel.isCaptureReady,
+                    showsGreenCelebration: viewModel.captureReadiness.showsGreenCelebration,
                     hasSceneData: viewModel.analysis.hasSceneData,
                     hasMLData: viewModel.analysis.hasMLData,
                     alignmentScore: viewModel.analysis.sceneAlignmentScore,

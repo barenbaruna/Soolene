@@ -32,12 +32,21 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     var capturedImage: UIImage?
     var capturedPhotoData: Data?
     var captureError: String?
+    /// Last `ARError.code.rawValue` from hi-res capture failure (telemetry).
+    var lastCaptureARErrorCode: Int?
     var trackingState: ARCamera.TrackingState = .notAvailable
     /// 0…1 progress toward stable tracking for hi-res capture.
     var trackingStabilityProgress: Float = 0
     var isCapturingHighResolution = false
     var lastLockQuality: SubjectLockQuality?
     var viewportSize: CGSize = .zero
+    /// Last frame frozen for handoff overlay (Epic 3b UI).
+    var handoffFrozenPreviewImage: UIImage?
+    /// Active lens preset for telemetry (derived from display multiplier).
+    var selectedLens: LensType = .wide
+    /// User-facing zoom multiplier for handoff snapshot.
+    var displayMultiplier: CGFloat = 1.0
+    var isZoomPreviewApproximate = false
 
     /// The processed preview is driven by ARSCNView bound to `session`.
     let session = ARSession()
@@ -48,6 +57,8 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     var onFrameUpdated: (@Sendable (SpatialFramePacket) -> Void)?
     var onSubjectLockResult: (@Sendable (SubjectLockQuality?) -> Void)?
     var onTrackingStateChanged: ((ARCamera.TrackingState) -> Void)?
+    /// Fired on the main queue after AR session run completes (used to refresh zoom profile).
+    var onSessionConfigured: (() -> Void)?
     /// When false, the delegate skips pixel-buffer copy (Vision still receives projected subject).
     var shouldProcessVisionFrame: (@Sendable () -> Bool)?
 
@@ -74,8 +85,10 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     private var visionFrameProcessCounter = 0
     private var pendingSessionRecovery = false
     private var sessionCaptureActive = false
+    private var pendingDeviceVideoZoom: CGFloat = 1.0
 
     private static let captureCIContext = CIContext(options: nil)
+    private static let zoomLog = Logger(subsystem: "com.barenbaruna.Photograph", category: "ZoomDiscovery")
     private static let requiredNormalFramesForCapture = 3
     private static let visionProcessEveryNthFrame = 2
 
@@ -136,9 +149,19 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         sessionController.run(resetAnchors: resetAnchors, reattach: reattach)
 
         DispatchQueue.main.async { [weak self] in
-            self?.isSessionRunning = true
-            self?.isARKitSupported = true
-            self?.isSessionConfigured = true
+            guard let self else { return }
+            self.isSessionRunning = true
+            self.isARKitSupported = true
+            self.isSessionConfigured = true
+            self.notifySessionConfiguredAndReapplyZoom()
+        }
+    }
+
+    private func notifySessionConfiguredAndReapplyZoom() {
+        // ARKit exposes `configurableCaptureDeviceForPrimaryCamera` only after run.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            self?.onSessionConfigured?()
+            self?.reapplyPendingDeviceZoom()
         }
     }
 
@@ -426,27 +449,45 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         }
     }
 
-    func setZoomFactor(_ factor: CGFloat) {
-        sessionQueue.async { [weak self] in
-            guard let device = ARWorldTrackingConfiguration.configurableCaptureDeviceForPrimaryCamera else { return }
+    /// Applies device `videoZoomFactor` from mapped AR guidance zoom.
+    func setZoomFactor(_ deviceVideoZoomFactor: CGFloat) {
+        pendingDeviceVideoZoom = deviceVideoZoomFactor
+        applyPendingDeviceZoom()
+    }
+
+    func reapplyPendingDeviceZoom() {
+        applyPendingDeviceZoom()
+    }
+
+    private func applyPendingDeviceZoom() {
+        let factor = pendingDeviceVideoZoom
+        DispatchQueue.main.async {
+            guard let device = ARWorldTrackingConfiguration.configurableCaptureDeviceForPrimaryCamera else {
+                Self.zoomLog.warning("zoom_apply skipped — no configurable AR capture device")
+                return
+            }
 
             do {
                 try device.lockForConfiguration()
                 let clamped = min(
                     max(factor, device.minAvailableVideoZoomFactor),
-                    min(device.maxAvailableVideoZoomFactor, 10)
+                    device.maxAvailableVideoZoomFactor
                 )
                 device.videoZoomFactor = clamped
+                let readback = device.videoZoomFactor
                 device.unlockForConfiguration()
+                Self.zoomLog.debug(
+                    """
+                    zoom_apply device=\(device.deviceType.rawValue) \
+                    requested=\(factor) applied=\(clamped) \
+                    min=\(device.minAvailableVideoZoomFactor) max=\(device.maxAvailableVideoZoomFactor) \
+                    readback=\(readback) visualPreview=\(self.displayMultiplier)
+                    """
+                )
             } catch {
-                // Ignore transient configuration failures.
+                Self.zoomLog.error("zoom_apply failed: \(error.localizedDescription)")
             }
         }
-    }
-
-    var maximumZoomFactor: CGFloat {
-        guard let device = ARWorldTrackingConfiguration.configurableCaptureDeviceForPrimaryCamera else { return 1 }
-        return min(device.maxAvailableVideoZoomFactor, 10)
     }
 
     func cycleFlash() {
@@ -456,6 +497,171 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         case .auto: flashMode = .off
         @unknown default: flashMode = .off
         }
+    }
+
+    // MARK: - AV Handoff Primitives (Option F)
+
+    /// Captures world map, anchor transform, camera controls, and a frozen preview frame.
+    func makeHandoffSnapshot(aspectRatio: AspectRatioMode) async -> CaptureHandoffSnapshot {
+        await withCheckedContinuation { continuation in
+            session.getCurrentWorldMap { [weak self] worldMap, error in
+                guard let self else {
+                    continuation.resume(returning: .empty(aspectRatio: aspectRatio))
+                    return
+                }
+                if let error {
+                    Self.captureLog.warning(
+                        "World map snapshot failed: \(error.localizedDescription)"
+                    )
+                }
+                self.sessionQueue.async {
+                    let snapshot = self.buildHandoffSnapshotOnSessionQueue(
+                        aspectRatio: aspectRatio,
+                        worldMap: worldMap
+                    )
+                    DispatchQueue.main.async {
+                        self.handoffFrozenPreviewImage = snapshot.frozenPreviewImage
+                    }
+                    continuation.resume(returning: snapshot)
+                }
+            }
+        }
+    }
+
+    /// Pauses AR and vision processing so AVFoundation can claim the camera.
+    func pauseForHandoff() async {
+        arStateLock.lock()
+        isVisionPausedForCapture = true
+        arStateLock.unlock()
+        await stopSessionAndWait()
+    }
+
+    /// Resumes AR after AV capture; waits up to `trackingTimeout` for stable tracking.
+    func resumeAfterHandoff(
+        _ snapshot: CaptureHandoffSnapshot,
+        trackingTimeout: TimeInterval = 8
+    ) async -> CaptureHandoffResumeResult {
+        let anchorTransform = snapshot.subjectAnchorTransform
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            sessionQueue.async { [weak self] in
+                guard let self else {
+                    continuation.resume()
+                    return
+                }
+                let anchor = self.prepareSubjectAnchorForResume(from: anchorTransform)
+                if let worldMap = snapshot.worldMap {
+                    self.sessionController.runWithWorldMap(worldMap, reattach: anchor)
+                } else {
+                    self.sessionController.runAfterHandoffWithoutWorldMap(reattach: anchor)
+                }
+                self.consecutiveNormalFrames = 0
+                DispatchQueue.main.async {
+                    self.isSessionRunning = true
+                    self.isSessionConfigured = true
+                    self.trackingStabilityProgress = 0
+                    self.notifySessionConfiguredAndReapplyZoom()
+                }
+                self.arStateLock.lock()
+                self.isVisionPausedForCapture = false
+                self.arStateLock.unlock()
+                continuation.resume()
+            }
+        }
+
+        if await waitForTrackingRecovery(timeout: trackingTimeout) {
+            return snapshot.worldMap != nil ? .recoveredWithWorldMap : .recoveredWithoutWorldMap
+        }
+
+        if snapshot.worldMap != nil {
+            Self.captureLog.warning("World map relocalization timed out — falling back without map")
+            await resumeWithoutWorldMap(anchorTransform: anchorTransform)
+            if await waitForTrackingRecovery(timeout: trackingTimeout) {
+                return .recoveredWithoutWorldMap
+            }
+        }
+
+        return .trackingDegraded
+    }
+
+    func clearHandoffFrozenPreview() {
+        DispatchQueue.main.async { [weak self] in
+            self?.handoffFrozenPreviewImage = nil
+        }
+    }
+
+    private func buildHandoffSnapshotOnSessionQueue(
+        aspectRatio: AspectRatioMode,
+        worldMap: ARWorldMap?
+    ) -> CaptureHandoffSnapshot {
+        arStateLock.lock()
+        let anchorTransform = subjectAnchor?.transform
+        let orientation = sessionInterfaceOrientation
+        arStateLock.unlock()
+
+        let controls = CameraControlSnapshot.fromSpatialEngine(
+            self,
+            displayMultiplier: displayMultiplier
+        )
+
+        var frozenImage: UIImage?
+        if let frame = session.currentFrame {
+            let imageOrientation = Self.imageOrientation(for: orientation)
+            frozenImage = Self.makeUIImage(from: frame.capturedImage, orientation: imageOrientation)
+        }
+
+        return CaptureHandoffSnapshot(
+            worldMap: worldMap,
+            subjectAnchorTransform: anchorTransform,
+            cameraControls: controls,
+            aspectRatio: aspectRatio,
+            frozenPreviewImage: frozenImage
+        )
+    }
+
+    /// Builds an anchor for post-handoff resume without adding it before `session.run`.
+    private func prepareSubjectAnchorForResume(from transform: simd_float4x4?) -> ARAnchor? {
+        arStateLock.lock()
+        subjectAnchor = nil
+        isSubjectLocked = transform != nil
+        arStateLock.unlock()
+
+        guard let transform else { return nil }
+        let anchor = ARAnchor(transform: transform)
+        arStateLock.lock()
+        subjectAnchor = anchor
+        arStateLock.unlock()
+        return anchor
+    }
+
+    private func resumeWithoutWorldMap(anchorTransform: simd_float4x4?) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            sessionQueue.async { [weak self] in
+                guard let self else {
+                    continuation.resume()
+                    return
+                }
+                let anchor = self.prepareSubjectAnchorForResume(from: anchorTransform)
+                self.sessionController.runAfterHandoffWithoutWorldMap(reattach: anchor)
+                self.consecutiveNormalFrames = 0
+                DispatchQueue.main.async { self.trackingStabilityProgress = 0 }
+                continuation.resume()
+            }
+        }
+    }
+
+    private func waitForTrackingRecovery(timeout: TimeInterval) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let ready = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+                sessionQueue.async { [weak self] in
+                    continuation.resume(returning: self?.isTrackingReadyForCapture() ?? false)
+                }
+            }
+            if ready { return true }
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+        return false
     }
 
     // MARK: - High-Resolution Capture
@@ -468,6 +674,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
             capturedImage = nil
             capturedPhotoData = nil
             captureError = nil
+            lastCaptureARErrorCode = nil
             pendingAspectRatio = aspectRatio
         }
 
@@ -576,9 +783,11 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
                 Self.logCaptureFailure(error: error, config: config)
                 let message = Self.captureErrorMessage(for: error)
+                let arCode = (error as? ARError)?.code.rawValue
                 Task { @MainActor in
                     self.isCapturingHighResolution = false
                     self.captureError = message
+                    self.lastCaptureARErrorCode = arCode
                 }
                 self.arStateLock.lock()
                 self.isVisionPausedForCapture = false

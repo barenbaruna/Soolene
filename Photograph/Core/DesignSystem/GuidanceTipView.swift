@@ -2,7 +2,7 @@
 //  GuidanceTipView.swift
 //  Photograph
 //
-//  Centered guidance label — always driven by `tip`; glass scrim for readability.
+//  Centered guidance label — driven by `tip` and unified `captureReadiness`.
 //
 
 import SwiftUI
@@ -11,7 +11,7 @@ struct GuidanceTipView: View {
     let phase: GuidancePhase
     let tip: String
     let composition: CompositionType?
-    let isCaptureReady: Bool
+    let captureReadiness: CaptureReadiness
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -53,9 +53,9 @@ struct GuidanceTipView: View {
         case .subjectLocked:
             return "subjectLocked"
         case .guiding(let composition):
-            return "guiding-\(composition.rawValue)"
+            return "guiding-\(composition.rawValue)-\(captureReadiness)"
         case .perfect(let composition):
-            return "perfect-\(composition.rawValue)-\(isCaptureReady)"
+            return "perfect-\(composition.rawValue)-\(captureReadiness)"
         }
     }
 
@@ -106,11 +106,13 @@ struct GuidanceTipView: View {
     }
 
     private var foregroundColor: Color {
-        switch phase {
-        case .perfect where isCaptureReady:
+        if captureReadiness.showsGreenCelebration {
             return AppColors.gridlineGreen
-        case .perfect:
+        }
+        if captureReadiness.showsStabilizingUI {
             return AppColors.controlActive
+        }
+        switch phase {
         case .guiding:
             return AppColors.textOnCamera
         default:
@@ -119,7 +121,7 @@ struct GuidanceTipView: View {
     }
 
     private var showsReadyIcon: Bool {
-        phase.isPerfect && isCaptureReady
+        captureReadiness.showsGreenCelebration
     }
 
     @ViewBuilder

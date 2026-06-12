@@ -18,7 +18,7 @@ protocol ClassicCameraProviding: AnyObject {
     var availableLenses: [LensType] { get }
     var selectedLens: LensType { get set }
 
-    func configureSession(useFront: Bool, lens: LensType)
+    func configureSession(useFront: Bool, displayMultiplier: CGFloat)
     func startSession()
     func stopSession()
     func stopSessionAndWait() async

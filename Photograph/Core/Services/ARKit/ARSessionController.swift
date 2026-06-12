@@ -36,23 +36,51 @@ final class ARSessionController {
             config.videoFormat = hiResFormat
         }
 
-        configureContinuousAutoFocus()
         worldConfiguration = config
         return config
     }
 
     func run(resetAnchors: Bool, reattach anchor: ARAnchor?) {
         guard let config = worldConfiguration ?? buildConfiguration() else { return }
-        let options: ARSession.RunOptions = resetAnchors ? [.resetTracking, .removeExistingAnchors] : [.resetTracking]
+        let options: ARSession.RunOptions = resetAnchors
+            ? [.resetTracking, .removeExistingAnchors]
+            : []
         session.run(config, options: options)
         if let anchor {
             session.add(anchor: anchor)
         }
+        configureContinuousAutoFocus()
     }
 
     func runPreservingConfiguration() {
         guard let config = worldConfiguration else { return }
         session.run(config)
+        configureContinuousAutoFocus()
+    }
+
+    /// Resumes AR after AV handoff using a **one-shot** world map (never stored on `worldConfiguration`).
+    func runWithWorldMap(_ worldMap: ARWorldMap, reattach anchor: ARAnchor?) {
+        guard var config = worldConfiguration ?? buildConfiguration() else { return }
+        config.initialWorldMap = worldMap
+        session.run(config, options: [])
+        config.initialWorldMap = nil
+        worldConfiguration = config
+        if let anchor {
+            session.add(anchor: anchor)
+        }
+        configureContinuousAutoFocus()
+    }
+
+    /// Fallback resume when relocalization from world map fails or map unavailable.
+    func runAfterHandoffWithoutWorldMap(reattach anchor: ARAnchor?) {
+        guard var config = worldConfiguration ?? buildConfiguration() else { return }
+        config.initialWorldMap = nil
+        worldConfiguration = config
+        session.run(config, options: [.resetTracking])
+        if let anchor {
+            session.add(anchor: anchor)
+        }
+        configureContinuousAutoFocus()
     }
 
     func pause() {

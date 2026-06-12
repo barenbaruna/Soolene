@@ -40,7 +40,7 @@ struct CompositionDirectionOverlay: View {
     let subjectPoint: CGPoint?
     let targetPoint: CGPoint?
     let isPerfect: Bool
-    var isCaptureReady: Bool = true
+    var showsGreenCelebration: Bool = false
     let hasSceneData: Bool
     let hasMLData: Bool
     let alignmentScore: Float
@@ -65,14 +65,14 @@ struct CompositionDirectionOverlay: View {
     private var anchorColor: Color {
         switch proximity {
         case .perfect:
-            return isCaptureReady ? AppColors.gridlineGreen : AppColors.controlActive
+            return showsGreenCelebration ? AppColors.gridlineGreen : AppColors.controlActive
         case .close:   return AppColors.primary
         case .far:     return Color.white.opacity(0.85)
         }
     }
 
     private var showsCelebration: Bool {
-        proximity == .perfect && isCaptureReady
+        proximity == .perfect && showsGreenCelebration
     }
 
     private var bracketLineWidth: CGFloat {

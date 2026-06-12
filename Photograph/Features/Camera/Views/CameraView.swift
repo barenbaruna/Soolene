@@ -76,6 +76,13 @@ struct CameraView: View {
                     .allowsHitTesting(false)
             }
 
+            if viewModel.isCaptureHandoffInProgress {
+                CameraHandoffOverlay(
+                    frozenPreview: viewModel.handoffFrozenPreviewImage,
+                    message: handoffOverlayMessage
+                )
+            }
+
             WalkthroughOverlayView(context: .camera)
         }
         .onChange(of: isShowingGallery) { _, showing in
@@ -103,8 +110,11 @@ struct CameraView: View {
                 Task { await viewModel.savePhoto() }
             }
         }
-        .onChange(of: viewModel.shutterIsPerfect) { wasReady, isReady in
-            guard isReady, !wasReady else { return }
+        .onChange(of: viewModel.trackingStabilityProgress) { _, _ in
+            viewModel.syncHandoffRecovery()
+        }
+        .onChange(of: viewModel.captureReadiness) { wasReady, isReady in
+            guard isReady.showsGreenCelebration, !wasReady.showsGreenCelebration else { return }
             UIAccessibility.post(
                 notification: .announcement,
                 argument: "Composition ready. Capture now."
@@ -129,6 +139,16 @@ struct CameraView: View {
                 viewModel.showInlineToast(error)
             }
         }
+    }
+
+    private var handoffOverlayMessage: String {
+        if viewModel.isHandoffRecovering {
+            return "Realigning guidance…"
+        }
+        if viewModel.isMaxQualityCaptureEnabled {
+            return "Capturing at maximum quality…"
+        }
+        return "Capturing…"
     }
 
     // MARK: - Gestures

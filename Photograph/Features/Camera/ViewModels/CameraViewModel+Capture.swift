@@ -20,6 +20,10 @@ extension CameraViewModel {
     }
 
     func capturePhoto() {
+        if isCapturing {
+            showInlineToast("Capture in progress")
+            return
+        }
         if timerLength > 0 {
             startCountdown()
         } else {
@@ -64,31 +68,29 @@ extension CameraViewModel {
         captureCoordinator.clearCaptureErrors()
     }
 
-    var isCaptureReady: Bool {
-        captureCoordinator.isCaptureReady(
+    var captureReadiness: CaptureReadiness {
+        captureCoordinator.captureReadiness(
             cameraMode: cameraMode,
-            guidancePhase: guidancePhase
+            guidancePhase: guidancePhase,
+            analysis: analysis
         )
+    }
+
+    /// Hardware + tracking gate (legacy name — prefer `captureReadiness.isShutterEnabled`).
+    var isCaptureReady: Bool {
+        captureReadiness.isShutterEnabled
     }
 
     var shutterIsPerfect: Bool {
-        shutterReadiness == .ready
-    }
-
-    var isCompositionAligned: Bool {
-        guidancePhase.isPerfect || analysis.isCompositionPerfect
+        captureReadiness.showsGreenCelebration
     }
 
     var isStabilizingForCapture: Bool {
-        isCompositionAligned && !isCaptureReady
+        captureReadiness.showsStabilizingUI
     }
 
     var shutterReadiness: ShutterReadiness {
-        captureCoordinator.shutterReadiness(
-            cameraMode: cameraMode,
-            guidancePhase: guidancePhase,
-            isCompositionPerfect: analysis.isCompositionPerfect
-        )
+        captureReadiness.shutterVisual
     }
 
     var activeCapturedPhotoData: Data? {
@@ -101,11 +103,44 @@ extension CameraViewModel {
 
     var isCapturing: Bool {
         captureCoordinator.isCapturing(cameraMode: cameraMode)
+            || captureCoordinator.isCaptureHandoffInProgress
+    }
+
+    var isCaptureHandoffInProgress: Bool {
+        captureCoordinator.isCaptureHandoffInProgress
+    }
+
+    var isHandoffRecovering: Bool {
+        captureCoordinator.isHandoffRecovering
+    }
+
+    var handoffFrozenPreviewImage: UIImage? {
+        spatialEngine.handoffFrozenPreviewImage
+    }
+
+    /// Shown when engineering flag allows Max Quality on rear spatial camera.
+    var showsMaxQualityToggle: Bool {
+        cameraMode == .rearSpatial && CaptureArchitectureFlags.maxQualityCaptureEnabled
+    }
+
+    /// User + flag effective Max Quality Mode (capture path wired in Epic 4b).
+    var isMaxQualityCaptureEnabled: Bool {
+        captureSettings.maxQualityCaptureActive
+    }
+
+    func toggleMaxQualityCapture() {
+        guard showsMaxQualityToggle else { return }
+        HapticManager.selection()
+        let turningOn = !captureSettings.maxQualityCapture
+        captureSettings.maxQualityCapture = turningOn
+        if turningOn {
+            showInlineToast("Max Quality pauses briefly for best photo quality.")
+        }
     }
 
     func startCountdown() {
         guard !isCountingDown else { return }
-        guard isCaptureReady else { return }
+        guard captureReadiness.isShutterEnabled else { return }
         isCountingDown = true
         countdownValue = timerLength
 
@@ -116,7 +151,7 @@ extension CameraViewModel {
                 countdownValue -= 1
             }
             if isCountingDown {
-                if isCaptureReady {
+                if captureReadiness.isShutterEnabled {
                     executeCapture()
                 }
                 isCountingDown = false
@@ -125,13 +160,18 @@ extension CameraViewModel {
     }
 
     func executeCapture() {
-        guard isCaptureReady, !isCapturing else { return }
+        if isCapturing {
+            showInlineToast("Capture in progress")
+            return
+        }
+        guard captureReadiness.isShutterEnabled else { return }
 
         Task {
             await captureCoordinator.executeCapture(
                 cameraMode: cameraMode,
                 aspectRatio: selectedAspectRatio,
-                isCaptureReady: isCaptureReady
+                guidancePhase: guidancePhase,
+                analysis: analysis
             )
 
             HapticManager.capture()

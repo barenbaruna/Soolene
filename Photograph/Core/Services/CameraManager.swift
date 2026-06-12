@@ -50,6 +50,9 @@ final class CameraManager: NSObject, @unchecked Sendable {
     /// Transient state for capture
     var pendingAspectRatio: AspectRatioMode = .free
 
+    /// Largest photo dimensions configured on `photoOutput` (mutated on `sessionQueue`).
+    var configuredMaxPhotoDimensions: CMVideoDimensions?
+
     // MARK: - Rotation
     
     private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
@@ -62,9 +65,14 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     private var hasDeliveredPreviewFrame = false
 
+    /// Discovered once per manager — shared by live zoom and handoff capture.
+    let zoomCapabilities: ZoomDeviceCapabilities
+    let zoomMapping = ZoomMappingEngine()
+
     // MARK: - Setup
 
     override init() {
+        zoomCapabilities = ZoomDeviceCapabilities.discover()
         super.init()
         discoverAvailableLenses()
     }
@@ -86,7 +94,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
             sessionQueue.async { [weak self] in
                 guard let self else { continuation.resume(); return }
                 self.discoverAvailableLenses()
-                self.configureSession(useFront: false, lens: .wide)
+                self.configureSession(useFront: false, displayMultiplier: 1.0)
                 continuation.resume()
             }
         }
@@ -114,15 +122,19 @@ final class CameraManager: NSObject, @unchecked Sendable {
         // 2× digital crop on wide — always useful on any device
         lenses.append(.twoX)
 
-        // 5× telephoto (iPhone 15 Pro Max, 16 Pro, 17 Pro)
-        if deviceTypes.contains(.builtInTelephotoCamera) { lenses.append(.fiveX) }
+        lenses.append(.fourX)
+        if deviceTypes.contains(.builtInTelephotoCamera) {
+            lenses.append(.tele)
+        } else {
+            lenses.append(.tenX)
+        }
 
         DispatchQueue.main.async { [weak self] in
             self?.availableLenses = lenses
         }
     }
 
-    func configureSession(useFront: Bool, lens: LensType = .wide) {
+    func configureSession(useFront: Bool, displayMultiplier: CGFloat = 1.0) {
         session.beginConfiguration()
         session.sessionPreset = useFront ? .high : .photo
 
@@ -136,13 +148,8 @@ final class CameraManager: NSObject, @unchecked Sendable {
         if useFront {
             device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
         } else {
-            // Check for LiDAR camera first for 3D depth, then fallback to requested lens/wide angle
-            if let lidarDevice = AVCaptureDevice.default(.builtInLiDARDepthCamera, for: .video, position: .back) {
-                device = lidarDevice
-            } else {
-                device = AVCaptureDevice.default(lens.deviceType, for: .video, position: .back)
-                    ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
-            }
+            device = ZoomDeviceCapabilities.rearVirtualDevice()
+                ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         }
 
         guard let device,
@@ -194,7 +201,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
         if session.canAddOutput(photoOutput) {
             session.addOutput(photoOutput)
         }
-        photoOutput.maxPhotoQualityPrioritization = .quality
+        configurePhotoOutput(for: device)
 
         if let connection = videoDataOutput.connection(with: .video) {
             connection.isVideoMirrored = useFront
@@ -222,14 +229,28 @@ final class CameraManager: NSObject, @unchecked Sendable {
             }
         session.commitConfiguration()
 
-        // Apply digital zoom for lenses that use it (e.g. 2× crop on wide-angle)
-        if !useFront, lens.zoomFactor > 1.0 {
-            if let device = session.inputs.compactMap({ $0 as? AVCaptureDeviceInput }).first?.device,
-               let _ = try? device.lockForConfiguration()
-            {
-                device.videoZoomFactor = min(lens.zoomFactor, device.maxAvailableVideoZoomFactor)
-                device.unlockForConfiguration()
-            }
+        if !useFront {
+            applyDisplayZoom(displayMultiplier, on: device)
+        }
+    }
+
+    /// Applies display-space multiplier to the active rear virtual camera (call on `sessionQueue`).
+    func applyDisplayZoom(_ displayMultiplier: CGFloat, on device: AVCaptureDevice) {
+        let application = zoomMapping.map(
+            displayMultiplier: displayMultiplier,
+            path: .avHandoff,
+            capabilities: zoomCapabilities
+        )
+        do {
+            try device.lockForConfiguration()
+            let zoom = min(
+                max(application.deviceVideoZoomFactor, device.minAvailableVideoZoomFactor),
+                device.maxAvailableVideoZoomFactor
+            )
+            device.videoZoomFactor = zoom
+            device.unlockForConfiguration()
+        } catch {
+            // Non-fatal — capture with current zoom.
         }
     }
 
