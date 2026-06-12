@@ -33,11 +33,11 @@ enum WalkthroughContext {
 // MARK: - WalkthroughOverlayView
 
 struct WalkthroughOverlayView: View {
-    @EnvironmentObject private var manager: OnboardingManager
+    @Environment(OnboardingStore.self) private var store
     let context: WalkthroughContext
 
     var body: some View {
-        if manager.isWalkthroughActive {
+        if store.isWalkthroughActive {
             GeometryReader { geo in
                 ZStack {
                     tooltipForCurrentStep(in: geo)
@@ -55,7 +55,7 @@ struct WalkthroughOverlayView: View {
         let screenW = geo.size.width
         let screenH = geo.size.height
 
-        switch manager.currentStep {
+        switch store.currentStep {
 
         // ── Step 1: Composition Suggestion ────────────────
         // Left side, vertically centered near the overlay circle
@@ -64,8 +64,8 @@ struct WalkthroughOverlayView: View {
                 title: "Lock Your Subject",
                 description: "Long-press on any subject to lock focus. The app will suggest the best composition for your scene.",
                 anchor: .bottom,
-                onPrimary: { manager.advanceStep() },
-                onSecondary: { manager.skipWalkthrough() }
+                onPrimary: { store.advanceStep() },
+                onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.72, 280))
             .position(x: screenW * 0.40, y: screenH * 0.38)
@@ -77,8 +77,8 @@ struct WalkthroughOverlayView: View {
                 title: "Choose & Follow",
                 description: "Pick a composition style, then align the bracket with the target circle on screen.",
                 anchor: .top,
-                onPrimary: { manager.advanceStep() },
-                onSecondary: { manager.skipWalkthrough() }
+                onPrimary: { store.advanceStep() },
+                onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.72, 280))
             .position(x: screenW * 0.50, y: screenH * 0.32)
@@ -90,8 +90,8 @@ struct WalkthroughOverlayView: View {
                 title: "Perfect Shot",
                 description: "When the guides turn green, your composition is aligned. Tap the shutter to capture!",
                 anchor: .bottom,
-                onPrimary: { manager.advanceStep() },
-                onSecondary: { manager.skipWalkthrough() }
+                onPrimary: { store.advanceStep() },
+                onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.80, 320))
             .position(x: screenW * 0.50, y: screenH * 0.72)
@@ -103,8 +103,8 @@ struct WalkthroughOverlayView: View {
                 title: "View Your Shots",
                 description: "Tap here to view and review all the photos you have captured using the composition guides.",
                 anchor: .bottomLeading,
-                onPrimary: { manager.advanceStep() },
-                onSecondary: { manager.skipWalkthrough() }
+                onPrimary: { store.advanceStep() },
+                onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.68, 260))
             .position(x: screenW * 0.38, y: screenH * 0.72)
@@ -116,8 +116,8 @@ struct WalkthroughOverlayView: View {
                 title: "Grid Guide",
                 description: "Tap to overlay the composition grid on your photo.",
                 anchor: .top,
-                onPrimary: { manager.advanceStep() },
-                onSecondary: { manager.skipWalkthrough() }
+                onPrimary: { store.advanceStep() },
+                onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.72, 280))
             .position(x: screenW * 0.60, y: screenH * 0.18)
@@ -131,7 +131,7 @@ struct WalkthroughOverlayView: View {
                 primaryLabel: "Finish",
                 secondaryLabel: nil,
                 anchor: .top,
-                onPrimary: { manager.advanceStep() },
+                onPrimary: { store.advanceStep() },
                 onSecondary: nil
             )
             .frame(width: min(screenW * 0.72, 280))
@@ -141,7 +141,7 @@ struct WalkthroughOverlayView: View {
         // Centered card
         case .congratulation where context == .detail:
             CongratulationView {
-                manager.finishWalkthrough()
+                store.finishWalkthrough()
             }
             .position(x: screenW * 0.50, y: screenH * 0.50)
 
@@ -157,6 +157,6 @@ struct WalkthroughOverlayView: View {
     ZStack {
         Color.gray.ignoresSafeArea()
         WalkthroughOverlayView(context: .camera)
-            .environmentObject(OnboardingManager())
+            .environment(OnboardingStore())
     }
 }

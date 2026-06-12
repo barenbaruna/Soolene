@@ -11,7 +11,7 @@ import UIKit
 
 /// Main camera screen.
 struct CameraView: View {
-    @EnvironmentObject private var onboardingManager: OnboardingManager
+    @Environment(OnboardingStore.self) private var onboarding
     @State private var viewModel = CameraViewModel()
     @State private var isShowingGallery = false
     @State private var tapIndicatorPoint: CGPoint? = nil
@@ -204,7 +204,7 @@ struct CameraView: View {
             }
         }
         // Dismiss gallery automatically if they finish walkthrough while inside it
-        .onChange(of: onboardingManager.hasCompletedWalkthrough) { _, completed in
+        .onChange(of: onboarding.hasCompletedWalkthrough) { _, completed in
             if completed {
                 isShowingGallery = false
             }

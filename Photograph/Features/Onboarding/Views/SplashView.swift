@@ -16,7 +16,7 @@
 import SwiftUI
 
 struct SplashView: View {
-    @EnvironmentObject private var onboardingManager: OnboardingManager
+    @Environment(OnboardingStore.self) private var onboarding
     @State private var contentOpacity: Double = 0
 
     var body: some View {
@@ -55,7 +55,7 @@ struct SplashView: View {
             // Auto-dismiss after 2.5 seconds
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                 withAnimation(.easeOut(duration: 0.5)) {
-                    onboardingManager.hasCompletedSplash = true
+                    onboarding.hasCompletedSplash = true
                 }
             }
         }
@@ -93,5 +93,5 @@ struct SplashView: View {
 
 #Preview {
     SplashView()
-        .environmentObject(OnboardingManager())
+        .environment(OnboardingStore())
 }
