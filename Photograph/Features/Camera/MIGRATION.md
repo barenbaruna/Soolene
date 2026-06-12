@@ -8,7 +8,7 @@
 | Path | Status |
 |------|--------|
 | `Views/`, `ViewModels/`, `Components/`, `Overlays/` | Active — move to `Presentation/` in Phase 3–4 |
-| `Coordinators/` | Active — move to `Domain/Coordinators/` in Phase 3 |
+| `Domain/Coordinators/` | Active — migrated from `Coordinators/` |
 | `Domain/Models/` | Skeleton — `CompositionUIState`, `CaptureUIState` |
 | `Data/Adapters/` | Skeleton — protocol conformances |
 
