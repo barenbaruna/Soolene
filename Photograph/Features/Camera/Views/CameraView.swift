@@ -9,7 +9,7 @@ import UIKit
 /// Main camera screen — orchestrates preview, guidance, controls, and side effects.
 struct CameraView: View {
     @Environment(OnboardingStore.self) private var onboarding
-    @State private var viewModel = CameraViewModel()
+    @State private var viewModel = AppDependencies.shared.makeCameraViewModel()
     @State private var isShowingGallery = false
     @State private var tapIndicatorPoint: CGPoint?
     @State private var tapIndicatorStyle: TapIndicatorStyle = .focus

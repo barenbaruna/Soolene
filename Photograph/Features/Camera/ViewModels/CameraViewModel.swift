@@ -2,10 +2,7 @@
 //  CameraViewModel.swift
 //  Photograph
 //
-//  Created by Baren Baruna Harahap on 18/05/26.
-//
 
-import ARKit
 import AVFoundation
 import Photos
 import SwiftUI
@@ -31,7 +28,7 @@ final class CameraViewModel {
     var countdownValue = 0
     var isSwitchingCamera = false
     var zoomFactor: CGFloat = 1
-    private var lastZoomApplyTime: CFAbsoluteTime = 0
+    var lastZoomApplyTime: CFAbsoluteTime = 0
 
     // MARK: - Permissions
 
@@ -53,13 +50,13 @@ final class CameraViewModel {
     // MARK: - Services
 
     var spatialEngine: SpatialCameraEngine
-    private let visionService: VisionService
+    let visionService: VisionService
     private let motionService = MotionService()
 
     // MARK: - Coordinators
 
-    private let captureCoordinator: CaptureCoordinator
-    private let sessionCoordinator: CameraSessionCoordinator
+    let captureCoordinator: CaptureCoordinator
+    let sessionCoordinator: CameraSessionCoordinator
     let compositionCoordinator: CompositionCoordinator
 
     // MARK: - Motion State
@@ -158,6 +155,14 @@ final class CameraViewModel {
     var isSubjectPinned: Bool { compositionCoordinator.uiState.isSubjectPinned }
     var recommendedCompositionLabel: String? { compositionCoordinator.uiState.recommendedLabel }
 
+    var sortedPickerCompositions: [CompositionType] {
+        compositionCoordinator.sortedPickerCompositions(predictions: analysis.mlPredictions)
+    }
+
+    var resolvedComposition: CompositionType {
+        userSelectedComposition ?? analysis.detectedComposition
+    }
+
     // MARK: - Lifecycle
 
     func onAppear() async {
@@ -168,6 +173,41 @@ final class CameraViewModel {
         await loadLatestThumbnail()
         motionService.start()
     }
+
+    func onDisappear() {
+        sessionCoordinator.pauseSessions(cameraMode: cameraMode)
+        motionService.stop()
+    }
+
+    func pauseSession() {
+        sessionCoordinator.pauseSessions(cameraMode: cameraMode)
+    }
+
+    func resumeSession() {
+        sessionCoordinator.resumeSession(cameraMode: cameraMode)
+    }
+
+    // MARK: - Tap-to-Compose
+
+    func pinSubject(at normalisedPoint: CGPoint) {
+        trackingQualityWarning = nil
+        compositionCoordinator.pinSubject(
+            at: normalisedPoint,
+            cameraMode: cameraMode,
+            analysis: &analysis
+        )
+    }
+
+    func selectComposition(_ composition: CompositionType) {
+        compositionCoordinator.selectComposition(composition, analysis: &analysis)
+    }
+
+    func clearPinnedSubject() {
+        compositionCoordinator.clearPinnedSubject(cameraMode: cameraMode)
+        trackingQualityWarning = nil
+    }
+
+    // MARK: - Private
 
     private func loadLatestThumbnail() async {
         guard let assets = await GalleryManager.shared.fetchAllPhotos(),
@@ -191,472 +231,5 @@ final class CameraViewModel {
                 }
             }
         }
-    }
-
-    func onDisappear() {
-        sessionCoordinator.pauseSessions(cameraMode: cameraMode)
-        motionService.stop()
-    }
-
-    func pauseSession() {
-        sessionCoordinator.pauseSessions(cameraMode: cameraMode)
-    }
-
-    func resumeSession() {
-        sessionCoordinator.resumeSession(cameraMode: cameraMode)
-    }
-
-    // MARK: - Permissions
-
-    func refreshPermissions() async {
-        cameraPermission = PrivacyPermissionService.cameraStatus()
-        photoAddPermission = PrivacyPermissionService.photoAddStatus()
-        photoReadPermission = PrivacyPermissionService.photoReadStatus()
-    }
-
-    func requestCameraAccess() async {
-        isRequestingCameraPermission = true
-        defer { isRequestingCameraPermission = false }
-        cameraPermission = await PrivacyPermissionService.requestCameraAccess()
-        if cameraPermission.allowsCamera {
-            await spatialEngine.checkPermissionsAndSetup()
-        }
-    }
-
-    func requestPhotoAddAccess() async {
-        isRequestingPhotoPermission = true
-        defer { isRequestingPhotoPermission = false }
-        photoAddPermission = await PrivacyPermissionService.requestPhotoAddAccess()
-        photoReadPermission = PrivacyPermissionService.photoReadStatus()
-    }
-
-    func openAppSettings() {
-        PrivacyPermissionService.openSettings()
-    }
-
-    func presentLimitedPhotoPicker() {
-        PrivacyPermissionService.presentLimitedLibraryPicker()
-    }
-
-    // MARK: - Inline feedback
-
-    func showInlineToast(_ message: String, duration: TimeInterval = 4) {
-        inlineToastMessage = message
-        Task {
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
-            if inlineToastMessage == message {
-                inlineToastMessage = nil
-            }
-        }
-    }
-
-    var showsTrackingStabilityMeter: Bool {
-        cameraMode == .rearSpatial && isStabilizingForCapture
-    }
-
-    var trackingStabilityProgress: Float {
-        spatialEngine.trackingStabilityProgress
-    }
-
-    private func checkPermissions() async {
-        await refreshPermissions()
-    }
-
-    // MARK: - Camera Actions
-
-    func switchCamera() {
-        guard !isSwitchingCamera else { return }
-        HapticManager.selection()
-        isSwitchingCamera = true
-
-        Task {
-            if cameraMode == .rearSpatial {
-                await sessionCoordinator.switchToFrontClassic(
-                    hasCameraPermission: hasCameraPermission,
-                    checkPermissions: { await self.checkPermissions() }
-                )
-                cameraMode = .frontClassic
-                trackingQualityWarning = "Front camera uses 2D tracking — world lock unavailable."
-            } else {
-                await sessionCoordinator.switchToRearSpatial()
-                cameraMode = .rearSpatial
-                trackingQualityWarning = nil
-            }
-            isSwitchingCamera = false
-        }
-    }
-
-    func switchLens(_ lens: LensType) {
-        guard !isSwitchingCamera else { return }
-        HapticManager.selection()
-        zoomFactor = lens.zoomFactor
-        switch cameraMode {
-        case .rearSpatial:
-            spatialEngine.setZoomFactor(lens.zoomFactor)
-        case .frontClassic:
-            guard cameraManager.isUsingFrontCamera else { return }
-            cameraManager.setZoomFactor(lens.zoomFactor)
-        }
-    }
-
-    func switchLens(_ rawValue: String) {
-        guard let lens = LensType(rawValue: rawValue) else { return }
-        switchLens(lens)
-    }
-
-    // MARK: - Preview Gestures
-
-    func focusAndExpose(at normalizedPoint: CGPoint) {
-        guard !isSwitchingCamera else { return }
-        HapticManager.selection()
-        switch cameraMode {
-        case .rearSpatial:
-            spatialEngine.focusAndExpose(at: normalizedPoint)
-        case .frontClassic:
-            cameraManager.focusAndExpose(at: normalizedPoint)
-        }
-    }
-
-    func updateZoom(magnification: CGFloat, isFinal: Bool) {
-        guard !isSwitchingCamera else { return }
-
-        let now = CFAbsoluteTimeGetCurrent()
-        if !isFinal, now - lastZoomApplyTime < 1.0 / 30.0 { return }
-        lastZoomApplyTime = now
-
-        let baseZoom = max(zoomFactor, 1)
-        let nextZoom = baseZoom * magnification
-        switch cameraMode {
-        case .rearSpatial:
-            spatialEngine.setZoomFactor(nextZoom)
-            if isFinal {
-                zoomFactor = min(max(nextZoom, 1), spatialEngine.maximumZoomFactor)
-            }
-        case .frontClassic:
-            cameraManager.setZoomFactor(nextZoom)
-            if isFinal {
-                zoomFactor = min(max(nextZoom, 1), cameraManager.maximumZoomFactor)
-            }
-        }
-    }
-
-    // MARK: - Tap-to-Compose
-
-    func pinSubject(at normalisedPoint: CGPoint) {
-        trackingQualityWarning = nil
-        compositionCoordinator.pinSubject(
-            at: normalisedPoint,
-            cameraMode: cameraMode,
-            analysis: &analysis
-        )
-    }
-
-    func selectComposition(_ composition: CompositionType) {
-        compositionCoordinator.selectComposition(composition, analysis: &analysis)
-    }
-
-    func clearPinnedSubject() {
-        compositionCoordinator.clearPinnedSubject(cameraMode: cameraMode)
-        trackingQualityWarning = nil
-    }
-
-    func cycleFlash() {
-        HapticManager.selection()
-        switch cameraMode {
-        case .rearSpatial:
-            spatialEngine.cycleFlash()
-        case .frontClassic:
-            break
-        }
-    }
-
-    func cycleTimer() {
-        HapticManager.selection()
-        switch timerLength {
-        case 0: timerLength = 3
-        case 3: timerLength = 10
-        case 10: timerLength = 0
-        default: timerLength = 0
-        }
-    }
-
-    func setExposure(_ bias: Float) {
-        guard !isSwitchingCamera else { return }
-        switch cameraMode {
-        case .rearSpatial:
-            spatialEngine.setExposureBias(bias)
-        case .frontClassic:
-            cameraManager.setExposureBias(bias)
-        }
-    }
-
-    func resetExposure() {
-        HapticManager.selection()
-        setExposure(0)
-    }
-
-    func cycleExposure() {
-        let current = exposureBias
-        let next: Float
-        if current == 0 { next = 1.0 }
-        else if current == 1.0 { next = 2.0 }
-        else if current == 2.0 { next = -2.0 }
-        else if current == -2.0 { next = -1.0 }
-        else { next = 0.0 }
-        HapticManager.selection()
-        setExposure(next)
-    }
-
-    func capturePhoto() {
-        if timerLength > 0 {
-            startCountdown()
-        } else {
-            executeCapture()
-        }
-    }
-
-    private func startCountdown() {
-        guard !isCountingDown else { return }
-        guard isCaptureReady else { return }
-        isCountingDown = true
-        countdownValue = timerLength
-
-        Task {
-            while countdownValue > 0 {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                if !isCountingDown { return }
-                countdownValue -= 1
-            }
-            if isCountingDown {
-                if isCaptureReady {
-                    executeCapture()
-                }
-                isCountingDown = false
-            }
-        }
-    }
-
-    func cancelCountdown() {
-        isCountingDown = false
-    }
-
-    private func executeCapture() {
-        guard isCaptureReady, !isCapturing else { return }
-
-        Task {
-            await captureCoordinator.executeCapture(
-                cameraMode: cameraMode,
-                aspectRatio: selectedAspectRatio,
-                isCaptureReady: isCaptureReady
-            )
-
-            HapticManager.capture()
-            showShutterFlash = true
-            try? await Task.sleep(nanoseconds: 100_000_000)
-            showShutterFlash = false
-            await savePhoto()
-        }
-    }
-
-    // MARK: - Review Actions
-
-    func savePhoto() async {
-        guard let data = activeCapturedPhotoData else { return }
-
-        await refreshPermissions()
-        guard photoAddPermission.allowsPhotoSave else {
-            let message = PrivacyPermissionService.photoSaveMessage(for: photoAddPermission)
-            saveError = message
-            showInlineToast(message)
-            return
-        }
-
-        do {
-            try await GalleryManager.shared.savePhoto(data, composition: resolvedComposition)
-
-            if let image = UIImage(data: data) {
-                let renderer = UIGraphicsImageRenderer(size: CGSize(width: 80, height: 80))
-                let thumb = renderer.image { _ in
-                    image.draw(in: CGRect(x: 0, y: 0, width: 80, height: 80))
-                }
-                lastSavedThumbnail = thumb
-            }
-            captureCoordinator.clearCapturedPhotoData()
-        } catch {
-            let message = error.localizedDescription
-            saveError = message
-            showInlineToast(message)
-        }
-    }
-
-    var sortedPickerCompositions: [CompositionType] {
-        compositionCoordinator.sortedPickerCompositions(predictions: analysis.mlPredictions)
-    }
-
-    // MARK: - Resolved Composition
-
-    var resolvedComposition: CompositionType {
-        userSelectedComposition ?? analysis.detectedComposition
-    }
-
-    var guidanceTip: String {
-        if let warning = trackingQualityWarning {
-            return warning
-        }
-        if let label = recommendedCompositionLabel,
-           case .guiding = guidancePhase {
-            return label
-        }
-
-        switch guidancePhase {
-        case .scanning:
-            if cameraMode == .rearSpatial, spatialEngine.trackingState != .normal {
-                return "Move slowly while spatial tracking initializes"
-            }
-            return "Long-press your subject"
-        case .subjectLocked:
-            return mlSuggestion.map { "Best fit: \($0.shortLabel) — tap to change" }
-                ?? "Analyzing scene for best composition"
-        case .guiding(let comp):
-            let technique = GuidanceEngine.techniqueForUserSelection(
-                composition: comp,
-                geometry: analysis.sceneGeometry
-            )
-            return technique.tip
-        case .perfect:
-            if isCaptureReady {
-                return "Perfect. Capture now."
-            }
-            return "Hold steady — stabilizing tracking for capture"
-        }
-    }
-
-    var showsDualAnchorGuidance: Bool {
-        guard guidancePhase.isActive else { return false }
-        guard userSelectedComposition != nil else { return false }
-        return resolvedComposition != .horizontal
-    }
-
-    var isCaptureReady: Bool {
-        captureCoordinator.isCaptureReady(
-            cameraMode: cameraMode,
-            guidancePhase: guidancePhase
-        )
-    }
-
-    var shutterIsPerfect: Bool {
-        shutterReadiness == .ready
-    }
-
-    var isCompositionAligned: Bool {
-        guidancePhase.isPerfect || analysis.isCompositionPerfect
-    }
-
-    var isStabilizingForCapture: Bool {
-        shutterReadiness == .stabilizing
-    }
-
-    var shutterReadiness: ShutterReadiness {
-        captureCoordinator.shutterReadiness(
-            cameraMode: cameraMode,
-            guidancePhase: guidancePhase,
-            isCompositionPerfect: analysis.isCompositionPerfect
-        )
-    }
-
-    private func updateTrackingWarning(for state: ARCamera.TrackingState) {
-        guard cameraMode == .rearSpatial else { return }
-        switch state {
-        case .limited(let reason):
-            trackingQualityWarning = limitedTrackingMessage(reason)
-        case .notAvailable:
-            trackingQualityWarning = "Move the device slowly to restore tracking."
-        case .normal:
-            if trackingQualityWarning?.contains("approximate") != true
-                && trackingQualityWarning?.contains("world lock") != true {
-                trackingQualityWarning = nil
-            }
-        }
-    }
-
-    private func limitedTrackingMessage(_ reason: ARCamera.TrackingState.Reason) -> String {
-        switch reason {
-        case .excessiveMotion:
-            return "Move the device more slowly."
-        case .insufficientFeatures:
-            return "Point at a textured surface for better tracking."
-        case .initializing:
-            return "Initializing spatial tracking…"
-        case .relocalizing:
-            return "Relocalizing — hold steady."
-        @unknown default:
-            return "Tracking is limited — hold steady."
-        }
-    }
-
-    var activeCapturedPhotoData: Data? {
-        captureCoordinator.activeCapturedPhotoData
-    }
-
-    var captureError: String? {
-        captureCoordinator.activeCaptureError
-    }
-
-    func clearCaptureError() {
-        captureCoordinator.clearCaptureErrors()
-    }
-
-    // MARK: - Computed UI Properties
-
-    var flashSymbolName: String {
-        switch activeFlashMode {
-        case .on: return "bolt.fill"
-        case .auto: return "bolt.badge.automatic"
-        case .off: return "bolt.slash.fill"
-        @unknown default: return "bolt.slash.fill"
-        }
-    }
-
-    var isFrontCamera: Bool { cameraMode == .frontClassic }
-
-    var activeFlashMode: AVCaptureDevice.FlashMode {
-        switch cameraMode {
-        case .rearSpatial: spatialEngine.flashMode
-        case .frontClassic: cameraManager.flashMode
-        }
-    }
-
-    var flashMode: AVCaptureDevice.FlashMode { activeFlashMode }
-
-    var isFlashActive: Bool {
-        activeFlashMode == .on || activeFlashMode == .auto
-    }
-
-    var exposureBias: Float {
-        switch cameraMode {
-        case .rearSpatial: spatialEngine.exposureBias
-        case .frontClassic: cameraManager.exposureBias
-        }
-    }
-
-    var selectedLens: String {
-        LensType.closest(toZoom: zoomFactor).rawValue
-    }
-
-    var isCapturing: Bool {
-        captureCoordinator.isCapturing(cameraMode: cameraMode)
-    }
-
-    var availableLenses: [LensType] {
-        cameraMode == .frontClassic ? [.wide] : LensType.availableOnDevice
-    }
-}
-
-// MARK: - LensType Zoom Helper
-
-private extension LensType {
-    static func closest(toZoom zoom: CGFloat) -> LensType {
-        let candidates: [LensType] = [.ultraWide, .wide, .twoX, .fiveX]
-        return candidates.min(by: { abs($0.zoomFactor - zoom) < abs($1.zoomFactor - zoom) }) ?? .wide
     }
 }

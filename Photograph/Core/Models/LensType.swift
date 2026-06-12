@@ -71,4 +71,10 @@ enum LensType: String, CaseIterable, Identifiable {
 
         return lenses.isEmpty ? [.wide] : lenses
     }
+
+    /// Nearest preset lens for the current zoom factor (toolbar display).
+    static func closest(toZoom zoom: CGFloat) -> LensType {
+        let candidates: [LensType] = [.ultraWide, .wide, .twoX, .fiveX]
+        return candidates.min(by: { abs($0.zoomFactor - zoom) < abs($1.zoomFactor - zoom) }) ?? .wide
+    }
 }

@@ -7,7 +7,7 @@
 
 - [x] `xcodebuild -scheme Photograph -destination 'generic/platform=iOS' build` succeeds
 - [ ] No new Swift 6 concurrency warnings (review build log on CI or local full build)
-- [ ] `CameraViewModel` under 300 LOC (currently ~662 — deferred post-refactor trim)
+- [x] `CameraViewModel.swift` core file under 300 LOC (~235; extensions hold capture/controls/guidance)
 - [x] No view imports ARKit except `SpatialCameraView` wrapper
 
 ## On-device (iPhone with LiDAR recommended)
