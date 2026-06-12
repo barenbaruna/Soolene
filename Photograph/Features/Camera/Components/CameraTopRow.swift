@@ -21,7 +21,7 @@ struct CameraTopRow: View {
                 composition: viewModel.userSelectedComposition
                     ?? viewModel.mlSuggestion
                     ?? viewModel.resolvedComposition,
-                isCaptureReady: viewModel.isCaptureReady
+                captureReadiness: viewModel.captureReadiness
             )
             .frame(maxWidth: .infinity)
             .padding(.horizontal, Spacing.standard)

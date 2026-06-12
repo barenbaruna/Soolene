@@ -17,6 +17,18 @@ struct CameraTopToolbar: View {
 
     var body: some View {
         HStack(spacing: Spacing.large) {
+            if viewModel.showsMaxQualityToggle {
+                toolbarButton(
+                    icon: "camera.aperture",
+                    isActive: viewModel.isMaxQualityCaptureEnabled,
+                    label: viewModel.isMaxQualityCaptureEnabled
+                        ? "Max Quality Capture on"
+                        : "Max Quality Capture off"
+                ) {
+                    viewModel.toggleMaxQualityCapture()
+                }
+            }
+
             toolbarButton(
                 icon: flashIcon,
                 isActive: viewModel.isFlashActive || activePanel == .flash,
@@ -34,9 +46,9 @@ struct CameraTopToolbar: View {
             }
 
             toolbarButton(
-                icon: "timer",
+                icon: timerIcon,
                 isActive: viewModel.timerLength > 0 || activePanel == .timer,
-                label: "Timer"
+                label: timerAccessibilityLabel
             ) {
                 onPanelTapped(.timer)
             }
@@ -72,6 +84,22 @@ struct CameraTopToolbar: View {
         .accessibilityLabel(label)
         .accessibilityAddTraits(isActive ? .isSelected : [])
         .rotationEffect(.degrees(iconRotation))
+    }
+
+    private var timerIcon: String {
+        switch viewModel.timerLength {
+        case 3: return "3.arrow.trianglehead.counterclockwise"
+        case 10: return "10.arrow.trianglehead.counterclockwise"
+        default: return "timer"
+        }
+    }
+
+    private var timerAccessibilityLabel: String {
+        switch viewModel.timerLength {
+        case 3: return "3 second timer"
+        case 10: return "10 second timer"
+        default: return "Timer off"
+        }
     }
 
     private var flashIcon: String {
