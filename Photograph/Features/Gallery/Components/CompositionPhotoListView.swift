@@ -10,7 +10,9 @@ struct CompositionPhotoListView: View {
     @State private var viewModel: CompositionPhotoListViewModel
 
     init(composition: CompositionType) {
-        _viewModel = State(initialValue: CompositionPhotoListViewModel(composition: composition))
+        _viewModel = State(
+            initialValue: AppDependencies.shared.makeCompositionPhotoListViewModel(composition: composition)
+        )
     }
 
     private let columns = [

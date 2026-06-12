@@ -32,8 +32,15 @@ final class AppDependencies {
         visionService.usesSpatialTracking = true
     }
 
-    /// Factory for the camera screen. Coordinators are created inside the ViewModel today.
     func makeCameraViewModel() -> CameraViewModel {
         CameraViewModel()
+    }
+
+    func makeGalleryViewModel() -> GalleryViewModel {
+        GalleryViewModel(gallery: gallery, permissions: permissions)
+    }
+
+    func makeCompositionPhotoListViewModel(composition: CompositionType) -> CompositionPhotoListViewModel {
+        CompositionPhotoListViewModel(composition: composition, gallery: gallery)
     }
 }

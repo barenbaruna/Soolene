@@ -9,7 +9,7 @@ import UIKit
 
 struct GalleryView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var viewModel = GalleryViewModel()
+    @State private var viewModel = AppDependencies.shared.makeGalleryViewModel()
 
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.standard),
