@@ -41,6 +41,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
     /// The processed preview is driven by ARSCNView bound to `session`.
     let session = ARSession()
+    private let sessionController: ARSessionController
 
     // MARK: - Callbacks
 
@@ -54,7 +55,9 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
     private let sessionQueue = DispatchQueue(label: "com.photograph.arSession", qos: .userInitiated)
     private let arStateLock = NSLock()
-    private var worldConfiguration: ARWorldTrackingConfiguration?
+    private var worldConfiguration: ARWorldTrackingConfiguration? {
+        sessionController.worldConfiguration
+    }
     private var subjectAnchor: ARAnchor?
     private(set) var isSubjectLocked = false
     private var pendingLockPoint: CGPoint?
@@ -88,6 +91,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     // MARK: - Lifecycle
 
     override init() {
+        sessionController = ARSessionController(session: session)
         super.init()
         session.delegate = self
     }
@@ -119,38 +123,17 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     }
 
     private func configureAndRun(resetAnchors: Bool) {
-        guard ARWorldTrackingConfiguration.isSupported else { return }
+        guard sessionController.buildConfiguration() != nil else { return }
 
-        let config = ARWorldTrackingConfiguration()
-        config.planeDetection = [.horizontal, .vertical]
-        
-        config.isAutoFocusEnabled = true
-        config.worldAlignment = .gravity
-
-        if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
-            config.frameSemantics.insert(.sceneDepth)
-        }
-
-        if let recommended = ARWorldTrackingConfiguration.recommendedVideoFormatForHighResolutionFrameCapturing {
-            config.videoFormat = recommended
-        } else if let hiResFormat = ARWorldTrackingConfiguration.supportedVideoFormats.first(where: {
-            $0.isRecommendedForHighResolutionFrameCapturing
-        }) {
-            config.videoFormat = hiResFormat
-        }
-
-        configureContinuousAutoFocus()
-
-        worldConfiguration = config
-        let options: ARSession.RunOptions = resetAnchors ? [.resetTracking, .removeExistingAnchors] : [.resetTracking]
-        session.run(config, options: options)
-
-        if !resetAnchors, let anchor = subjectAnchor {
-            session.add(anchor: anchor)
-        } else if resetAnchors {
+        arStateLock.lock()
+        let reattach = resetAnchors ? nil : subjectAnchor
+        if resetAnchors {
             subjectAnchor = nil
             isSubjectLocked = false
         }
+        arStateLock.unlock()
+
+        sessionController.run(resetAnchors: resetAnchors, reattach: reattach)
 
         DispatchQueue.main.async { [weak self] in
             self?.isSessionRunning = true
@@ -162,8 +145,8 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     /// Resumes an existing configuration without resetting world anchors.
     func resumeSessionPreservingAnchors() {
         sessionQueue.async { [weak self] in
-            guard let self, let config = self.worldConfiguration else { return }
-            self.session.run(config)
+            guard let self else { return }
+            self.sessionController.runPreservingConfiguration()
             DispatchQueue.main.async {
                 self.isSessionRunning = true
                 self.isSessionConfigured = true
@@ -171,29 +154,13 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         }
     }
 
-    private func configureContinuousAutoFocus() {
-        guard let device = ARWorldTrackingConfiguration.configurableCaptureDeviceForPrimaryCamera else { return }
-        do {
-            try device.lockForConfiguration()
-            if device.isFocusModeSupported(.continuousAutoFocus) {
-                device.focusMode = AVCaptureDevice.FocusMode.continuousAutoFocus
-            }
-            if device.isExposureModeSupported(.continuousAutoExposure) {
-                device.exposureMode = AVCaptureDevice.ExposureMode.continuousAutoExposure
-            }
-            device.unlockForConfiguration()
-        } catch {
-            // Non-fatal — ARKit still runs with default focus.
-        }
-    }
-
     func startSession() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
-            if self.worldConfiguration == nil {
+            if self.sessionController.worldConfiguration == nil {
                 self.configureAndRun(resetAnchors: true)
-            } else if let config = self.worldConfiguration {
-                self.session.run(config)
+            } else {
+                self.sessionController.runPreservingConfiguration()
                 DispatchQueue.main.async { self.isSessionRunning = true }
             }
         }
@@ -201,18 +168,17 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
     func stopSession() {
         sessionQueue.async { [weak self] in
-            self?.session.pause()
+            self?.sessionController.pause()
             DispatchQueue.main.async {
                 self?.isSessionRunning = false
             }
         }
     }
 
-    /// Pauses the AR session and waits until the session queue has finished.
     func stopSessionAndWait() async {
         await withCheckedContinuation { continuation in
             sessionQueue.async { [weak self] in
-                self?.session.pause()
+                self?.sessionController.pause()
                 DispatchQueue.main.async {
                     self?.isSessionRunning = false
                     continuation.resume()
