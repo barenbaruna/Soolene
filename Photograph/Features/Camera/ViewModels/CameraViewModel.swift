@@ -19,14 +19,6 @@ final class CameraViewModel {
     var analysis = CompositionAnalysis()
     var selectedAspectRatio: AspectRatioMode = .free
 
-    // MARK: - Guidance Phase (stored for @Observable UI updates)
-
-    var guidancePhase: GuidancePhase = .scanning
-    var mlSuggestion: CompositionType? = nil
-    var userSelectedComposition: CompositionType? = nil
-    var isSubjectPinned: Bool = false
-    var recommendedCompositionLabel: String? = nil
-
     // MARK: - Capture State
 
     var showShutterFlash = false
@@ -68,7 +60,7 @@ final class CameraViewModel {
 
     private let captureCoordinator: CaptureCoordinator
     private let sessionCoordinator: CameraSessionCoordinator
-    private let compositionCoordinator: CompositionCoordinator
+    let compositionCoordinator: CompositionCoordinator
 
     // MARK: - Motion State
 
@@ -106,13 +98,11 @@ final class CameraViewModel {
             guard let self else { return }
             self.analysis = result
             self.compositionCoordinator.updatePhaseFromAnalysis(result)
-            self.syncCompositionState()
         }
 
         visionService.onMLSuggestionReady = { [weak self] predictions in
             guard let self else { return }
             self.compositionCoordinator.handleMLSuggestion(predictions, analysis: &self.analysis)
-            self.syncCompositionState()
         }
 
         spatialEngine.shouldProcessVisionFrame = { @Sendable in
@@ -149,17 +139,24 @@ final class CameraViewModel {
 
         sessionCoordinator.onGuidanceReset = { [weak self] in
             self?.compositionCoordinator.resetGuidanceState()
-            self?.syncCompositionState()
+        }
+
+        spatialEngine.onTrackingStateChanged = { [weak self] state in
+            Task { @MainActor in
+                self?.updateTrackingWarning(for: state)
+            }
         }
     }
 
-    private func syncCompositionState() {
-        guidancePhase = compositionCoordinator.guidancePhase
-        mlSuggestion = compositionCoordinator.mlSuggestion
-        userSelectedComposition = compositionCoordinator.userSelectedComposition
-        isSubjectPinned = compositionCoordinator.isSubjectPinned
-        recommendedCompositionLabel = compositionCoordinator.recommendedCompositionLabel
-    }
+    // MARK: - Composition (domain-owned state)
+
+    var compositionState: CompositionUIState { compositionCoordinator.uiState }
+
+    var guidancePhase: GuidancePhase { compositionCoordinator.uiState.phase }
+    var mlSuggestion: CompositionType? { compositionCoordinator.uiState.mlSuggestion }
+    var userSelectedComposition: CompositionType? { compositionCoordinator.uiState.userSelectedComposition }
+    var isSubjectPinned: Bool { compositionCoordinator.uiState.isSubjectPinned }
+    var recommendedCompositionLabel: String? { compositionCoordinator.uiState.recommendedLabel }
 
     // MARK: - Lifecycle
 
@@ -352,18 +349,15 @@ final class CameraViewModel {
             cameraMode: cameraMode,
             analysis: &analysis
         )
-        syncCompositionState()
     }
 
     func selectComposition(_ composition: CompositionType) {
         compositionCoordinator.selectComposition(composition, analysis: &analysis)
-        syncCompositionState()
     }
 
     func clearPinnedSubject() {
         compositionCoordinator.clearPinnedSubject(cameraMode: cameraMode)
         trackingQualityWarning = nil
-        syncCompositionState()
     }
 
     func cycleFlash() {
@@ -456,12 +450,11 @@ final class CameraViewModel {
                 isCaptureReady: isCaptureReady
             )
 
-            await MainActor.run {
-                HapticManager.capture()
-                showShutterFlash = true
-            }
+            HapticManager.capture()
+            showShutterFlash = true
             try? await Task.sleep(nanoseconds: 100_000_000)
             showShutterFlash = false
+            await savePhoto()
         }
     }
 
@@ -488,6 +481,7 @@ final class CameraViewModel {
                 }
                 lastSavedThumbnail = thumb
             }
+            captureCoordinator.clearCapturedPhotoData()
         } catch {
             let message = error.localizedDescription
             saveError = message
@@ -551,22 +545,53 @@ final class CameraViewModel {
     }
 
     var shutterIsPerfect: Bool {
-        guidancePhase.isPerfect && isCaptureReady
+        shutterReadiness == .ready
     }
 
-    /// Composition is aligned but AR tracking may still be stabilizing.
     var isCompositionAligned: Bool {
         guidancePhase.isPerfect || analysis.isCompositionPerfect
     }
 
     var isStabilizingForCapture: Bool {
-        isCompositionAligned && !isCaptureReady
+        shutterReadiness == .stabilizing
     }
 
     var shutterReadiness: ShutterReadiness {
-        if shutterIsPerfect { return .ready }
-        if isCompositionAligned { return .stabilizing }
-        return .idle
+        captureCoordinator.shutterReadiness(
+            cameraMode: cameraMode,
+            guidancePhase: guidancePhase,
+            isCompositionPerfect: analysis.isCompositionPerfect
+        )
+    }
+
+    private func updateTrackingWarning(for state: ARCamera.TrackingState) {
+        guard cameraMode == .rearSpatial else { return }
+        switch state {
+        case .limited(let reason):
+            trackingQualityWarning = limitedTrackingMessage(reason)
+        case .notAvailable:
+            trackingQualityWarning = "Move the device slowly to restore tracking."
+        case .normal:
+            if trackingQualityWarning?.contains("approximate") != true
+                && trackingQualityWarning?.contains("world lock") != true {
+                trackingQualityWarning = nil
+            }
+        }
+    }
+
+    private func limitedTrackingMessage(_ reason: ARCamera.TrackingState.Reason) -> String {
+        switch reason {
+        case .excessiveMotion:
+            return "Move the device more slowly."
+        case .insufficientFeatures:
+            return "Point at a textured surface for better tracking."
+        case .initializing:
+            return "Initializing spatial tracking…"
+        case .relocalizing:
+            return "Relocalizing — hold steady."
+        @unknown default:
+            return "Tracking is limited — hold steady."
+        }
     }
 
     var activeCapturedPhotoData: Data? {

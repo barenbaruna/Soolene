@@ -3,7 +3,6 @@
 //  Photograph
 //
 
-import ARKit
 import SwiftUI
 import UIKit
 
@@ -94,36 +93,12 @@ struct CameraView: View {
         .fullScreenCover(isPresented: $isShowingGallery) {
             GalleryView()
         }
-        .onChange(of: viewModel.spatialEngine.capturedPhotoData) { _, newData in
-            if newData != nil {
-                Task { await viewModel.savePhoto() }
-            }
-        }
-        .onChange(of: viewModel.cameraManager.capturedPhotoData) { _, newData in
-            if newData != nil {
-                Task { await viewModel.savePhoto() }
-            }
-        }
         .onChange(of: viewModel.shutterIsPerfect) { wasReady, isReady in
             guard isReady, !wasReady else { return }
             UIAccessibility.post(
                 notification: .announcement,
                 argument: "Composition ready. Capture now."
             )
-        }
-        .onChange(of: viewModel.spatialEngine.trackingState) { _, state in
-            guard viewModel.cameraMode == .rearSpatial else { return }
-            switch state {
-            case .limited(let reason):
-                viewModel.trackingQualityWarning = limitedTrackingMessage(reason)
-            case .notAvailable:
-                viewModel.trackingQualityWarning = "Move the device slowly to restore tracking."
-            case .normal:
-                if viewModel.trackingQualityWarning?.contains("approximate") != true
-                    && viewModel.trackingQualityWarning?.contains("world lock") != true {
-                    viewModel.trackingQualityWarning = nil
-                }
-            }
         }
         .alert("Could Not Save", isPresented: Binding(
             get: { viewModel.saveError != nil },
@@ -200,21 +175,6 @@ struct CameraView: View {
             withAnimation(.easeOut(duration: 0.2)) {
                 isShowingFocusExposure = false
             }
-        }
-    }
-
-    private func limitedTrackingMessage(_ reason: ARCamera.TrackingState.Reason) -> String {
-        switch reason {
-        case .excessiveMotion:
-            return "Move the device more slowly."
-        case .insufficientFeatures:
-            return "Point at a textured surface for better tracking."
-        case .initializing:
-            return "Initializing spatial tracking…"
-        case .relocalizing:
-            return "Relocalizing — hold steady."
-        @unknown default:
-            return "Tracking is limited — hold steady."
         }
     }
 
