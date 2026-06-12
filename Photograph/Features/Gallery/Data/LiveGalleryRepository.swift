@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Photos
 
 /// Default `GalleryRepository` backed by `GalleryManager`.
 struct LiveGalleryRepository: GalleryRepository {
@@ -27,5 +28,9 @@ struct LiveGalleryRepository: GalleryRepository {
 
     func fetchAllCompositionMetadata() async -> [GalleryManager.PhotoMetadata] {
         await manager.fetchAllCompositionMetadata()
+    }
+
+    func fetchMostRecentAssetLocalIdentifier() async -> String? {
+        await manager.fetchAllPhotos()?.firstObject?.localIdentifier
     }
 }

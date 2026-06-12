@@ -11,4 +11,5 @@ protocol GalleryRepository: Sendable {
     func fetchCompositionCounts() async -> [CompositionType: Int]
     func fetchPhotoIdentifiers(for composition: CompositionType) async -> [String]
     func fetchAllCompositionMetadata() async -> [GalleryManager.PhotoMetadata]
+    func fetchMostRecentAssetLocalIdentifier() async -> String?
 }

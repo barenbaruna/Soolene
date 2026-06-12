@@ -1,8 +1,6 @@
 //
 //  GalleryView.swift
-//  Visula
-//
-//  Library home — Recent strip + Composition category grid.
+//  Photograph
 //
 
 import Photos
@@ -11,13 +9,7 @@ import UIKit
 
 struct GalleryView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var compositionCounts: [CompositionType: Int] = [:]
-    @State private var previewAssets: [CompositionType: PHAsset] = [:]
-    @State private var recentAsset: PHAsset?
-    @State private var recentComposition: CompositionType = .ruleOfThirds
-    @State private var isLoading = true
-    @State private var readPermission: PermissionStatus = .notDetermined
-    @State private var isRequestingPermission = false
+    @State private var viewModel = GalleryViewModel()
 
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.standard),
@@ -27,18 +19,18 @@ struct GalleryView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if isLoading {
+                if viewModel.isLoading {
                     ProgressView("Loading…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if !readPermission.allowsPhotoBrowse {
+                } else if !viewModel.readPermission.allowsPhotoBrowse {
                     PhotoLibraryPermissionView(
-                        readStatus: readPermission,
-                        isRequesting: isRequestingPermission,
-                        onRequestAccess: { Task { await requestReadAccess() } },
+                        readStatus: viewModel.readPermission,
+                        isRequesting: viewModel.isRequestingPermission,
+                        onRequestAccess: { Task { await viewModel.requestReadAccess() } },
                         onOpenSettings: { PrivacyPermissionService.openSettings() },
                         onManageLimited: { PrivacyPermissionService.presentLimitedLibraryPicker() }
                     )
-                } else if compositionCounts.values.reduce(0, +) == 0 {
+                } else if viewModel.isLibraryEmpty {
                     ContentUnavailableView(
                         "No Photos Yet",
                         systemImage: "camera.viewfinder",
@@ -62,16 +54,16 @@ struct GalleryView: View {
         }
         .tint(AppColors.secondary)
         .preferredColorScheme(.dark)
-        .task { await bootstrap() }
+        .task { await viewModel.bootstrap() }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            Task { await refreshAndLoad() }
+            Task { await viewModel.refresh() }
         }
     }
 
     private var libraryContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.medium) {
-                if readPermission == .limited {
+                if viewModel.readPermission == .limited {
                     limitedAccessBanner
                         .padding(.horizontal, Spacing.standard)
                 }
@@ -86,7 +78,7 @@ struct GalleryView: View {
 
                 LazyVGrid(columns: columns, spacing: Spacing.standard) {
                     ForEach(CompositionType.allCases) { type in
-                        let count = compositionCounts[type] ?? 0
+                        let count = viewModel.compositionCounts[type] ?? 0
                         if count > 0 {
                             NavigationLink {
                                 CompositionPhotoListView(composition: type)
@@ -94,7 +86,7 @@ struct GalleryView: View {
                                 CompositionCategoryCard(
                                     composition: type,
                                     count: count,
-                                    previewAsset: previewAssets[type]
+                                    previewAsset: viewModel.previewAssets[type]
                                 )
                             }
                             .buttonStyle(.plain)
@@ -127,9 +119,9 @@ struct GalleryView: View {
 
     private var recentStrip: some View {
         Group {
-            if let asset = recentAsset {
+            if let asset = viewModel.recentAsset {
                 NavigationLink {
-                    PhotoDetailView(asset: asset, composition: recentComposition)
+                    PhotoDetailView(asset: asset, composition: viewModel.recentComposition)
                 } label: {
                     Color.clear
                         .frame(height: 120)
@@ -151,58 +143,5 @@ struct GalleryView: View {
             .foregroundStyle(AppColors.textGuide)
             .textCase(.uppercase)
             .padding(.horizontal, Spacing.standard)
-    }
-
-    private func bootstrap() async {
-        readPermission = PrivacyPermissionService.photoReadStatus()
-        await refreshAndLoad()
-    }
-
-    private func refreshAndLoad() async {
-        readPermission = PrivacyPermissionService.photoReadStatus()
-        guard readPermission.allowsPhotoBrowse else {
-            isLoading = false
-            return
-        }
-        isLoading = true
-        await loadData()
-    }
-
-    private func requestReadAccess() async {
-        isRequestingPermission = true
-        defer { isRequestingPermission = false }
-        readPermission = await PrivacyPermissionService.requestPhotoReadAccess()
-        if readPermission.allowsPhotoBrowse {
-            await loadData()
-        } else {
-            isLoading = false
-        }
-    }
-
-    private func loadData() async {
-        let counts = await GalleryManager.shared.fetchCompositionCounts()
-        var previews: [CompositionType: PHAsset] = [:]
-        for type in CompositionType.allCases {
-            let identifiers = await GalleryManager.shared.fetchPhotoIdentifiers(for: type)
-            if let firstID = identifiers.first {
-                let result = PHAsset.fetchAssets(withLocalIdentifiers: [firstID], options: nil)
-                if let asset = result.firstObject { previews[type] = asset }
-            }
-        }
-        let recent = await GalleryManager.shared.fetchAllPhotos()?.firstObject
-        var recentComp = CompositionType.ruleOfThirds
-        if let recent {
-            let metadata = await GalleryManager.shared.fetchAllCompositionMetadata()
-            if let match = metadata.first(where: { $0.assetIdentifier == recent.localIdentifier }) {
-                recentComp = match.composition
-            }
-        }
-        await MainActor.run {
-            compositionCounts = counts
-            previewAssets = previews
-            recentAsset = recent
-            recentComposition = recentComp
-            isLoading = false
-        }
     }
 }
