@@ -15,31 +15,26 @@ struct CameraControlsView: View {
     @State private var activePanel: CameraControlPanel?
 
     var body: some View {
-        VStack(spacing: 0) {
-            topSection
-            Spacer()
-
-            if viewModel.isCountingDown {
-                CameraCountdownOverlay(value: viewModel.countdownValue)
-            }
+        ZStack {
+            mainControls
 
             if activePanel == .exposure {
-                ViewfinderExposureScale(
-                    exposureBias: Binding(
-                        get: { viewModel.exposureBias },
-                        set: { viewModel.setExposure($0) }
-                    ),
-                    onDismiss: { withAnimation { activePanel = nil } }
-                )
-                .padding(.bottom, Spacing.standard)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+                RulerPanelDismissScrim {
+                    withAnimation(.snappy) { activePanel = nil }
+                }
 
-            CameraBottomControlsStack(
-                viewModel: viewModel,
-                isShowingGallery: $isShowingGallery,
-                iconRotation: iconRotation
-            )
+                VStack {
+                    Spacer()
+                    ViewfinderExposureScale(
+                        exposureBias: Binding(
+                            get: { viewModel.exposureBias },
+                            set: { viewModel.setExposure($0) }
+                        )
+                    )
+                    .padding(.bottom, Spacing.standard)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
         }
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
@@ -52,8 +47,25 @@ struct CameraControlsView: View {
         ) { _ in
             updateIconRotation(for: UIDevice.current.orientation)
         }
-        .sensoryFeedback(.success, trigger: viewModel.shutterReadiness) { old, new in
-            new == .ready && old != .ready
+        .sensoryFeedback(.success, trigger: viewModel.captureReadiness) { old, new in
+            new.showsGreenCelebration && !old.showsGreenCelebration
+        }
+    }
+
+    private var mainControls: some View {
+        VStack(spacing: 0) {
+            topSection
+            Spacer()
+
+            if viewModel.isCountingDown {
+                CameraCountdownOverlay(value: viewModel.countdownValue)
+            }
+
+            CameraBottomControlsStack(
+                viewModel: viewModel,
+                isShowingGallery: $isShowingGallery,
+                iconRotation: iconRotation
+            )
         }
     }
 
@@ -98,7 +110,7 @@ struct CameraControlsView: View {
             withAnimation { activePanel = activePanel == .aspect ? nil : .aspect }
             cycleAspectRatio()
         case .exposure:
-            withAnimation {
+            withAnimation(.snappy) {
                 activePanel = activePanel == .exposure ? nil : .exposure
             }
         }

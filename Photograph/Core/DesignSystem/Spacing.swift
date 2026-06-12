@@ -48,8 +48,10 @@ enum ControlMetrics {
     static let focusBox: CGFloat = 116
     static let exposureRailWidth: CGFloat = 44
     static let exposureRailHeight: CGFloat = 228
-    static let exposureControlHeight: CGFloat = 112
     static let exposureControlWidth: CGFloat = 328
+
+    /// Interior tick track height (shared with `LiquidGlassRuler`).
+    static let rulerTrackHeight: CGFloat = 44
     static let topScrimHeight: CGFloat = 128
 
     // MARK: - Composition Picker
