@@ -1,12 +1,13 @@
 //
 //  GalleryView.swift
-//  Photograph
+//  Visula
 //
-//  Library home — Recent strip + Composition category grid (design reference).
+//  Library home — Recent strip + Composition category grid.
 //
 
 import Photos
 import SwiftUI
+import UIKit
 
 struct GalleryView: View {
     @Environment(\.dismiss) private var dismiss
@@ -15,6 +16,8 @@ struct GalleryView: View {
     @State private var recentAsset: PHAsset?
     @State private var recentComposition: CompositionType = .ruleOfThirds
     @State private var isLoading = true
+    @State private var readPermission: PermissionStatus = .notDetermined
+    @State private var isRequestingPermission = false
 
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.standard),
@@ -27,11 +30,19 @@ struct GalleryView: View {
                 if isLoading {
                     ProgressView("Loading…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if !readPermission.allowsPhotoBrowse {
+                    PhotoLibraryPermissionView(
+                        readStatus: readPermission,
+                        isRequesting: isRequestingPermission,
+                        onRequestAccess: { Task { await requestReadAccess() } },
+                        onOpenSettings: { PrivacyPermissionService.openSettings() },
+                        onManageLimited: { PrivacyPermissionService.presentLimitedLibraryPicker() }
+                    )
                 } else if compositionCounts.values.reduce(0, +) == 0 {
                     ContentUnavailableView(
                         "No Photos Yet",
                         systemImage: "camera.viewfinder",
-                        description: Text("Open the camera to start capturing guided compositions.")
+                        description: Text("Open the camera in \(AppIdentity.displayName) to start capturing guided compositions.")
                     )
                 } else {
                     libraryContent
@@ -51,12 +62,20 @@ struct GalleryView: View {
         }
         .tint(AppColors.secondary)
         .preferredColorScheme(.dark)
-        .task { await loadData() }
+        .task { await bootstrap() }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            Task { await refreshAndLoad() }
+        }
     }
 
     private var libraryContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.medium) {
+                if readPermission == .limited {
+                    limitedAccessBanner
+                        .padding(.horizontal, Spacing.standard)
+                }
+
                 sectionHeader("RECENT")
 
                 recentStrip
@@ -89,6 +108,23 @@ struct GalleryView: View {
         .contentMargins(.bottom, Spacing.large, for: .scrollContent)
     }
 
+    private var limitedAccessBanner: some View {
+        HStack(spacing: Spacing.small) {
+            Image(systemName: "photo.badge.plus")
+                .foregroundStyle(AppColors.controlActive)
+            Text(PrivacyPermissionService.photoBrowseMessage(for: .limited))
+                .font(.caption)
+                .foregroundStyle(AppColors.textGuide)
+            Spacer(minLength: 0)
+            Button("Manage") {
+                PrivacyPermissionService.presentLimitedLibraryPicker()
+            }
+            .font(.caption.weight(.semibold))
+        }
+        .padding(Spacing.small)
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: AppRadius.small))
+    }
+
     private var recentStrip: some View {
         Group {
             if let asset = recentAsset {
@@ -115,6 +151,32 @@ struct GalleryView: View {
             .foregroundStyle(AppColors.textGuide)
             .textCase(.uppercase)
             .padding(.horizontal, Spacing.standard)
+    }
+
+    private func bootstrap() async {
+        readPermission = PrivacyPermissionService.photoReadStatus()
+        await refreshAndLoad()
+    }
+
+    private func refreshAndLoad() async {
+        readPermission = PrivacyPermissionService.photoReadStatus()
+        guard readPermission.allowsPhotoBrowse else {
+            isLoading = false
+            return
+        }
+        isLoading = true
+        await loadData()
+    }
+
+    private func requestReadAccess() async {
+        isRequestingPermission = true
+        defer { isRequestingPermission = false }
+        readPermission = await PrivacyPermissionService.requestPhotoReadAccess()
+        if readPermission.allowsPhotoBrowse {
+            await loadData()
+        } else {
+            isLoading = false
+        }
     }
 
     private func loadData() async {

@@ -69,7 +69,7 @@ final class CompositionCoordinator {
             geometry: analysis.sceneGeometry
         )
 
-        HapticManager.selection()
+        HapticManager.lock()
         isSubjectPinned = true
         visionService.pinSubject(at: resolvedPoint)
         if cameraMode == .rearSpatial {

@@ -7,6 +7,7 @@
 
 import ARKit
 import SwiftUI
+import UIKit
 
 /// Main camera screen.
 struct CameraView: View {
@@ -25,6 +26,24 @@ struct CameraView: View {
     @State private var showLockIcon = false
 
     var body: some View {
+        Group {
+            if viewModel.hasCameraPermission {
+                cameraExperience
+            } else {
+                CameraPermissionGateView(
+                    status: viewModel.cameraPermission,
+                    isRequesting: viewModel.isRequestingCameraPermission,
+                    onRequestAccess: { Task { await viewModel.requestCameraAccess() } },
+                    onOpenSettings: { viewModel.openAppSettings() }
+                )
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            Task { await viewModel.refreshPermissions() }
+        }
+    }
+
+    private var cameraExperience: some View {
         ZStack {
             // MARK: Layer 1 — Camera Preview
 
@@ -74,7 +93,8 @@ struct CameraView: View {
                 geometry: viewModel.analysis.sceneGeometry,
                 aspectRatio: viewModel.selectedAspectRatio,
                 subjectOffset: viewModel.analysis.subjectOffset,
-                isPerfect: viewModel.analysis.isCompositionPerfect,
+                isPerfect: viewModel.shutterIsPerfect,
+                isStabilizing: viewModel.isStabilizingForCapture,
                 sceneAlignmentScore: viewModel.analysis.sceneAlignmentScore,
                 hasSceneData: viewModel.analysis.hasSceneData
             )
@@ -88,7 +108,7 @@ struct CameraView: View {
 
             if case .guiding = viewModel.guidancePhase, !viewModel.analysis.isCompositionPerfect {
                 Rectangle()
-                    .strokeBorder(AppColors.accent, lineWidth: 2)
+                    .strokeBorder(AppColors.accent.opacity(0.85), lineWidth: 3)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
                     .transition(.opacity)
@@ -97,7 +117,7 @@ struct CameraView: View {
             // MARK: Layer 2.5 — Scanning Phase Hints
 
             if !viewModel.guidancePhase.isActive {
-                ScanningHintOverlay(
+                ScanningCoachOverlay(
                     saliencyCentroid: viewModel.analysis.sceneGeometry.saliencyCentroid,
                     faceDetected: !viewModel.analysis.sceneGeometry.faceRects.isEmpty
                 )
@@ -114,6 +134,7 @@ struct CameraView: View {
                     subjectPoint: viewModel.analysis.bestSubjectPoint,
                     targetPoint: viewModel.analysis.sceneGeometry.lockedTargetPoint,
                     isPerfect: viewModel.analysis.isCompositionPerfect,
+                    isCaptureReady: viewModel.isCaptureReady,
                     hasSceneData: viewModel.analysis.hasSceneData,
                     hasMLData: viewModel.analysis.hasMLData,
                     alignmentScore: viewModel.analysis.sceneAlignmentScore,
@@ -203,6 +224,13 @@ struct CameraView: View {
                 Task { await viewModel.savePhoto() }
             }
         }
+        .onChange(of: viewModel.shutterIsPerfect) { wasReady, isReady in
+            guard isReady, !wasReady else { return }
+            UIAccessibility.post(
+                notification: .announcement,
+                argument: "Composition ready. Capture now."
+            )
+        }
         .onChange(of: viewModel.spatialEngine.trackingState) { _, state in
             guard viewModel.cameraMode == .rearSpatial else { return }
             switch state {
@@ -225,13 +253,16 @@ struct CameraView: View {
         } message: {
             Text(viewModel.saveError ?? "")
         }
-        .alert("Could Not Capture", isPresented: Binding(
-            get: { viewModel.captureError != nil },
-            set: { if !$0 { viewModel.clearCaptureError() } }
-        )) {
-            Button("OK", role: .cancel) { viewModel.clearCaptureError() }
-        } message: {
-            Text(viewModel.captureError ?? "")
+        .onChange(of: viewModel.captureError) { _, error in
+            if let error {
+                viewModel.showInlineToast(error)
+                viewModel.clearCaptureError()
+            }
+        }
+        .onChange(of: viewModel.saveError) { _, error in
+            if let error {
+                viewModel.showInlineToast(error)
+            }
         }
     }
 

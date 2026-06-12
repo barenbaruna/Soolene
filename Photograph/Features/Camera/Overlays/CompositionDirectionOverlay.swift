@@ -40,6 +40,7 @@ struct CompositionDirectionOverlay: View {
     let subjectPoint: CGPoint?
     let targetPoint: CGPoint?
     let isPerfect: Bool
+    var isCaptureReady: Bool = true
     let hasSceneData: Bool
     let hasMLData: Bool
     let alignmentScore: Float
@@ -63,17 +64,22 @@ struct CompositionDirectionOverlay: View {
 
     private var anchorColor: Color {
         switch proximity {
-        case .perfect: return AppColors.gridlineGreen
+        case .perfect:
+            return isCaptureReady ? AppColors.gridlineGreen : AppColors.controlActive
         case .close:   return AppColors.primary
         case .far:     return Color.white.opacity(0.85)
         }
     }
 
+    private var showsCelebration: Bool {
+        proximity == .perfect && isCaptureReady
+    }
+
     private var bracketLineWidth: CGFloat {
         switch proximity {
-        case .perfect: return 2.5
-        case .close:   return 2.0
-        case .far:     return 1.5
+        case .perfect: return GridMetrics.targetRing
+        case .close:   return GridMetrics.crosshair
+        case .far:     return GridMetrics.secondary
         }
     }
 
@@ -137,12 +143,10 @@ struct CompositionDirectionOverlay: View {
                                 .transition(.opacity)
                         }
 
-                        if proximity == .perfect {
-                            // Green celebration burst
+                        if showsCelebration {
                             PerfectBurstRing()
                                 .position(targetPx)
 
-                            // Green glow halo
                             Circle()
                                 .fill(
                                     RadialGradient(
@@ -159,7 +163,7 @@ struct CompositionDirectionOverlay: View {
                         // --- Layer 3: Target Socket ---
                         EnhancedTargetSocket(
                             color: anchorColor,
-                            isPerfect: proximity == .perfect,
+                            isPerfect: showsCelebration,
                             dotSize: dotSize
                         )
                         .frame(width: socketSize, height: socketSize)
@@ -167,8 +171,7 @@ struct CompositionDirectionOverlay: View {
                         .allowsHitTesting(false)
 
                         // --- Layer 4: Subject Bracket ---
-                        if proximity == .perfect {
-                            // Perfect state: show checkmark instead of bracket
+                        if showsCelebration {
                             PerfectCheckmark(color: anchorColor)
                                 .frame(width: ControlMetrics.dualAnchorBracketSize,
                                        height: ControlMetrics.dualAnchorBracketSize)

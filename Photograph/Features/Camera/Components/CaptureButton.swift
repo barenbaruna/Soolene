@@ -2,16 +2,17 @@
 //  CaptureButton.swift
 //  Photograph
 //
-//  Shutter: white outer ring + olive inner fill (design reference).
-//  Perfect state adds green glow and ring.
+//  Shutter: olive (idle) → gold (stabilizing) → green (ready).
 //
 
 import SwiftUI
 
 struct CaptureButton: View {
     let action: () -> Void
-    var isPerfect: Bool = false
+    var readiness: ShutterReadiness = .idle
     var isDisabled: Bool = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isPressed = false
     @State private var glowPulsing = false
@@ -26,7 +27,7 @@ struct CaptureButton: View {
             action()
         }) {
             ZStack {
-                if isPerfect {
+                if readiness == .ready {
                     Circle()
                         .fill(AppColors.gridlineGreen.opacity(glowPulsing ? 0.35 : 0.12))
                         .frame(
@@ -34,6 +35,14 @@ struct CaptureButton: View {
                             height: ControlMetrics.shutterOuter + 20
                         )
                         .blur(radius: 10)
+                } else if readiness == .stabilizing {
+                    Circle()
+                        .fill(AppColors.controlActive.opacity(glowPulsing ? 0.28 : 0.1))
+                        .frame(
+                            width: ControlMetrics.shutterOuter + 14,
+                            height: ControlMetrics.shutterOuter + 14
+                        )
+                        .blur(radius: 8)
                 }
 
                 Circle()
@@ -41,19 +50,53 @@ struct CaptureButton: View {
                     .frame(width: ControlMetrics.shutterOuter, height: ControlMetrics.shutterOuter)
 
                 Circle()
-                    .fill(isPerfect ? AppColors.gridlineGreen : AppColors.primary)
+                    .fill(innerFillColor)
                     .frame(width: ControlMetrics.shutterInner, height: ControlMetrics.shutterInner)
                     .scaleEffect(isPressed ? 0.88 : 1.0)
                     .animation(.easeInOut(duration: 0.15), value: isPressed)
             }
-            .scaleEffect(isPerfect && glowPulsing ? 1.04 : 1.0)
-            .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: glowPulsing)
+            .scaleEffect(pulseScale)
+            .animation(pulseAnimation, value: glowPulsing)
         }
         .disabled(isDisabled)
-        .opacity(isDisabled ? 0.45 : 1)
-        .accessibilityLabel(isPerfect ? "Capture Photo — Perfect Composition" : "Capture Photo")
-        .onChange(of: isPerfect) { _, newValue in
-            glowPulsing = newValue
+        .opacity(buttonOpacity)
+        .accessibilityLabel(accessibilityLabel)
+        .onChange(of: readiness) { _, newValue in
+            glowPulsing = newValue != .idle && !reduceMotion
+        }
+        .onAppear {
+            glowPulsing = readiness != .idle && !reduceMotion
+        }
+    }
+
+    private var innerFillColor: Color {
+        switch readiness {
+        case .ready: return AppColors.gridlineGreen
+        case .stabilizing: return AppColors.controlActive
+        case .idle: return AppColors.primary
+        }
+    }
+
+    private var buttonOpacity: Double {
+        if isDisabled && readiness == .idle { return 0.45 }
+        return 1
+    }
+
+    private var pulseScale: CGFloat {
+        guard !reduceMotion, glowPulsing else { return 1 }
+        return readiness == .ready ? 1.04 : 1.02
+    }
+
+    private var pulseAnimation: Animation? {
+        guard !reduceMotion else { return nil }
+        return .easeInOut(duration: readiness == .ready ? 0.8 : 1.1).repeatForever(autoreverses: true)
+    }
+
+    private var accessibilityLabel: String {
+        switch readiness {
+        case .ready: return "Capture Photo — ready"
+        case .stabilizing: return "Capture Photo — hold steady, stabilizing"
+        case .idle: return "Capture Photo"
         }
     }
 }

@@ -18,19 +18,21 @@ struct CompositionOverlayView: View {
     let aspectRatio: AspectRatioMode
     let subjectOffset: CGVector
     let isPerfect: Bool
+    var isStabilizing: Bool = false
     let sceneAlignmentScore: Float
     let hasSceneData: Bool
     
     // MARK: - Color Logic
     
-    /// Returns the current guide color based on scene alignment score.
-    ///
     /// - White:  No Vision data yet
-    /// - Green:  Composition is perfect (aligned with frozen target / level horizon)
-    /// - Red:    Scene data present but not yet perfect
+    /// - Green:  Composition aligned and capture-ready
+    /// - Gold:   Composition aligned, tracking stabilizing
+    /// - Red:    Scene data present but not yet aligned
     private var guideColor: Color {
         if !hasSceneData { return Color(uiColor: .gridlineWhite) }
-        return isPerfect ? Color(uiColor: .gridlineGreen) : Color(uiColor: .gridlineRed)
+        if isPerfect { return Color(uiColor: .gridlineGreen) }
+        if isStabilizing { return AppColors.controlActive }
+        return Color(uiColor: .gridlineRed)
     }
     
     // MARK: - Body

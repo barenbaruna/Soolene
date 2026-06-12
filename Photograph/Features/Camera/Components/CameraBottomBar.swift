@@ -56,7 +56,7 @@ struct CameraBottomBar: View {
             } else {
                 CaptureButton(
                     action: { viewModel.capturePhoto() },
-                    isPerfect: viewModel.shutterIsPerfect,
+                    readiness: viewModel.shutterReadiness,
                     isDisabled: viewModel.isCapturing || !viewModel.isCaptureReady
                 )
             }

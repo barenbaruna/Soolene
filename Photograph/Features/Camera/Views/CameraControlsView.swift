@@ -2,7 +2,7 @@
 //  CameraControlsView.swift
 //  Photograph
 //
-//  Camera HUD: top toolbar, guidance, zoom ruler, composition picker, bottom band.
+//  Camera HUD: top toolbar, guidance, exposure overlay, bottom controls.
 //
 
 import SwiftUI
@@ -16,31 +16,11 @@ struct CameraControlsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: Spacing.small) {
-                CameraTopToolbar(
-                    viewModel: viewModel,
-                    iconRotation: iconRotation,
-                    activePanel: activePanel,
-                    onPanelTapped: handlePanelTap
-                )
-                .padding(.top, Spacing.small)
-
-                CameraTopRow(
-                    viewModel: viewModel,
-                    isCountingDown: viewModel.isCountingDown
-                )
-            }
-            .padding(.horizontal, Spacing.standard)
-
+            topSection
             Spacer()
 
             if viewModel.isCountingDown {
-                Text("\(viewModel.countdownValue)")
-                    .font(.system(size: 72, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(AppColors.primary)
-                    .shadow(color: .black.opacity(0.4), radius: 8)
-                    .transition(.scale.combined(with: .opacity))
+                CameraCountdownOverlay(value: viewModel.countdownValue)
             }
 
             if activePanel == .exposure {
@@ -55,40 +35,11 @@ struct CameraControlsView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            VStack(spacing: Spacing.small) {
-                if !viewModel.isCountingDown {
-                    ZoomRulerView(
-                        lenses: viewModel.availableLenses,
-                        selectedLens: LensType(rawValue: viewModel.selectedLens) ?? .wide,
-                        onSelect: { viewModel.switchLens($0) }
-                    )
-                    .disabled(viewModel.isSwitchingCamera)
-                    .opacity(viewModel.isSwitchingCamera ? 0.5 : 1)
-                    .padding(.bottom, Spacing.small)
-
-                    if viewModel.guidancePhase.showPicker {
-                        CompositionPickerView(
-                            selectedComposition: viewModel.userSelectedComposition,
-                            mlSuggestion: viewModel.mlSuggestion,
-                            compositions: viewModel.sortedPickerCompositions,
-                            onSelect: { viewModel.selectComposition($0) }
-                        )
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                        if case .subjectLocked = viewModel.guidancePhase {
-                            Text("Double-tap to unlock subject")
-                                .font(.caption2)
-                                .foregroundStyle(AppColors.textGuide)
-                        }
-                    }
-                }
-
-                CameraBottomBar(
-                    viewModel: viewModel,
-                    isShowingGallery: $isShowingGallery,
-                    iconRotation: iconRotation
-                )
-            }
+            CameraBottomControlsStack(
+                viewModel: viewModel,
+                isShowingGallery: $isShowingGallery,
+                iconRotation: iconRotation
+            )
         }
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
@@ -99,14 +50,38 @@ struct CameraControlsView: View {
         .onReceive(
             NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
         ) { _ in
-            let o = UIDevice.current.orientation
-            withAnimation(.spring(response: 0.3)) {
-                switch o {
-                case .landscapeLeft: iconRotation = 90
-                case .landscapeRight: iconRotation = -90
-                case .portraitUpsideDown: iconRotation = 180
-                default: iconRotation = 0
-                }
+            updateIconRotation(for: UIDevice.current.orientation)
+        }
+        .sensoryFeedback(.success, trigger: viewModel.shutterReadiness) { old, new in
+            new == .ready && old != .ready
+        }
+    }
+
+    private var topSection: some View {
+        VStack(spacing: Spacing.small) {
+            CameraTopToolbar(
+                viewModel: viewModel,
+                iconRotation: iconRotation,
+                activePanel: activePanel,
+                onPanelTapped: handlePanelTap
+            )
+            .padding(.top, Spacing.small)
+
+            CameraTopRow(
+                viewModel: viewModel,
+                isCountingDown: viewModel.isCountingDown
+            )
+        }
+        .padding(.horizontal, Spacing.standard)
+    }
+
+    private func updateIconRotation(for orientation: UIDeviceOrientation) {
+        withAnimation(.spring(response: 0.3)) {
+            switch orientation {
+            case .landscapeLeft: iconRotation = 90
+            case .landscapeRight: iconRotation = -90
+            case .portraitUpsideDown: iconRotation = 180
+            default: iconRotation = 0
             }
         }
     }

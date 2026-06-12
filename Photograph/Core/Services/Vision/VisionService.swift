@@ -504,9 +504,6 @@ final class VisionService: @unchecked Sendable {
                 self.analysisLock.unlock()
             }
 
-            if merged.isCompositionPerfect, !self.wasCompositionPerfect {
-                HapticManager.success()
-            }
             self.wasCompositionPerfect = merged.isCompositionPerfect
         }
     }

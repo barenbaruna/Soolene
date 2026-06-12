@@ -43,8 +43,15 @@ final class CameraViewModel {
 
     // MARK: - Permissions
 
-    var hasCameraPermission = false
-    var hasPhotoPermission = false
+    var cameraPermission: PermissionStatus = .notDetermined
+    var photoAddPermission: PermissionStatus = .notDetermined
+    var photoReadPermission: PermissionStatus = .notDetermined
+    var isRequestingCameraPermission = false
+    var isRequestingPhotoPermission = false
+    var inlineToastMessage: String?
+
+    var hasCameraPermission: Bool { cameraPermission.allowsCamera }
+    var hasPhotoPermission: Bool { photoAddPermission.allowsPhotoSave }
 
     // MARK: - Camera Mode
 
@@ -157,8 +164,10 @@ final class CameraViewModel {
     // MARK: - Lifecycle
 
     func onAppear() async {
-        await checkPermissions()
-        await spatialEngine.checkPermissionsAndSetup()
+        await refreshPermissions()
+        if hasCameraPermission {
+            await spatialEngine.checkPermissionsAndSetup()
+        }
         await loadLatestThumbnail()
         motionService.start()
     }
@@ -202,22 +211,58 @@ final class CameraViewModel {
 
     // MARK: - Permissions
 
-    private func checkPermissions() async {
-        let camStatus = AVCaptureDevice.authorizationStatus(for: .video)
-        if camStatus == .notDetermined {
-            let granted = await AVCaptureDevice.requestAccess(for: .video)
-            hasCameraPermission = granted
-        } else {
-            hasCameraPermission = camStatus == .authorized
-        }
+    func refreshPermissions() async {
+        cameraPermission = PrivacyPermissionService.cameraStatus()
+        photoAddPermission = PrivacyPermissionService.photoAddStatus()
+        photoReadPermission = PrivacyPermissionService.photoReadStatus()
+    }
 
-        let photoStatus = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-        if photoStatus == .notDetermined {
-            let result = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-            hasPhotoPermission = (result == .authorized || result == .limited)
-        } else {
-            hasPhotoPermission = (photoStatus == .authorized || photoStatus == .limited)
+    func requestCameraAccess() async {
+        isRequestingCameraPermission = true
+        defer { isRequestingCameraPermission = false }
+        cameraPermission = await PrivacyPermissionService.requestCameraAccess()
+        if cameraPermission.allowsCamera {
+            await spatialEngine.checkPermissionsAndSetup()
         }
+    }
+
+    func requestPhotoAddAccess() async {
+        isRequestingPhotoPermission = true
+        defer { isRequestingPhotoPermission = false }
+        photoAddPermission = await PrivacyPermissionService.requestPhotoAddAccess()
+        photoReadPermission = PrivacyPermissionService.photoReadStatus()
+    }
+
+    func openAppSettings() {
+        PrivacyPermissionService.openSettings()
+    }
+
+    func presentLimitedPhotoPicker() {
+        PrivacyPermissionService.presentLimitedLibraryPicker()
+    }
+
+    // MARK: - Inline feedback
+
+    func showInlineToast(_ message: String, duration: TimeInterval = 4) {
+        inlineToastMessage = message
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            if inlineToastMessage == message {
+                inlineToastMessage = nil
+            }
+        }
+    }
+
+    var showsTrackingStabilityMeter: Bool {
+        cameraMode == .rearSpatial && isStabilizingForCapture
+    }
+
+    var trackingStabilityProgress: Float {
+        spatialEngine.trackingStabilityProgress
+    }
+
+    private func checkPermissions() async {
+        await refreshPermissions()
     }
 
     // MARK: - Camera Actions
@@ -425,6 +470,14 @@ final class CameraViewModel {
     func savePhoto() async {
         guard let data = activeCapturedPhotoData else { return }
 
+        await refreshPermissions()
+        guard photoAddPermission.allowsPhotoSave else {
+            let message = PrivacyPermissionService.photoSaveMessage(for: photoAddPermission)
+            saveError = message
+            showInlineToast(message)
+            return
+        }
+
         do {
             try await GalleryManager.shared.savePhoto(data, composition: resolvedComposition)
 
@@ -436,7 +489,9 @@ final class CameraViewModel {
                 lastSavedThumbnail = thumb
             }
         } catch {
-            saveError = error.localizedDescription
+            let message = error.localizedDescription
+            saveError = message
+            showInlineToast(message)
         }
     }
 
@@ -497,6 +552,21 @@ final class CameraViewModel {
 
     var shutterIsPerfect: Bool {
         guidancePhase.isPerfect && isCaptureReady
+    }
+
+    /// Composition is aligned but AR tracking may still be stabilizing.
+    var isCompositionAligned: Bool {
+        guidancePhase.isPerfect || analysis.isCompositionPerfect
+    }
+
+    var isStabilizingForCapture: Bool {
+        isCompositionAligned && !isCaptureReady
+    }
+
+    var shutterReadiness: ShutterReadiness {
+        if shutterIsPerfect { return .ready }
+        if isCompositionAligned { return .stabilizing }
+        return .idle
     }
 
     var activeCapturedPhotoData: Data? {

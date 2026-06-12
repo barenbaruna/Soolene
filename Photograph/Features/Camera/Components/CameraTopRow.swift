@@ -11,6 +11,8 @@ struct CameraTopRow: View {
     let viewModel: CameraViewModel
     let isCountingDown: Bool
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         if !isCountingDown {
             GuidanceTipView(
@@ -18,10 +20,13 @@ struct CameraTopRow: View {
                 tip: viewModel.guidanceTip,
                 composition: viewModel.userSelectedComposition
                     ?? viewModel.mlSuggestion
-                    ?? viewModel.resolvedComposition
+                    ?? viewModel.resolvedComposition,
+                isCaptureReady: viewModel.isCaptureReady
             )
             .frame(maxWidth: .infinity)
             .padding(.horizontal, Spacing.standard)
+            .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.45, dampingFraction: 0.82),
+                       value: viewModel.guidancePhase)
         }
     }
 }

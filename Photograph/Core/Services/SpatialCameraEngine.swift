@@ -33,6 +33,8 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     var capturedPhotoData: Data?
     var captureError: String?
     var trackingState: ARCamera.TrackingState = .notAvailable
+    /// 0…1 progress toward stable tracking for hi-res capture.
+    var trackingStabilityProgress: Float = 0
     var isCapturingHighResolution = false
     var lastLockQuality: SubjectLockQuality?
     var viewportSize: CGSize = .zero
@@ -120,6 +122,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
         let config = ARWorldTrackingConfiguration()
         config.planeDetection = [.horizontal, .vertical]
+        
         config.isAutoFocusEnabled = true
         config.worldAlignment = .gravity
 
@@ -535,6 +538,9 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         sessionCaptureActive = true
 
         guard isTrackingReadyForCapture() else {
+            Self.captureLog.warning(
+                "Capture blocked: tracking not ready state=\(String(describing: self.session.currentFrame?.camera.trackingState)) frames=\(self.consecutiveNormalFrames)"
+            )
             sessionCaptureActive = false
             Task { @MainActor in
                 self.isCapturingHighResolution = false
@@ -560,7 +566,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         let captureFlash = flashMode
         arStateLock.unlock()
 
-        var settings = photoSettings
+        let settings = photoSettings
         settings.photoQualityPrioritization = .quality
         settings.flashMode = captureFlash
 
@@ -701,7 +707,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
             case .highResolutionFrameCaptureInProgress:
                 return "Please wait — a photo is still being captured."
             case .highResolutionFrameCaptureFailed:
-                return "Photo capture failed. Hold steady until tracking is stable, then try again."
+                return error.localizedDescription
             default:
                 break
             }
@@ -773,8 +779,14 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
             consecutiveNormalFrames = 0
         }
 
+        let progress: Float = {
+            guard case .normal = tracking else { return 0 }
+            return min(1, Float(consecutiveNormalFrames) / Float(Self.requiredNormalFramesForCapture))
+        }()
+
         DispatchQueue.main.async { [weak self] in
             self?.trackingState = tracking
+            self?.trackingStabilityProgress = progress
         }
 
         let packet = makeFramePacket(from: frame)

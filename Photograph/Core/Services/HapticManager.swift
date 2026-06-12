@@ -23,6 +23,20 @@ enum HapticManager {
         generator.notificationOccurred(.success)
     }
 
+    /// Used when tracking stabilizes and capture becomes available.
+    static func captureReady() {
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        generator.impactOccurred()
+    }
+
+    /// Used when the user locks a subject with a long-press.
+    static func lock() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred(intensity: 0.85)
+    }
+
     /// Used for small UI interactions like switching settings or camera lenses.
     static func selection() {
         let generator = UISelectionFeedbackGenerator()

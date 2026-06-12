@@ -2,41 +2,67 @@
 //  LensSelectorView.swift
 //  Photograph
 //
-//  Created by Baren Baruna Harahap on 18/05/26.
+//  Discrete zoom lens chips — matches native Camera discrete levels (not a slider).
 //
 
 import SwiftUI
 
-/// Horizontal lens selector showing available zoom levels (0.5×, 1×, 2×, 3×).
-/// Only shows lenses that the current device actually supports.
+/// Horizontal lens selector for supported zoom levels (0.5×, 1×, 2×, 3×).
 struct LensSelectorView: View {
     let availableLenses: [LensType]
-    @Binding var selectedLens: LensType
+    let selectedLens: LensType
+    let onSelect: (LensType) -> Void
     var iconRotation: Double = 0
+    var isEnabled: Bool = true
 
     var body: some View {
-        if self.availableLenses.count > 1 {
-            HStack(spacing: 6) {
-                ForEach(self.availableLenses) { lens in
-                    Button {
-                        withAnimation(.spring(response: 0.3)) {
-                            self.selectedLens = lens
-                        }
-                    } label: {
-                        Text(lens.rawValue)
-                            .font(.caption)
-                            .fontWeight(self.selectedLens == lens ? .bold : .medium)
-                            .monospacedDigit()
-                            .foregroundStyle(self.selectedLens == lens ? AppColors.controlActive : .white)
-                            .rotationEffect(.degrees(iconRotation))
-                            .frame(width: ControlMetrics.settingsButton, height: ControlMetrics.settingsButton)
-                    }
-                    .lensChipBackground(isSelected: self.selectedLens == lens)
-                    .accessibilityLabel("\(lens.rawValue) zoom")
-                    .accessibilityAddTraits(self.selectedLens == lens ? .isSelected : [])
-                }
+        if availableLenses.count > 1 {
+            lensChipRow
+        }
+    }
+
+    @ViewBuilder
+    private var lensChipRow: some View {
+        if #available(iOS 26, *) {
+            GlassEffectContainer(spacing: Spacing.small) {
+                chipButtons
+            }
+        } else {
+            chipButtons
+                .padding(.horizontal, Spacing.small)
+                .padding(.vertical, Spacing.tiny)
+                .background(.ultraThinMaterial, in: Capsule())
+        }
+    }
+
+    private var chipButtons: some View {
+        HStack(spacing: Spacing.small) {
+            ForEach(availableLenses) { lens in
+                lensButton(for: lens)
             }
         }
+    }
+
+    private func lensButton(for lens: LensType) -> some View {
+        let isSelected = selectedLens == lens
+
+        return Button {
+            guard isEnabled else { return }
+            onSelect(lens)
+        } label: {
+            Text(lens.rawValue)
+                .font(.subheadline.weight(isSelected ? .bold : .medium))
+                .monospacedDigit()
+                .foregroundStyle(isSelected ? AppColors.controlActive : AppColors.textGuide)
+                .rotationEffect(.degrees(iconRotation))
+                .frame(minWidth: ControlMetrics.compactIconButton, minHeight: ControlMetrics.compactIconButton)
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .lensChipBackground(isSelected: isSelected)
+        .accessibilityLabel("\(lens.rawValue) zoom")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .disabled(!isEnabled)
     }
 }
 
@@ -47,20 +73,25 @@ private extension View {
     func lensChipBackground(isSelected: Bool) -> some View {
         if #available(iOS 26, *) {
             self.glassEffect(
-                isSelected ? .regular.tint(AppColors.controlActive.opacity(0.15)).interactive() : .regular.interactive(),
-                in: .circle
+                isSelected
+                    ? .regular.tint(AppColors.controlActive.opacity(0.2)).interactive()
+                    : .regular.interactive(),
+                in: .capsule
             )
         } else {
             self
                 .background(
-                    Circle()
+                    Capsule()
                         .fill(isSelected
-                            ? AnyShapeStyle(.ultraThinMaterial)
-                            : AnyShapeStyle(Color.white.opacity(0.1)))
+                            ? AnyShapeStyle(AppColors.controlActive.opacity(0.15))
+                            : AnyShapeStyle(Color.white.opacity(0.08)))
                 )
                 .overlay(
-                    Circle()
-                        .strokeBorder(isSelected ? AppColors.controlActive.opacity(0.6) : Color.clear, lineWidth: 1)
+                    Capsule()
+                        .strokeBorder(
+                            isSelected ? AppColors.controlActive.opacity(0.55) : Color.clear,
+                            lineWidth: 1.5
+                        )
                 )
         }
     }

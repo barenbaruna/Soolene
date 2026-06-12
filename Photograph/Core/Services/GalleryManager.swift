@@ -9,16 +9,16 @@ import Foundation
 import Photos
 import UIKit
 
-/// Manages saving and reading photos in a custom "Photograph" album.
-/// Photos are saved to both Camera Roll and the custom album for in-app gallery.
+/// Manages saving and reading photos in the Visula album.
+/// Photos are saved to both Camera Roll and the custom album for in-app library.
 actor GalleryManager {
     static let shared = GalleryManager()
 
-    private let albumName = "Photograph"
+    private let albumName = AppIdentity.photoAlbumName
 
     // MARK: - Save Photo
 
-    /// Saves photo data to Camera Roll AND the custom "Photograph" album.
+    /// Saves photo data to Camera Roll AND the Visula album.
     /// - Parameters:
     ///   - photoData: Raw JPEG data including EXIF metadata
     ///   - composition: The detected composition type to store as metadata
@@ -162,7 +162,7 @@ enum GalleryError: LocalizedError {
         case .saveFailed:
             return "Could not save the photo. Please try again."
         case .permissionDenied:
-            return "Photo Library permission required. Please enable in Settings."
+            return "\(AppIdentity.displayName) needs Photo Library access. Enable Photos in Settings to save and browse your library."
         }
     }
 }
