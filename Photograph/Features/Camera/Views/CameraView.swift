@@ -93,6 +93,16 @@ struct CameraView: View {
         .fullScreenCover(isPresented: $isShowingGallery) {
             GalleryView()
         }
+        .onChange(of: viewModel.spatialEngine.capturedPhotoData) { _, newData in
+            if newData != nil {
+                Task { await viewModel.savePhoto() }
+            }
+        }
+        .onChange(of: viewModel.cameraManager.capturedPhotoData) { _, newData in
+            if newData != nil {
+                Task { await viewModel.savePhoto() }
+            }
+        }
         .onChange(of: viewModel.shutterIsPerfect) { wasReady, isReady in
             guard isReady, !wasReady else { return }
             UIAccessibility.post(

@@ -80,7 +80,7 @@ extension CameraViewModel {
     }
 
     var isStabilizingForCapture: Bool {
-        shutterReadiness == .stabilizing
+        isCompositionAligned && !isCaptureReady
     }
 
     var shutterReadiness: ShutterReadiness {
@@ -138,7 +138,6 @@ extension CameraViewModel {
             showShutterFlash = true
             try? await Task.sleep(nanoseconds: 100_000_000)
             showShutterFlash = false
-            await savePhoto()
         }
     }
 }

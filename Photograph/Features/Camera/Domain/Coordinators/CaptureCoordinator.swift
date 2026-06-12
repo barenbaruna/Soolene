@@ -24,16 +24,15 @@ final class CaptureCoordinator {
         self.visionService = visionService
     }
 
-    /// True when composition is perfect and hardware/session gates pass.
-    func isCaptureReady(cameraMode: CameraMode, guidancePhase: GuidancePhase) -> Bool {
-        guard guidancePhase.isPerfect else { return false }
+    /// Hardware/session gates for capture (matches `integration/ui-logic-sync`).
+    /// Composition perfection is reflected in `shutterReadiness`, not this gate.
+    func isCaptureReady(cameraMode: CameraMode, guidancePhase _: GuidancePhase) -> Bool {
         guard !isCapturing(cameraMode: cameraMode) else { return false }
 
         switch cameraMode {
         case .rearSpatial:
             return spatialEngine.isSessionConfigured
                 && spatialEngine.trackingState == .normal
-                && spatialEngine.trackingStabilityProgress >= 1.0
         case .frontClassic:
             return cameraManager.isSessionRunning
         }
@@ -44,10 +43,9 @@ final class CaptureCoordinator {
         guidancePhase: GuidancePhase,
         isCompositionPerfect: Bool
     ) -> ShutterReadiness {
-        let captureReady = isCaptureReady(cameraMode: cameraMode, guidancePhase: guidancePhase)
-        let aligned = guidancePhase.isPerfect || isCompositionPerfect
-        if guidancePhase.isPerfect && captureReady { return .ready }
-        if aligned && !captureReady { return .stabilizing }
+        let hardwareReady = isCaptureReady(cameraMode: cameraMode, guidancePhase: guidancePhase)
+        if guidancePhase.isPerfect && hardwareReady { return .ready }
+        if guidancePhase.isPerfect || isCompositionPerfect { return .stabilizing }
         return .idle
     }
 
@@ -100,7 +98,10 @@ final class CaptureCoordinator {
     private func waitForClassicCaptureCompletion(timeout: TimeInterval = 12) async {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            if !cameraManager.isCapturingPhoto {
+            if !cameraManager.isCapturingPhoto, cameraManager.capturedPhotoData != nil {
+                return
+            }
+            if !cameraManager.isCapturingPhoto, cameraManager.captureError != nil {
                 return
             }
             try? await Task.sleep(nanoseconds: 50_000_000)
