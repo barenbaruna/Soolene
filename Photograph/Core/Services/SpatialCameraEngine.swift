@@ -46,6 +46,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
     var onFrameUpdated: (@Sendable (SpatialFramePacket) -> Void)?
     var onSubjectLockResult: (@Sendable (SubjectLockQuality?) -> Void)?
+    var onTrackingStateChanged: ((ARCamera.TrackingState) -> Void)?
     /// When false, the delegate skips pixel-buffer copy (Vision still receives projected subject).
     var shouldProcessVisionFrame: (@Sendable () -> Bool)?
 
@@ -785,8 +786,10 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         }()
 
         DispatchQueue.main.async { [weak self] in
-            self?.trackingState = tracking
-            self?.trackingStabilityProgress = progress
+            guard let self else { return }
+            self.trackingState = tracking
+            self.trackingStabilityProgress = progress
+            self.onTrackingStateChanged?(tracking)
         }
 
         let packet = makeFramePacket(from: frame)
