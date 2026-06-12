@@ -3,6 +3,8 @@
 //  Photograph
 //
 //  SwiftUI wrapper for ARKit camera preview with tap / long-press / pinch gestures.
+//  AR guidance uses visual preview zoom — ARKit wide-primary hi-res feeds ignore
+//  `videoZoomFactor` for the live ARSCNView image.
 //
 
 import ARKit
@@ -11,6 +13,8 @@ import SwiftUI
 /// Full-screen AR camera preview backed by ARSCNView.
 struct SpatialCameraView: UIViewRepresentable {
     let engine: SpatialCameraEngine
+    /// Display-space multiplier — drives visual preview zoom (1× = identity).
+    let previewZoom: CGFloat
     var onTap: ((CGPoint, CGPoint) -> Void)?
     var onLongPress: ((CGPoint, CGPoint) -> Void)?
     var onDoubleTap: (() -> Void)?
@@ -20,47 +24,99 @@ struct SpatialCameraView: UIViewRepresentable {
         Coordinator()
     }
 
-    func makeUIView(context: Context) -> ARSCNView {
-        let view = ARSCNView(frame: .zero)
-        view.session = engine.session
-        view.automaticallyUpdatesLighting = false
-        view.rendersCameraGrain = true
-        view.antialiasingMode = ProcessInfo.processInfo.thermalState == .nominal
+    func makeUIView(context: Context) -> ARPreviewContainer {
+        let container = ARPreviewContainer()
+        container.arView.session = engine.session
+        container.arView.automaticallyUpdatesLighting = false
+        container.arView.rendersCameraGrain = true
+        container.arView.antialiasingMode = ProcessInfo.processInfo.thermalState == .nominal
             ? .multisampling4X
             : .none
-        view.contentMode = .scaleAspectFill
+        container.arView.contentMode = .scaleAspectFill
 
-        context.coordinator.arView = view
+        context.coordinator.container = container
         context.coordinator.engine = engine
         context.coordinator.onTap = onTap
         context.coordinator.onLongPress = onLongPress
         context.coordinator.onDoubleTap = onDoubleTap
         context.coordinator.onPinch = onPinch
-        context.coordinator.installGestures(on: view)
+        context.coordinator.installGestures(on: container)
 
-        updateViewportSize(for: view)
-        return view
+        container.setPreviewZoom(previewZoom)
+        updateViewportSize(for: container)
+        return container
     }
 
-    func updateUIView(_ uiView: ARSCNView, context: Context) {
-        context.coordinator.arView = uiView
+    func updateUIView(_ uiView: ARPreviewContainer, context: Context) {
+        context.coordinator.container = uiView
         context.coordinator.engine = engine
         context.coordinator.onTap = onTap
         context.coordinator.onLongPress = onLongPress
         context.coordinator.onDoubleTap = onDoubleTap
         context.coordinator.onPinch = onPinch
+        uiView.setPreviewZoom(previewZoom)
         updateViewportSize(for: uiView)
     }
 
-    private func updateViewportSize(for view: ARSCNView) {
-        let size = view.bounds.size
+    private func updateViewportSize(for container: ARPreviewContainer) {
+        let size = container.bounds.size
         guard size.width > 0, size.height > 0 else { return }
-        let orientation = view.window?.windowScene?.interfaceOrientation ?? .portrait
+        let orientation = container.window?.windowScene?.interfaceOrientation ?? .portrait
         engine.updateViewport(size: size, orientation: orientation)
     }
 
+    // MARK: - Container
+
+    /// Clips a scaled ARSCNView so display-space zoom is visible during AR guidance.
+    final class ARPreviewContainer: UIView {
+        let arView = ARSCNView(frame: .zero)
+        private(set) var previewZoom: CGFloat = 1.0
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            clipsToBounds = true
+            backgroundColor = .black
+            arView.translatesAutoresizingMaskIntoConstraints = false
+            addSubview(arView)
+            NSLayoutConstraint.activate([
+                arView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                arView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                arView.topAnchor.constraint(equalTo: topAnchor),
+                arView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ])
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) { nil }
+
+        func setPreviewZoom(_ zoom: CGFloat) {
+            let clamped = min(max(zoom, 0.5), 10.0)
+            guard abs(clamped - previewZoom) > 0.001 else { return }
+            previewZoom = clamped
+            applyPreviewTransform()
+        }
+
+        private func applyPreviewTransform() {
+            // <1× cannot reveal ultra-wide on AR wide-primary — keep identity.
+            let scale = previewZoom < 1.0 ? 1.0 : previewZoom
+            arView.transform = CGAffineTransform(scaleX: scale, y: scale)
+        }
+
+        /// Maps a touch in container space to normalized image coordinates accounting for preview scale.
+        func normalizedPoint(at containerPoint: CGPoint) -> CGPoint {
+            let scale = previewZoom < 1.0 ? 1.0 : previewZoom
+            let adjusted = CGPoint(
+                x: bounds.midX + (containerPoint.x - bounds.midX) / scale,
+                y: bounds.midY + (containerPoint.y - bounds.midY) / scale
+            )
+            return CoordinateMapper.normalizedPoint(in: bounds.size, viewPoint: adjusted)
+        }
+    }
+
+    // MARK: - Coordinator
+
     final class Coordinator: NSObject {
-        weak var arView: ARSCNView?
+        weak var container: ARPreviewContainer?
         weak var engine: SpatialCameraEngine?
         var onTap: ((CGPoint, CGPoint) -> Void)?
         var onLongPress: ((CGPoint, CGPoint) -> Void)?
@@ -68,7 +124,7 @@ struct SpatialCameraView: UIViewRepresentable {
         var onPinch: ((CGFloat, Bool) -> Void)?
         private var didInstallGestures = false
 
-        func installGestures(on view: ARSCNView) {
+        func installGestures(on view: ARPreviewContainer) {
             guard !didInstallGestures else { return }
             didInstallGestures = true
 
@@ -90,16 +146,10 @@ struct SpatialCameraView: UIViewRepresentable {
             view.addGestureRecognizer(pinch)
         }
 
-        private func normalizedPair(in view: ARSCNView, at viewPoint: CGPoint) -> (CGPoint, CGPoint) {
-            let normalized = CoordinateMapper.normalizedPoint(in: view.bounds.size, viewPoint: viewPoint)
-            return (viewPoint, normalized)
-        }
-
         @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
-            guard recognizer.state == .ended, let view = arView else { return }
-            let viewPoint = recognizer.location(in: view)
-            let pair = normalizedPair(in: view, at: viewPoint)
-            onTap?(pair.0, pair.1)
+            guard recognizer.state == .ended, let container else { return }
+            let viewPoint = recognizer.location(in: container)
+            onTap?(viewPoint, container.normalizedPoint(at: viewPoint))
         }
 
         @objc private func handleDoubleTap(_ recognizer: UITapGestureRecognizer) {
@@ -108,10 +158,9 @@ struct SpatialCameraView: UIViewRepresentable {
         }
 
         @objc private func handleLongPress(_ recognizer: UILongPressGestureRecognizer) {
-            guard recognizer.state == .began, let view = arView else { return }
-            let viewPoint = recognizer.location(in: view)
-            let pair = normalizedPair(in: view, at: viewPoint)
-            onLongPress?(pair.0, pair.1)
+            guard recognizer.state == .began, let container else { return }
+            let viewPoint = recognizer.location(in: container)
+            onLongPress?(viewPoint, container.normalizedPoint(at: viewPoint))
         }
 
         @objc private func handlePinch(_ recognizer: UIPinchGestureRecognizer) {

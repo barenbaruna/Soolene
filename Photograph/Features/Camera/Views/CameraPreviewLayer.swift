@@ -17,6 +17,7 @@ struct CameraPreviewLayer: View {
             if viewModel.cameraMode == .rearSpatial {
                 SpatialCameraView(
                     engine: viewModel.spatialEngine,
+                    previewZoom: viewModel.zoomController.displayMultiplier,
                     onTap: onFocusTap,
                     onLongPress: onSubjectPin,
                     onDoubleTap: onClearPin,

@@ -2,79 +2,101 @@
 //  LensType.swift
 //  Photograph
 //
-//  Represents available camera lenses.
-//  DiscoverySession dynamically picks which ones the device supports.
-//
-//  iPhone basic series:    0.5×, 1×, 2×
-//  iPhone Pro/Max series:  0.5×, 1×, 2×, 5× (optical telephoto)
-//
-//  Created by Baren Baruna Harahap on 18/05/26.
+//  Internal zoom preset identifiers — telemetry and handoff legacy only (no UI chips).
 //
 
 import AVFoundation
 
-/// All possible lens focal lengths supported by the app.
-/// Actual availability is determined at runtime via `AVCaptureDevice.DiscoverySession`.
+/// Discrete zoom presets for telemetry — not shown in UI (continuous ruler is primary).
 enum LensType: String, CaseIterable, Identifiable {
     case ultraWide = "0.5×"
     case wide      = "1×"
     case twoX      = "2×"
-    case fiveX     = "5×"
+    case fourX     = "4×"
+    case tele      = "tele"
+    case tenX      = "10×"
 
-    var id: String { rawValue }
+    var id: String { displayLabel }
 
-    /// The physical camera device type this lens maps to.
+    /// User-visible label derived from device capabilities.
+    var displayLabel: String {
+        switch self {
+        case .ultraWide: return "0.5×"
+        case .wide:      return "1×"
+        case .twoX:      return "2×"
+        case .fourX:     return "4×"
+        case .tele:
+            if let tele = ZoomDeviceCapabilities.discover().teleDisplayMultiplier {
+                return String(format: "%.0f×", tele)
+            }
+            return "5×"
+        case .tenX:      return "10×"
+        }
+    }
+
+    var nominalMultiplier: CGFloat {
+        switch self {
+        case .ultraWide: return 0.5
+        case .wide:      return 1.0
+        case .twoX:      return 2.0
+        case .fourX:     return 4.0
+        case .tele:
+            return ZoomDeviceCapabilities.discover().teleDisplayMultiplier ?? 5.0
+        case .tenX:      return 10.0
+        }
+    }
+
     var deviceType: AVCaptureDevice.DeviceType {
         switch self {
         case .ultraWide: return .builtInUltraWideCamera
-        case .wide:      return .builtInWideAngleCamera
-        case .twoX:      return .builtInWideAngleCamera   // 2× digital crop
-        case .fiveX:     return .builtInTelephotoCamera
+        case .wide, .twoX, .fourX, .tenX: return .builtInWideAngleCamera
+        case .tele:      return .builtInTelephotoCamera
         }
     }
 
-    /// Zoom factor applied on the selected device.
-    var zoomFactor: CGFloat {
+    var avDigitalZoomFactor: CGFloat {
         switch self {
-        case .ultraWide: return 1.0
-        case .wide:      return 1.0
+        case .ultraWide, .wide, .tele: return 1.0
         case .twoX:      return 2.0
-        case .fiveX:     return 1.0  // telephoto device native
+        case .fourX:     return 4.0
+        case .tenX:      return 10.0
         }
     }
 
-    // MARK: - Device-Aware Lens List
+    // MARK: - Device-aware presets
 
-    /// Returns the lenses available on the current device.
-    /// Basic iPhones: 0.5×, 1×, 2×
-    /// Pro/Max iPhones: 0.5×, 1×, 2×, 5×
     static var availableOnDevice: [LensType] {
-        let discovery = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera],
-            mediaType: .video,
-            position: .back
-        )
-        let deviceTypes = Set(discovery.devices.map { $0.deviceType })
-
+        let caps = ZoomDeviceCapabilities.discover()
         var lenses: [LensType] = []
-
-        if deviceTypes.contains(.builtInUltraWideCamera) {
-            lenses.append(.ultraWide)
+        if caps.hasUltraWide { lenses.append(.ultraWide) }
+        lenses.append(.wide)
+        lenses.append(.twoX)
+        lenses.append(.fourX)
+        if caps.hasTelephoto {
+            lenses.append(.tele)
+        } else {
+            lenses.append(.tenX)
         }
-        if deviceTypes.contains(.builtInWideAngleCamera) {
-            lenses.append(.wide)
-            lenses.append(.twoX) // 2× is always available via digital crop on wide
-        }
-        if deviceTypes.contains(.builtInTelephotoCamera) {
-            lenses.append(.fiveX)
-        }
-
         return lenses.isEmpty ? [.wide] : lenses
     }
 
-    /// Nearest preset lens for the current zoom factor (toolbar display).
-    static func closest(toZoom zoom: CGFloat) -> LensType {
-        let candidates: [LensType] = [.ultraWide, .wide, .twoX, .fiveX]
-        return candidates.min(by: { abs($0.zoomFactor - zoom) < abs($1.zoomFactor - zoom) }) ?? .wide
+    /// Preset whose band contains the current display multiplier (telemetry).
+    static func preset(containing multiplier: CGFloat, in available: [LensType]) -> LensType {
+        let boundaries = ZoomDeviceCapabilities.discover().majorBoundaries
+        let sortedBoundaries = boundaries.sorted()
+        var activeBoundary: CGFloat = sortedBoundaries.first ?? 1.0
+        for boundary in sortedBoundaries where multiplier >= boundary - 0.05 {
+            activeBoundary = boundary
+        }
+
+        switch activeBoundary {
+        case ..<0.75: return available.contains(.ultraWide) ? .ultraWide : .wide
+        case ..<1.5: return .wide
+        case ..<3.0: return .twoX
+        case ..<4.5: return .fourX
+        default:
+            if available.contains(.tele) { return .tele }
+            return .tenX
+        }
     }
 }

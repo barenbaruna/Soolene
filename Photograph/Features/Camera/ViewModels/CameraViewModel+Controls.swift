@@ -30,22 +30,76 @@ extension CameraViewModel {
         }
     }
 
-    func switchLens(_ lens: LensType) {
+    // MARK: - Zoom (continuous ruler)
+
+    var showsZoomRuler: Bool {
+        CaptureArchitectureFlags.zoomRulerEnabled
+            && cameraMode == .rearSpatial
+            && !isCountingDown
+    }
+
+    func setZoomMultiplier(_ multiplier: CGFloat, isFinal: Bool) {
         guard !isSwitchingCamera else { return }
-        HapticManager.selection()
-        zoomFactor = lens.zoomFactor
-        switch cameraMode {
-        case .rearSpatial:
-            spatialEngine.setZoomFactor(lens.zoomFactor)
-        case .frontClassic:
-            guard cameraManager.isUsingFrontCamera else { return }
-            cameraManager.setZoomFactor(lens.zoomFactor)
+        let application = zoomController.setDisplayMultiplier(
+            multiplier,
+            source: .ruler,
+            path: currentZoomPath,
+            emitHaptics: !isFinal
+        )
+        applyZoomApplication(application)
+        if isFinal, let snap = zoomController.onRulerDragEnded() {
+            let snapped = zoomController.setDisplayMultiplier(
+                snap,
+                source: .ruler,
+                path: currentZoomPath,
+                emitHaptics: false
+            )
+            applyZoomApplication(snapped)
         }
     }
 
-    func switchLens(_ rawValue: String) {
-        guard let lens = LensType(rawValue: rawValue) else { return }
-        switchLens(lens)
+    func onZoomRulerDragBegan() {
+        zoomController.onRulerDragBegan()
+    }
+
+    func updateZoom(magnification: CGFloat, isFinal: Bool) {
+        guard !isSwitchingCamera else { return }
+
+        let now = CFAbsoluteTimeGetCurrent()
+        if !isFinal, now - lastZoomApplyTime < 1.0 / 30.0 { return }
+        lastZoomApplyTime = now
+
+        if isFinal {
+            defer { pinchStartMultiplier = nil }
+            guard let start = pinchStartMultiplier else { return }
+            let application = zoomController.setDisplayMultiplier(
+                start * magnification,
+                source: .pinch,
+                path: currentZoomPath,
+                emitHaptics: false
+            )
+            applyZoomApplication(application)
+            return
+        }
+
+        if pinchStartMultiplier == nil {
+            pinchStartMultiplier = zoomController.displayMultiplier
+        }
+        guard let start = pinchStartMultiplier else { return }
+
+        let application = zoomController.setDisplayMultiplier(
+            start * magnification,
+            source: .pinch,
+            path: currentZoomPath,
+            emitHaptics: false
+        )
+        applyZoomApplication(application)
+    }
+
+    func refreshARZoomAfterSessionStart() {
+        guard cameraMode == .rearSpatial else { return }
+        zoomController.refreshARZoomProfile()
+        applyZoomApplication(zoomController.mapForPath(.arGuidance))
     }
 
     func focusAndExpose(at normalizedPoint: CGPoint) {
@@ -56,29 +110,6 @@ extension CameraViewModel {
             spatialEngine.focusAndExpose(at: normalizedPoint)
         case .frontClassic:
             cameraManager.focusAndExpose(at: normalizedPoint)
-        }
-    }
-
-    func updateZoom(magnification: CGFloat, isFinal: Bool) {
-        guard !isSwitchingCamera else { return }
-
-        let now = CFAbsoluteTimeGetCurrent()
-        if !isFinal, now - lastZoomApplyTime < 1.0 / 30.0 { return }
-        lastZoomApplyTime = now
-
-        let baseZoom = max(zoomFactor, 1)
-        let nextZoom = baseZoom * magnification
-        switch cameraMode {
-        case .rearSpatial:
-            spatialEngine.setZoomFactor(nextZoom)
-            if isFinal {
-                zoomFactor = min(max(nextZoom, 1), spatialEngine.maximumZoomFactor)
-            }
-        case .frontClassic:
-            cameraManager.setZoomFactor(nextZoom)
-            if isFinal {
-                zoomFactor = min(max(nextZoom, 1), cameraManager.maximumZoomFactor)
-            }
         }
     }
 
@@ -117,18 +148,6 @@ extension CameraViewModel {
         setExposure(0)
     }
 
-    func cycleExposure() {
-        let current = exposureBias
-        let next: Float
-        if current == 0 { next = 1.0 }
-        else if current == 1.0 { next = 2.0 }
-        else if current == 2.0 { next = -2.0 }
-        else if current == -2.0 { next = -1.0 }
-        else { next = 0.0 }
-        HapticManager.selection()
-        setExposure(next)
-    }
-
     var flashSymbolName: String {
         switch activeFlashMode {
         case .on: return "bolt.fill"
@@ -160,11 +179,37 @@ extension CameraViewModel {
         }
     }
 
-    var selectedLens: String {
-        LensType.closest(toZoom: zoomFactor).rawValue
+    // MARK: - Private
+
+    private var currentZoomPath: CaptureZoomPath {
+        switch cameraMode {
+        case .rearSpatial: .arGuidance
+        case .frontClassic: .avLive
+        }
     }
 
-    var availableLenses: [LensType] {
-        cameraMode == .frontClassic ? [.wide] : LensType.availableOnDevice
+    private func applyZoomApplication(_ application: ZoomApplication) {
+        spatialEngine.displayMultiplier = application.displayMultiplier
+        spatialEngine.isZoomPreviewApproximate = application.isPreviewApproximate
+        let lens = LensType.preset(
+            containing: application.displayMultiplier,
+            in: LensType.availableOnDevice
+        )
+        spatialEngine.selectedLens = lens
+        cameraManager.selectedLens = lens
+
+        switch cameraMode {
+        case .rearSpatial:
+            spatialEngine.setZoomFactor(application.deviceVideoZoomFactor)
+        case .frontClassic:
+            cameraManager.setZoomFactor(application.displayMultiplier)
+        }
+
+        CaptureTelemetry.recordZoomSet(
+            displayMultiplier: application.displayMultiplier,
+            path: currentZoomPath,
+            deviceZoom: application.deviceVideoZoomFactor,
+            physicalLens: application.activePhysicalLens?.rawValue
+        )
     }
 }
