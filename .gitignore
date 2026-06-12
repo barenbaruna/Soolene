@@ -7,3 +7,6 @@ specs/
 # Xcode user state
 *.xcuserstate
 **/xcuserdata/
+
+# Local derived data (agent / CI scratch builds)
+.derivedData/

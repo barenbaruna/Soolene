@@ -30,4 +30,9 @@ protocol SpatialCameraProviding: AnyObject {
     func setExposureBias(_ bias: Float)
     func setZoomFactor(_ factor: CGFloat)
     func cycleFlash()
+
+    func makeHandoffSnapshot(aspectRatio: AspectRatioMode) async -> CaptureHandoffSnapshot
+    func pauseForHandoff() async
+    func resumeAfterHandoff(_ snapshot: CaptureHandoffSnapshot, trackingTimeout: TimeInterval) async -> CaptureHandoffResumeResult
+    func clearHandoffFrozenPreview()
 }
