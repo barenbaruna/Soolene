@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+import ARKit
 
 /// Structured capture metrics — filter Console with subsystem `com.barenbaruna.Photograph` category `CaptureTelemetry`.
 enum CaptureTelemetry {
@@ -20,6 +21,7 @@ enum CaptureTelemetry {
         case ar
         case av
         case avFallback
+        case avZoomed
     }
 
     private static let log = Logger(
@@ -110,6 +112,46 @@ enum CaptureTelemetry {
         ]
         if let physicalLens { parts.append("lens=\(physicalLens)") }
         log.info("\(parts.joined(separator: " "))")
+    }
+
+    /// Logs every ARKit video format available on this device (run once per session build).
+    static func recordSupportedVideoFormats(_ formats: [ARConfiguration.VideoFormat]) {
+        guard CaptureArchitectureFlags.telemetryEnabled else { return }
+        let entries = formats.enumerated().map { index, format in
+            "[\(index)] \(ARVideoFormatSelector.formatDescription(format))"
+        }
+        log.info("ar_video_formats count=\(formats.count) \(entries.joined(separator: " | "))")
+    }
+
+    static func recordSelectedVideoFormat(
+        _ format: ARConfiguration.VideoFormat,
+        source: String
+    ) {
+        guard CaptureArchitectureFlags.telemetryEnabled else { return }
+        log.info(
+            """
+            ar_video_format_selected source=\(source) \
+            \(ARVideoFormatSelector.formatDescription(format))
+            """
+        )
+    }
+
+    static func recordARPrimaryCamera(deviceType: String?) {
+        guard CaptureArchitectureFlags.telemetryEnabled else { return }
+        log.info("ar_primary_camera deviceType=\(deviceType ?? "nil")")
+    }
+
+    static func recordCaptureRoute(
+        displayMultiplier: CGFloat,
+        route: String
+    ) {
+        guard CaptureArchitectureFlags.telemetryEnabled else { return }
+        log.info(
+            """
+            capture_route display=\(String(format: "%.2f", displayMultiplier)) \
+            route=\(route)
+            """
+        )
     }
 
     private static func pathTelemetryKey(_ path: CaptureZoomPath) -> String {

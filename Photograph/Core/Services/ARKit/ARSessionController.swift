@@ -28,12 +28,15 @@ final class ARSessionController {
             config.frameSemantics.insert(.sceneDepth)
         }
 
-        if let recommended = ARWorldTrackingConfiguration.recommendedVideoFormatForHighResolutionFrameCapturing {
-            config.videoFormat = recommended
-        } else if let hiResFormat = ARWorldTrackingConfiguration.supportedVideoFormats.first(where: {
-            $0.isRecommendedForHighResolutionFrameCapturing
-        }) {
-            config.videoFormat = hiResFormat
+        let supportedFormats = ARWorldTrackingConfiguration.supportedVideoFormats
+        CaptureTelemetry.recordSupportedVideoFormats(supportedFormats)
+
+        if let selection = ARVideoFormatSelector.selectPreferredFormat(from: supportedFormats) {
+            config.videoFormat = selection.format
+            CaptureTelemetry.recordSelectedVideoFormat(
+                selection.format,
+                source: selection.source.rawValue
+            )
         }
 
         worldConfiguration = config

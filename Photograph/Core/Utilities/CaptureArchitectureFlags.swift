@@ -5,9 +5,12 @@
 
 import Foundation
 
-/// Engineering flags for Option F capture architecture (remote config later).
+/// Engineering flags for Option B + E-lite capture architecture (remote config later).
 enum CaptureArchitectureFlags {
-    /// AV fallback after AR hi-res failure (Default Mode).
+    /// AV handoff when display zoom ≠ 1× (E-lite primary path for zoomed rear capture).
+    static var elLiteCaptureEnabled = true
+
+    /// AV fallback after AR hi-res failure at baseline zoom only.
     static var avFallbackEnabled = true
 
     /// OSLog `CaptureTelemetry` events.

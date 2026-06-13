@@ -109,6 +109,11 @@ final class CameraSessionCoordinator {
         await performRearAVHandoff(snapshot: snapshot, telemetryPath: .avFallback)
     }
 
+    /// AR → AV → AR for E-lite zoomed capture (display multiplier ≠ 1×).
+    func captureRearViaZoomedHandoff(snapshot: CaptureHandoffSnapshot) async -> CaptureHandoffResult {
+        await performRearAVHandoff(snapshot: snapshot, telemetryPath: .avZoomed)
+    }
+
     private func performRearAVHandoff(
         snapshot: CaptureHandoffSnapshot,
         telemetryPath: CaptureTelemetry.CapturePath

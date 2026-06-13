@@ -71,6 +71,14 @@ enum GuidanceEngine {
         return (top.type, top.confidence)
     }
 
+    /// Returns the top ML prediction for immediate auto-select on subject lock.
+    static func recommendForImmediateSelect(
+        predictions: [CompositionPrediction]
+    ) -> (type: CompositionType, confidence: Float)? {
+        guard let top = predictions.first else { return nil }
+        return (top.type, top.confidence)
+    }
+
     /// Orders picker pills by ML confidence (highest first), then remaining types.
     static func sortedPickerOrder(predictions: [CompositionPrediction]) -> [CompositionType] {
         var seen = Set<CompositionType>()

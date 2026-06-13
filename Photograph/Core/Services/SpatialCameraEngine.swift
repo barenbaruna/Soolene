@@ -160,6 +160,9 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     private func notifySessionConfiguredAndReapplyZoom() {
         // ARKit exposes `configurableCaptureDeviceForPrimaryCamera` only after run.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            let primaryType = ARWorldTrackingConfiguration.configurableCaptureDeviceForPrimaryCamera?
+                .deviceType.rawValue
+            CaptureTelemetry.recordARPrimaryCamera(deviceType: primaryType)
             self?.onSessionConfigured?()
             self?.reapplyPendingDeviceZoom()
         }
@@ -740,6 +743,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         let captureOrientation = sessionInterfaceOrientation
         let captureRatio = pendingAspectRatio
         let captureFlash = flashMode
+        let capturePreviewScale = CaptureZoomRouting.effectivePreviewScale(for: displayMultiplier)
         arStateLock.unlock()
 
         let settings = photoSettings
@@ -819,8 +823,13 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
             DispatchQueue.global(qos: .userInitiated).async {
                 let image = Self.makeUIImage(from: pixelBuffer, orientation: orientation)
-                let jpegData = image.flatMap { Self.makeJPEGData(from: $0, aspectRatio: captureRatio) }
-                    ?? image?.jpegData(compressionQuality: 0.95)
+                let jpegData = image.flatMap {
+                    Self.makeJPEGData(
+                        from: $0,
+                        aspectRatio: captureRatio,
+                        previewScale: capturePreviewScale
+                    )
+                } ?? image?.jpegData(compressionQuality: 0.95)
 
                 Task { @MainActor in
                     self.isCapturingHighResolution = false
@@ -893,9 +902,21 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         return error.localizedDescription
     }
 
-    private static func makeJPEGData(from image: UIImage, aspectRatio: AspectRatioMode) -> Data? {
-        guard let baseData = image.jpegData(compressionQuality: 0.95) else { return nil }
-        return ImageCropHelper.cropImageWithMetadata(imageData: baseData, ratio: aspectRatio) ?? baseData
+    private static func makeJPEGData(
+        from image: UIImage,
+        aspectRatio: AspectRatioMode,
+        previewScale: CGFloat = 1.0
+    ) -> Data? {
+        guard var data = image.jpegData(compressionQuality: 0.95) else { return nil }
+
+        if previewScale > 1.01 {
+            data = ImageCropHelper.centerCropToVisibleFraction(
+                imageData: data,
+                visibleFraction: 1.0 / previewScale
+            ) ?? data
+        }
+
+        return ImageCropHelper.cropImageWithMetadata(imageData: data, ratio: aspectRatio) ?? data
     }
 
     /// Builds a packet synchronously while `frame` is valid. Copies the pixel buffer only when Vision is ready.

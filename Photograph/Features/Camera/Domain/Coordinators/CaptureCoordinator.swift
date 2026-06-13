@@ -213,6 +213,31 @@ final class CaptureCoordinator {
         captureMode: CaptureTelemetry.CaptureMode,
         shutterStart: CFAbsoluteTime
     ) async {
+        let displayMultiplier = spatialEngine.displayMultiplier
+
+        if CaptureZoomRouting.shouldUseZoomedAVHandoff(
+            displayMultiplier: displayMultiplier,
+            elLiteEnabled: CaptureArchitectureFlags.elLiteCaptureEnabled
+        ) {
+            CaptureTelemetry.recordCaptureRoute(
+                displayMultiplier: displayMultiplier,
+                route: "avZoomed"
+            )
+            await runRearAVHandoff(
+                aspectRatio: aspectRatio,
+                shutterStart: shutterStart,
+                telemetryMode: captureMode,
+                telemetryPath: .avZoomed
+            ) { snapshot in
+                await sessionCoordinator.captureRearViaZoomedHandoff(snapshot: snapshot)
+            }
+            return
+        }
+
+        CaptureTelemetry.recordCaptureRoute(
+            displayMultiplier: displayMultiplier,
+            route: "arHiRes"
+        )
         await spatialEngine.captureHighResolutionPhoto(aspectRatio: aspectRatio)
         let latencyMs = Int((CFAbsoluteTimeGetCurrent() - shutterStart) * 1000)
         if let data = spatialEngine.capturedPhotoData {

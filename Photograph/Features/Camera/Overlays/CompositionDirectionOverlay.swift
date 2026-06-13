@@ -8,9 +8,9 @@
 //
 //  ┌─────────────────────────────────────────────────────────┐
 //  │ FAR (distance > 0.12)                                   │
-//  │   Subject Bracket [ ]  ─ ─ ─ ─ ─ ➤ ─ ─ ─  ○ Target    │
+//  │   [ ] Subject Bracket  ─ ─ ➤ ─ ─ ─ ─ ─ ─ ─ ─  ○ Target│
 //  │        white            dashed connector     white      │
-//  │   Directional arrow at connector midpoint               │
+//  │   Directional arrow near subject bracket, tip → target  │
 //  ├─────────────────────────────────────────────────────────┤
 //  │ CLOSE (distance 0.06–0.12)                              │
 //  │   Subject Bracket [ ]              ◉ Target             │
@@ -194,6 +194,8 @@ struct CompositionDirectionOverlay: View {
                     .animation(reduceMotion ? .linear(duration: 0.15) : .easeInOut(duration: 0.35), value: anchorColor)
                     .animation(reduceMotion ? .linear(duration: 0.15) : .spring(response: 0.25, dampingFraction: 0.65), value: socketSize)
                     .animation(reduceMotion ? .linear(duration: 0.15) : .easeInOut(duration: 0.3), value: proximity == .perfect)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Move subject toward composition target")
                 }
             }
             .allowsHitTesting(false)
@@ -404,14 +406,14 @@ private struct DashedConnectorLine: View {
 
 // MARK: - DirectionArrow
 
-/// Arrow biased toward the target so guidance reads “move subject toward the circle.”
+/// Arrow near the subject bracket so guidance reads “move subject toward the circle.”
 private struct DirectionArrow: View {
     let from: CGPoint
     let to: CGPoint
     let color: Color
 
     /// Position along connector (0 = subject, 1 = target).
-    private let biasTowardTarget: CGFloat = 0.8
+    private let biasTowardTarget: CGFloat = 0.28
 
     var body: some View {
         let anchorX = from.x + (to.x - from.x) * biasTowardTarget

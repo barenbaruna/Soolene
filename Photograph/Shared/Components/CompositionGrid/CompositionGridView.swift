@@ -14,6 +14,7 @@ struct CompositionGridView: View {
     var lockedTarget: CGPoint?
     var isPerfect: Bool = false
     var showSubjectBox: Bool = true
+    var showsIntersectionMarkers: Bool = true
 
     var body: some View {
         ZStack {
@@ -24,7 +25,8 @@ struct CompositionGridView: View {
                     color: color,
                     geometry: geometry,
                     lockedTarget: lockedTarget,
-                    isPerfect: isPerfect
+                    isPerfect: isPerfect,
+                    showsIntersectionMarkers: showsIntersectionMarkers
                 )
             case .center:
                 CenterGrid(rect: rect, color: color, isPerfect: isPerfect)

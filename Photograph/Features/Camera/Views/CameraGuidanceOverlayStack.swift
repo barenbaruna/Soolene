@@ -24,7 +24,8 @@ struct CameraGuidanceOverlayStack: View {
                     isPerfect: viewModel.captureReadiness.showsGreenCelebration,
                     isStabilizing: viewModel.captureReadiness.showsStabilizingUI,
                     sceneAlignmentScore: viewModel.analysis.sceneAlignmentScore,
-                    hasSceneData: viewModel.analysis.hasSceneData
+                    hasSceneData: viewModel.analysis.hasSceneData,
+                    showsIntersectionMarkers: !viewModel.showsDualAnchorGuidance
                 )
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
@@ -32,9 +33,9 @@ struct CameraGuidanceOverlayStack: View {
                 .animation(.easeInOut(duration: 0.5), value: viewModel.guidancePhase.showsCompositionGrid)
             }
 
-            if case .guiding = viewModel.guidancePhase, !viewModel.analysis.isCompositionPerfect {
+            if case .perfect = viewModel.guidancePhase, viewModel.captureReadiness.showsGreenCelebration {
                 Rectangle()
-                    .strokeBorder(AppColors.accent.opacity(0.85), lineWidth: 3)
+                    .strokeBorder(AppColors.gridlineGreen.opacity(0.5), lineWidth: 2)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
                     .transition(.opacity)

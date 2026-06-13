@@ -17,12 +17,17 @@ final class CompositionCoordinator {
 
     var uiState = CompositionUIState()
 
+    private var autoSelectFallbackTask: Task<Void, Never>?
+    /// Invoked when ML predictions are delayed; ViewModel applies composition to analysis.
+    var onAutoSelectComposition: (@MainActor (CompositionType) -> Void)?
+
     init(visionService: VisionService, spatialEngine: SpatialCameraEngine) {
         self.visionService = visionService
         self.spatialEngine = spatialEngine
     }
 
     func resetGuidanceState() {
+        cancelAutoSelectFallback()
         uiState.isSubjectPinned = false
         visionService.clearPinnedSubject()
         uiState.phase = .scanning
@@ -33,6 +38,7 @@ final class CompositionCoordinator {
     }
 
     func clearPinnedSubject(cameraMode: CameraMode) {
+        cancelAutoSelectFallback()
         HapticManager.selection()
         uiState.isSubjectPinned = false
         visionService.clearPinnedSubject()
@@ -82,6 +88,7 @@ final class CompositionCoordinator {
             tryAutoSelect(predictions: analysis.mlPredictions, analysis: &analysis)
         } else {
             visionService.isMLEnabled = true
+            scheduleAutoSelectFallback()
         }
     }
 
@@ -92,6 +99,7 @@ final class CompositionCoordinator {
     }
 
     func selectComposition(_ composition: CompositionType, analysis: inout CompositionAnalysis) {
+        cancelAutoSelectFallback()
         HapticManager.selection()
         uiState.userSelectedComposition = composition
         uiState.phase = .guiding(composition: composition)
@@ -132,12 +140,37 @@ final class CompositionCoordinator {
 
     private func tryAutoSelect(predictions: [CompositionPrediction], analysis: inout CompositionAnalysis) {
         guard uiState.userSelectedComposition == nil else { return }
-        guard let recommendation = GuidanceEngine.recommendForAutoSelect(predictions: predictions) else {
+        cancelAutoSelectFallback()
+
+        guard let recommendation = GuidanceEngine.recommendForImmediateSelect(predictions: predictions) else {
             visionService.isMLEnabled = true
+            scheduleAutoSelectFallback()
             return
         }
 
         selectComposition(recommendation.type, analysis: &analysis)
-        uiState.recommendedLabel = "Recommended: \(recommendation.type.shortLabel)"
+        if recommendation.confidence >= GuidanceEngine.autoSelectConfidenceThreshold {
+            uiState.recommendedLabel = "Recommended: \(recommendation.type.shortLabel)"
+        } else {
+            uiState.recommendedLabel = "Suggested: \(recommendation.type.shortLabel) — tap to change"
+        }
+    }
+
+    private func scheduleAutoSelectFallback() {
+        cancelAutoSelectFallback()
+        autoSelectFallbackTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            guard case .subjectLocked = uiState.phase else { return }
+            guard uiState.userSelectedComposition == nil else { return }
+
+            onAutoSelectComposition?(.ruleOfThirds)
+            uiState.recommendedLabel = "Suggested: Rule of Thirds — tap to change"
+        }
+    }
+
+    private func cancelAutoSelectFallback() {
+        autoSelectFallbackTask?.cancel()
+        autoSelectFallbackTask = nil
     }
 }

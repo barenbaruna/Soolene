@@ -78,4 +78,31 @@ final class SubjectLockAccuracyTests: XCTestCase {
         XCTAssertEqual(resolved?.x ?? 0, 0.33, accuracy: 0.0001)
         XCTAssertEqual(resolved?.y ?? 0, 0.44, accuracy: 0.0001)
     }
+
+    func testRecommendForImmediateSelectReturnsTopPredictionRegardlessOfConfidence() {
+        let predictions = [
+            CompositionPrediction(type: .center, confidence: 0.35),
+            CompositionPrediction(type: .ruleOfThirds, confidence: 0.20)
+        ]
+
+        let result = GuidanceEngine.recommendForImmediateSelect(predictions: predictions)
+
+        XCTAssertEqual(result?.type, .center)
+        XCTAssertEqual(result?.confidence ?? 0, 0.35, accuracy: 0.0001)
+    }
+
+    func testRecommendForAutoSelectRequiresConfidenceThreshold() {
+        let lowConfidence = [CompositionPrediction(type: .diagonal, confidence: 0.40)]
+        XCTAssertNil(GuidanceEngine.recommendForAutoSelect(predictions: lowConfidence))
+
+        let highConfidence = [CompositionPrediction(type: .diagonal, confidence: 0.60)]
+        XCTAssertEqual(GuidanceEngine.recommendForAutoSelect(predictions: highConfidence)?.type, .diagonal)
+    }
+
+    func testGuidancePhaseIsLockedAfterSubjectLock() {
+        XCTAssertFalse(GuidancePhase.scanning.isLocked)
+        XCTAssertTrue(GuidancePhase.subjectLocked(subjectPoint: .zero).isLocked)
+        XCTAssertTrue(GuidancePhase.guiding(composition: .center).isLocked)
+        XCTAssertTrue(GuidancePhase.perfect(composition: .center).isLocked)
+    }
 }

@@ -36,6 +36,7 @@ extension CameraViewModel {
         CaptureArchitectureFlags.zoomRulerEnabled
             && cameraMode == .rearSpatial
             && !isCountingDown
+            && !guidancePhase.isLocked
     }
 
     func setZoomMultiplier(_ multiplier: CGFloat, isFinal: Bool) {
@@ -64,6 +65,7 @@ extension CameraViewModel {
 
     func updateZoom(magnification: CGFloat, isFinal: Bool) {
         guard !isSwitchingCamera else { return }
+        guard !guidancePhase.isActive else { return }
 
         let now = CFAbsoluteTimeGetCurrent()
         if !isFinal, now - lastZoomApplyTime < 1.0 / 30.0 { return }

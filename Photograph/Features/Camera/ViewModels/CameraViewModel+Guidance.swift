@@ -45,8 +45,8 @@ extension CameraViewModel {
             if analysis.sceneGeometry.trackedSubjectPoint == nil {
                 return "Locking subject…"
             }
-            return mlSuggestion.map { "Best fit: \($0.shortLabel) — tap to change" }
-                ?? "Analyzing scene for best composition"
+            return mlSuggestion.map { "Suggested: \($0.shortLabel) — tap to change" }
+                ?? "Selecting best composition…"
         case .guiding(let comp):
             let technique = GuidanceEngine.techniqueForUserSelection(
                 composition: comp,

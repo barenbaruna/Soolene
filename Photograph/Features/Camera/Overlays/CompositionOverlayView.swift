@@ -15,6 +15,7 @@ struct CompositionOverlayView: View {
     var isStabilizing: Bool = false
     let sceneAlignmentScore: Float
     let hasSceneData: Bool
+    var showsIntersectionMarkers: Bool = true
 
     private var guideColor: Color {
         if !hasSceneData { return Color(uiColor: .gridlineWhite) }
@@ -39,7 +40,9 @@ struct CompositionOverlayView: View {
                     color: guideColor,
                     geometry: geometry,
                     lockedTarget: geometry.lockedTargetPoint,
-                    isPerfect: isPerfect
+                    isPerfect: isPerfect,
+                    showSubjectBox: false,
+                    showsIntersectionMarkers: showsIntersectionMarkers
                 )
             }
             .allowsHitTesting(false)

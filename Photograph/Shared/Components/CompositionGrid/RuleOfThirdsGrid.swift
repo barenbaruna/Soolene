@@ -13,6 +13,7 @@ struct RuleOfThirdsGrid: View {
     let geometry: SceneGeometry
     var lockedTarget: CGPoint?
     let isPerfect: Bool
+    var showsIntersectionMarkers: Bool = true
     
     var body: some View {
         ZStack {
@@ -22,19 +23,19 @@ struct RuleOfThirdsGrid: View {
             GridLine(start: CGPoint(x: rect.minX, y: rect.minY + thirdH), end: CGPoint(x: rect.maxX, y: rect.minY + thirdH), color: color, lineWidth: GridMetrics.primary, isDashed: false)
             GridLine(start: CGPoint(x: rect.minX, y: rect.minY + thirdH * 2), end: CGPoint(x: rect.maxX, y: rect.minY + thirdH * 2), color: color, lineWidth: GridMetrics.primary, isDashed: false)
             
-            // Intersections
-            ForEach(0 ..< 4, id: \.self) { i in
-                let ip = intersections[i]
-                let isNearest = (i == nearestIndex)
-                let circleRadius: CGFloat = isNearest ? 14 : 10
-                
-                TargetCircle(center: ip, radius: circleRadius, color: color, lineWidth: isNearest ? GridMetrics.targetRing : GridMetrics.secondary)
-                Crosshair(center: ip, armLength: circleRadius * 0.6, color: color, lineWidth: GridMetrics.crosshair)
-                
-                // Glow effect
-                if isNearest && isPerfect {
-                    TargetCircle(center: ip, radius: circleRadius, color: color, lineWidth: GridMetrics.targetRingEmphasis)
-                        .shadow(color: color, radius: 12)
+            if showsIntersectionMarkers {
+                ForEach(0 ..< 4, id: \.self) { i in
+                    let ip = intersections[i]
+                    let isNearest = (i == nearestIndex)
+                    let circleRadius: CGFloat = isNearest ? 14 : 10
+                    
+                    TargetCircle(center: ip, radius: circleRadius, color: color, lineWidth: isNearest ? GridMetrics.targetRing : GridMetrics.secondary)
+                    Crosshair(center: ip, armLength: circleRadius * 0.6, color: color, lineWidth: GridMetrics.crosshair)
+                    
+                    if isNearest && isPerfect {
+                        TargetCircle(center: ip, radius: circleRadius, color: color, lineWidth: GridMetrics.targetRingEmphasis)
+                            .shadow(color: color, radius: 12)
+                    }
                 }
             }
         }

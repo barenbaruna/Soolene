@@ -4,6 +4,13 @@
 //
 //  Maps user-facing display multiplier ↔ device videoZoomFactor per capture path.
 //
+//  Architecture:
+//  - `.arGuidance`: Single AR primary lens (`configurableCaptureDeviceForPrimaryCamera`).
+//    Digital zoom only on that physical lens — no virtual multi-camera switching.
+//    Display ↔ device mapping uses `ARZoomProfile` (ultra-wide primary maps 1× ≈ 2× device).
+//  - `.avLive` / `.avHandoff`: Rear virtual device (triple/dual wide). iOS switches
+//    physical lenses at `virtualDeviceSwitchOverVideoZoomFactors`; display ≈ device zoom.
+//
 
 import CoreGraphics
 import Foundation

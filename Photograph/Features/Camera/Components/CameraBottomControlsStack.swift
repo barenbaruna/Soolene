@@ -27,6 +27,20 @@ struct CameraBottomControlsStack: View {
                     .transition(.opacity)
             }
 
+            compositionOrZoomSlot
+
+            CameraBottomBar(
+                viewModel: viewModel,
+                isShowingGallery: $isShowingGallery,
+                iconRotation: iconRotation
+            )
+        }
+    }
+
+    /// Composition picker and zoom ruler share one HUD slot above the shutter bar.
+    @ViewBuilder
+    private var compositionOrZoomSlot: some View {
+        Group {
             if !viewModel.isCountingDown, viewModel.guidancePhase.showPicker {
                 CompositionPickerView(
                     selectedComposition: viewModel.userSelectedComposition,
@@ -50,29 +64,17 @@ struct CameraBottomControlsStack: View {
                         showsPicker: false
                     )
                 }
+            } else if viewModel.showsZoomRuler {
+                ViewfinderZoomRuler(
+                    viewModel: viewModel,
+                    isEnabled: !viewModel.isSwitchingCamera
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-
-            zoomRulerAboveShutter
-
-            CameraBottomBar(
-                viewModel: viewModel,
-                isShowingGallery: $isShowingGallery,
-                iconRotation: iconRotation
-            )
         }
-    }
-
-    /// Floats on the viewfinder — directly above gallery / shutter / flip.
-    @ViewBuilder
-    private var zoomRulerAboveShutter: some View {
-        if viewModel.showsZoomRuler {
-            ViewfinderZoomRuler(
-                viewModel: viewModel,
-                isEnabled: !viewModel.isSwitchingCamera
-            )
-            .frame(height: ControlMetrics.rulerPanelContentHeight)
-            .padding(.bottom, Spacing.tiny)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-        }
+        .frame(height: ControlMetrics.rulerPanelContentHeight)
+        .padding(.bottom, Spacing.tiny)
+        .animation(.snappy, value: viewModel.guidancePhase.isLocked)
+        .animation(.snappy, value: viewModel.showsZoomRuler)
     }
 }

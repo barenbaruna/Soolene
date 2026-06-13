@@ -91,6 +91,9 @@ final class CameraViewModel {
             visionService: visionService,
             spatialEngine: spatialEngine
         )
+        compositionCoordinator.onAutoSelectComposition = { [weak self] composition in
+            self?.selectComposition(composition)
+        }
 
         visionService.usesSpatialTracking = true
 
