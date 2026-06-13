@@ -27,17 +27,18 @@ enum ClassicVisionPipeline {
                 try sequenceHandler.perform([tracker], on: pixelBuffer, orientation: orientation)
                 if let result = tracker.results?.first as? VNDetectedObjectObservation {
                     let uiRect = GeometryExtractor.visionToUIKit(result.boundingBox, isFrontCamera: isFrontCamera)
-                    let newCenter = CGPoint(x: uiRect.midX, y: uiRect.midY)
+                    let boxCenter = CGPoint(x: uiRect.midX, y: uiRect.midY)
 
                     let meetsConfidence = result.confidence > 0.3
                     var meetsVelocity = true
-                    if let lastPos = analysis.sceneGeometry.userPinnedSubject {
-                        let jump = hypot(newCenter.x - lastPos.x, newCenter.y - lastPos.y)
+                    if let lastPos = analysis.sceneGeometry.trackedSubjectPoint
+                                  ?? analysis.sceneGeometry.userLockOrigin {
+                        let jump = hypot(boxCenter.x - lastPos.x, boxCenter.y - lastPos.y)
                         if jump > 0.15 { meetsVelocity = false }
                     }
 
                     if meetsConfidence && meetsVelocity {
-                        analysis.sceneGeometry.userPinnedSubject = newCenter
+                        analysis.sceneGeometry.applyTrackedProjection(boxCenter)
                     }
 
                     let nextRequest = VNTrackObjectRequest(detectedObjectObservation: result)
@@ -45,11 +46,11 @@ enum ClassicVisionPipeline {
                     trackingRequest = nextRequest
                 } else {
                     trackingRequest = nil
-                    analysis.sceneGeometry.userPinnedSubject = nil
+                    analysis.sceneGeometry.clearUserLock()
                 }
             } catch {
                 trackingRequest = nil
-                analysis.sceneGeometry.userPinnedSubject = nil
+                analysis.sceneGeometry.clearUserLock()
             }
         }
 

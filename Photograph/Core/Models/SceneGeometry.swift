@@ -56,12 +56,19 @@ struct SceneGeometry: Equatable {
     /// (e.g., columns, trees, buildings). Used for Vertical composition detection.
     var hasStrongVerticals: Bool = false
 
-    // MARK: - User Input
+    // MARK: - Subject Lock (separated intent vs tracking)
 
-    /// When set, this point overrides all Vision-derived subject positions.
-    /// Set by user tap on the camera preview. Normalised UIKit coords (0–1).
-    /// Priority: userPinnedSubject > faceRect > bodyCenter > saliencyCentroid
-    var userPinnedSubject: CGPoint? = nil
+    /// Immutable user long-press location until lock is cleared. Normalised UIKit coords (0–1).
+    var userLockOrigin: CGPoint? = nil
+
+    /// Live tracked subject position (AR projection or Vision tracker). Normalised UIKit coords.
+    var trackedSubjectPoint: CGPoint? = nil
+
+    /// Offset from raw anchor/bbox projection to `userLockOrigin`, frozen on first track frame.
+    var subjectTrackingOffset: CGVector? = nil
+
+    /// True when the user has locked a subject.
+    var isSubjectLocked: Bool { userLockOrigin != nil }
 
     // MARK: - Locked State
 
@@ -73,4 +80,32 @@ struct SceneGeometry: Equatable {
     /// Locks the target in place to prevent jitter and ambiguity as the subject moves.
     /// Should be cleared when the composition type changes or the user explicitly retaps.
     var lockedTargetPoint: CGPoint? = nil
+
+    // MARK: - Subject Lock Lifecycle
+
+    mutating func establishUserLock(at point: CGPoint) {
+        userLockOrigin = point
+        trackedSubjectPoint = point
+        subjectTrackingOffset = nil
+        smoothedSubjectPoint = nil
+    }
+
+    mutating func clearUserLock() {
+        userLockOrigin = nil
+        trackedSubjectPoint = nil
+        subjectTrackingOffset = nil
+        smoothedSubjectPoint = nil
+    }
+
+    /// Applies tap-relative tracking: preserves the user's chosen pixel relative to the raw projection.
+    mutating func applyTrackedProjection(_ rawProjection: CGPoint) {
+        guard let origin = userLockOrigin else { return }
+        let result = SubjectLockMath.trackedPoint(
+            rawProjection: rawProjection,
+            userLockOrigin: origin,
+            existingOffset: subjectTrackingOffset
+        )
+        subjectTrackingOffset = result.offset
+        trackedSubjectPoint = result.point
+    }
 }

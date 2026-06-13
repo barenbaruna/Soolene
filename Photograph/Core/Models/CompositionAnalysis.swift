@@ -68,15 +68,14 @@ struct CompositionAnalysis: Equatable {
     /// True when Vision has returned usable scene data for the current composition.
     /// When false, guide lines are drawn in WHITE (neutral / no feedback mode).
     var hasSceneData: Bool {
-        // If user has pinned a subject, always show guidance
-        if sceneGeometry.userPinnedSubject != nil { return true }
+        if sceneGeometry.isSubjectLocked { return true }
         switch detectedComposition {
         case .ruleOfThirds, .center, .diagonal:
             return sceneGeometry.saliencyCentroid != nil || !sceneGeometry.faceRects.isEmpty
         case .horizontal:
             return sceneGeometry.horizonDetected
                 || sceneGeometry.deviceRollDegrees != nil
-                || sceneGeometry.userPinnedSubject != nil
+                || sceneGeometry.isSubjectLocked
         case .vertical:
             return sceneGeometry.saliencyBounds != nil || sceneGeometry.hasStrongVerticals
         }
@@ -88,12 +87,13 @@ struct CompositionAnalysis: Equatable {
     var faceRects: [CGRect]  { sceneGeometry.faceRects }
     var saliencyCentroid: CGPoint? { sceneGeometry.saliencyCentroid }
 
-    /// The best available subject position in normalised coordinates (0–1, UIKit).
-    /// Priority: smoothed > userPinned > face centroid > body center > saliency centroid.
+    /// Priority when locked: smoothed > tracked > lock origin.
+    /// When scanning: face > body > saliency.
     var bestSubjectPoint: CGPoint? {
-        // FIX 4: Prefer smoothed point over raw pinned point for stable overlay rendering
-        if let smoothed = sceneGeometry.smoothedSubjectPoint { return smoothed }
-        if let pinned = sceneGeometry.userPinnedSubject { return pinned }
+        if sceneGeometry.isSubjectLocked {
+            if let smoothed = sceneGeometry.smoothedSubjectPoint { return smoothed }
+            return sceneGeometry.trackedSubjectPoint ?? sceneGeometry.userLockOrigin
+        }
         if let face = sceneGeometry.faceRects.first {
             return CGPoint(x: face.midX, y: face.midY)
         }

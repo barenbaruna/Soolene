@@ -45,8 +45,10 @@ enum SpatialVisionPipeline {
         updated.sceneGeometry.deviceRollDegrees = deviceRollDegrees
         applySpatialSubjectPoint(spatialSubjectPoint, lastStored: &lastSpatialSubjectPoint, to: &updated)
 
-        if updated.sceneGeometry.userPinnedSubject != nil {
-            updated.sceneGeometry.smoothedSubjectPoint = updated.sceneGeometry.userPinnedSubject
+        if updated.sceneGeometry.isSubjectLocked {
+            if let tracked = updated.sceneGeometry.trackedSubjectPoint {
+                updated.sceneGeometry.smoothedSubjectPoint = tracked
+            }
             let offsetResult = AlignmentAnalyzer.computeSubjectOffset(
                 for: updated.detectedComposition,
                 geometry: updated.sceneGeometry
@@ -68,11 +70,13 @@ enum SpatialVisionPipeline {
         lastStored: inout CGPoint?,
         to updated: inout CompositionAnalysis
     ) {
+        guard updated.sceneGeometry.isSubjectLocked else { return }
+
         if let spatial = spatialSubjectPoint {
             lastStored = spatial
-            updated.sceneGeometry.userPinnedSubject = spatial
-        } else if let last = lastStored, updated.sceneGeometry.userPinnedSubject != nil {
-            updated.sceneGeometry.userPinnedSubject = last
+            updated.sceneGeometry.applyTrackedProjection(spatial)
+        } else if let last = lastStored {
+            updated.sceneGeometry.applyTrackedProjection(last)
         }
     }
 }

@@ -19,6 +19,7 @@ struct CameraView: View {
     @State private var lockRingPoint: CGPoint?
     @State private var lockRingAnimating = false
     @State private var showLockIcon = false
+    @State private var previewSize: CGSize = .zero
 
     var body: some View {
         Group {
@@ -46,6 +47,13 @@ struct CameraView: View {
                 onSubjectPin: handleSubjectPin,
                 onClearPin: clearPinnedSubject
             )
+            .background {
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { previewSize = geo.size }
+                        .onChange(of: geo.size) { _, size in previewSize = size }
+                }
+            }
 
             CameraGuidanceOverlayStack(viewModel: viewModel)
 
@@ -119,6 +127,12 @@ struct CameraView: View {
                 notification: .announcement,
                 argument: "Composition ready. Capture now."
             )
+        }
+        .onChange(of: viewModel.analysis.bestSubjectPoint) { _, point in
+            guard viewModel.isSubjectPinned, lockRingPoint != nil,
+                  let point, previewSize.width > 0, previewSize.height > 0
+            else { return }
+            lockRingPoint = CoordinateMapper.viewPoint(from: point, in: previewSize)
         }
         .alert("Could Not Save", isPresented: Binding(
             get: { viewModel.saveError != nil },

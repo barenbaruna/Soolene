@@ -294,6 +294,18 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
         let imagePoint = imageNormalizedPoint(viewNormalized: normalizedPoint, frame: frame)
 
+        // Prefer scene depth at the tap (person/object) before plane raycast.
+        if let depthMeters = sceneDepth(at: imagePoint, frame: frame),
+           depthMeters > 0.1, depthMeters < 10 {
+            let transform = worldTransform(
+                for: normalizedPoint,
+                distanceMeters: depthMeters,
+                frame: frame
+            )
+            installAnchor(at: transform, quality: .depthPlacement)
+            return
+        }
+
         let raycastTargets: [(ARRaycastQuery.Target, ARRaycastQuery.TargetAlignment)] = [
             (.existingPlaneGeometry, .any),
             (.estimatedPlane, .any),
@@ -309,19 +321,9 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
             }
         }
 
-        if let depthMeters = sceneDepth(at: imagePoint, frame: frame) {
-            let transform = worldTransform(
-                for: imagePoint,
-                distanceMeters: depthMeters,
-                frame: frame
-            )
-            installAnchor(at: transform, quality: .depthPlacement)
-            return
-        }
-
         let fallbackDistance: Float = 1.5
         let transform = worldTransform(
-            for: imagePoint,
+            for: normalizedPoint,
             distanceMeters: fallbackDistance,
             frame: frame
         )

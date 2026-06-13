@@ -99,8 +99,8 @@ final class CompositionCoordinator {
         analysis.detectedComposition = composition
         uiState.recommendedLabel = nil
 
-        if let subject = analysis.sceneGeometry.smoothedSubjectPoint
-                      ?? analysis.sceneGeometry.userPinnedSubject {
+        if let subject = analysis.sceneGeometry.userLockOrigin
+                      ?? analysis.sceneGeometry.trackedSubjectPoint {
             let frozenTarget = AlignmentAnalyzer.computeFixedTarget(
                 for: composition,
                 subjectAtLockTime: subject

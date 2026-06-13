@@ -38,6 +38,13 @@ extension CameraViewModel {
             }
             return "Long-press your subject"
         case .subjectLocked:
+            if cameraMode == .rearSpatial,
+               spatialEngine.lastLockQuality == .estimatedFallback {
+                return "Subject lock is approximate — point at a textured surface."
+            }
+            if analysis.sceneGeometry.trackedSubjectPoint == nil {
+                return "Locking subject…"
+            }
             return mlSuggestion.map { "Best fit: \($0.shortLabel) — tap to change" }
                 ?? "Analyzing scene for best composition"
         case .guiding(let comp):

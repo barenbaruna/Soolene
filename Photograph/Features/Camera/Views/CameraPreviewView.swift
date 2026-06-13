@@ -120,7 +120,7 @@ struct CameraPreviewView: UIViewRepresentable {
             else { return }
 
             let viewPoint = recognizer.location(in: view)
-            let normalized = CoordinateMapper.normalizedPoint(in: view.bounds.size, viewPoint: viewPoint)
+            let normalized = view.previewLayer.captureDevicePointConverted(fromLayerPoint: viewPoint)
             onLongPress?(viewPoint, normalized)
         }
 

@@ -51,6 +51,9 @@ final class VisionService: @unchecked Sendable {
     private var guidanceGeneration: UInt64 = 0
     private var userGuidanceActive = false
 
+    /// Initial Vision tracking box size (normalized). Smaller box reduces drift to bbox center mass.
+    private static let classicTrackingBoxSize: CGFloat = 0.08
+
     // MARK: - Subject Pinning
 
     func pinSubject(at normalisedPoint: CGPoint) {
@@ -58,14 +61,15 @@ final class VisionService: @unchecked Sendable {
         userGuidanceActive = false
         syncProcessorContext()
 
+        currentAnalysis.sceneGeometry.establishUserLock(at: normalisedPoint)
+        currentAnalysis.sceneGeometry.lockedTargetPoint = nil
+
         if usesSpatialTracking {
             trackingRequest = nil
-            currentAnalysis.sceneGeometry.userPinnedSubject = normalisedPoint
-            currentAnalysis.sceneGeometry.lockedTargetPoint = nil
             return
         }
 
-        let boxSize: CGFloat = 0.15
+        let boxSize = Self.classicTrackingBoxSize
         let rect = CGRect(
             x: max(0, normalisedPoint.x - boxSize / 2),
             y: max(0, normalisedPoint.y - boxSize / 2),
@@ -77,8 +81,6 @@ final class VisionService: @unchecked Sendable {
         let request = VNTrackObjectRequest(detectedObjectObservation: observation)
         request.trackingLevel = .fast
         trackingRequest = request
-        currentAnalysis.sceneGeometry.userPinnedSubject = normalisedPoint
-        currentAnalysis.sceneGeometry.lockedTargetPoint = nil
     }
 
     func syncGuidanceState(lockedTarget: CGPoint?, detectedComposition: CompositionType) {
@@ -93,9 +95,8 @@ final class VisionService: @unchecked Sendable {
         userGuidanceActive = false
         trackingRequest = nil
         lastSpatialSubjectPoint = nil
-        currentAnalysis.sceneGeometry.userPinnedSubject = nil
+        currentAnalysis.sceneGeometry.clearUserLock()
         currentAnalysis.sceneGeometry.lockedTargetPoint = nil
-        currentAnalysis.sceneGeometry.smoothedSubjectPoint = nil
         currentAnalysis.detectedComposition = .ruleOfThirds
         currentAnalysis.mlPredictions = []
         analysisProcessor.resetFilters()
@@ -104,11 +105,21 @@ final class VisionService: @unchecked Sendable {
 
     func resolvedPinPoint(for tap: CGPoint, geometry: SceneGeometry) -> CGPoint {
         guard isFrontCamera, !geometry.faceRects.isEmpty else { return tap }
-        let largest = geometry.faceRects.max(by: { $0.width * $0.height < $1.width * $1.height })
-        guard let face = largest else { return tap }
-        let faceCenter = CGPoint(x: face.midX, y: face.midY)
-        let distance = hypot(tap.x - faceCenter.x, tap.y - faceCenter.y)
-        return distance < 0.2 ? faceCenter : tap
+
+        var nearestFace: CGRect?
+        var nearestDistance: CGFloat = .infinity
+
+        for face in geometry.faceRects {
+            let faceCenter = CGPoint(x: face.midX, y: face.midY)
+            let distance = hypot(tap.x - faceCenter.x, tap.y - faceCenter.y)
+            if distance < nearestDistance {
+                nearestDistance = distance
+                nearestFace = face
+            }
+        }
+
+        guard let face = nearestFace, nearestDistance < 0.2 else { return tap }
+        return CGPoint(x: face.midX, y: face.midY)
     }
 
     // MARK: - Capture Gating
@@ -209,6 +220,7 @@ final class VisionService: @unchecked Sendable {
             if processingGeneration != self.guidanceGeneration {
                 updated.sceneGeometry.lockedTargetPoint = self.currentAnalysis.sceneGeometry.lockedTargetPoint
                 updated.detectedComposition = self.currentAnalysis.detectedComposition
+                self.copyLockState(from: self.currentAnalysis.sceneGeometry, to: &updated.sceneGeometry)
             }
 
             let final = self.finalize(updated, depthData: nil)
@@ -256,7 +268,7 @@ final class VisionService: @unchecked Sendable {
             guard let self else { return }
 
             var updated = snapshot
-            updated.sceneGeometry.userPinnedSubject = self.currentAnalysis.sceneGeometry.userPinnedSubject
+            self.copyLockState(from: self.currentAnalysis.sceneGeometry, to: &updated.sceneGeometry)
 
             ClassicVisionPipeline.runVisionRequests(
                 pixelBuffer: pixelBuffer,
@@ -294,6 +306,12 @@ final class VisionService: @unchecked Sendable {
         analysisProcessor.deviceRollDegrees = deviceRollDegrees
     }
 
+    private func copyLockState(from source: SceneGeometry, to destination: inout SceneGeometry) {
+        destination.userLockOrigin = source.userLockOrigin
+        destination.trackedSubjectPoint = source.trackedSubjectPoint
+        destination.subjectTrackingOffset = source.subjectTrackingOffset
+    }
+
     private func bumpGuidanceGeneration() {
         analysisLock.lock()
         guidanceGeneration &+= 1
@@ -311,6 +329,7 @@ final class VisionService: @unchecked Sendable {
             if let processingGeneration, processingGeneration != self.guidanceGeneration {
                 merged.sceneGeometry.lockedTargetPoint = self.currentAnalysis.sceneGeometry.lockedTargetPoint
                 merged.detectedComposition = self.currentAnalysis.detectedComposition
+                self.copyLockState(from: self.currentAnalysis.sceneGeometry, to: &merged.sceneGeometry)
             }
             self.currentAnalysis = merged
             self.onAnalysisUpdated?(merged)

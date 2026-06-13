@@ -161,7 +161,9 @@ enum GuidanceEngine {
 
     /// Resolves the best subject point from geometry using the standard priority chain.
     private static func bestSubjectPoint(from geometry: SceneGeometry) -> CGPoint? {
-        if let pinned = geometry.userPinnedSubject { return pinned }
+        if geometry.isSubjectLocked {
+            return geometry.trackedSubjectPoint ?? geometry.userLockOrigin
+        }
         if let face = geometry.faceRects.first {
             return CGPoint(x: face.midX, y: face.midY)
         }

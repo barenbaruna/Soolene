@@ -30,9 +30,11 @@ struct AlignmentAnalyzer {
     // MARK: - Subject Point Resolution
 
     /// Returns the best available subject position using the priority chain:
-    /// userPinnedSubject > face centroid > body center > saliency centroid
+    /// trackedSubjectPoint > userLockOrigin > face centroid > body center > saliency centroid
     static func resolveSubjectPoint(from geometry: SceneGeometry, depthData: AVDepthData? = nil) -> CGPoint? {
-        if let pinned = geometry.userPinnedSubject { return pinned }
+        if geometry.isSubjectLocked {
+            return geometry.trackedSubjectPoint ?? geometry.userLockOrigin
+        }
 
         // Multi-face resolution (raw, unsmoothed — used only on first frame before smoother initialises)
         if !geometry.faceRects.isEmpty {
@@ -225,7 +227,7 @@ struct AlignmentAnalyzer {
         switch composition {
 
         case .horizontal:
-            guard geometry.horizonDetected || geometry.deviceRollDegrees != nil || geometry.userPinnedSubject != nil else {
+            guard geometry.horizonDetected || geometry.deviceRollDegrees != nil || geometry.isSubjectLocked else {
                 return 0.0
             }
             let angleDeg = abs(effectiveHorizonAngle(geometry: geometry))
