@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CameraBottomControlsStack: View {
+    @Environment(OnboardingStore.self) private var onboarding
     @Bindable var viewModel: CameraViewModel
     @Binding var isShowingGallery: Bool
     let iconRotation: Double
@@ -31,14 +32,23 @@ struct CameraBottomControlsStack: View {
                     selectedComposition: viewModel.userSelectedComposition,
                     mlSuggestion: viewModel.mlSuggestion,
                     compositions: viewModel.sortedPickerCompositions,
-                    onSelect: { viewModel.selectComposition($0) }
+                    onSelect: { viewModel.selectComposition($0) },
+                    onClearSubject: { viewModel.clearPinnedSubject() }
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                if case .subjectLocked = viewModel.guidancePhase {
-                    Text("Double-tap to unlock subject")
-                        .font(.caption2)
-                        .foregroundStyle(AppColors.textGuide)
+                .onAppear {
+                    SubjectUnlockTipController.updateShouldShow(
+                        hasCompletedWalkthrough: onboarding.hasCompletedWalkthrough,
+                        hasLockedSubjectOnce: onboarding.hasLockedSubjectOnce,
+                        showsPicker: true
+                    )
+                }
+                .onDisappear {
+                    SubjectUnlockTipController.updateShouldShow(
+                        hasCompletedWalkthrough: onboarding.hasCompletedWalkthrough,
+                        hasLockedSubjectOnce: onboarding.hasLockedSubjectOnce,
+                        showsPicker: false
+                    )
                 }
             }
 

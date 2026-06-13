@@ -6,11 +6,19 @@
 //
 
 import SwiftUI
+import TipKit
 import UIKit
 
 @main
 struct PhotographApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+    init() {
+        try? Tips.configure([
+            .displayFrequency(.immediate),
+            .datastoreLocation(.applicationDefault)
+        ])
+    }
 
     var body: some Scene {
         WindowGroup {

@@ -13,6 +13,7 @@
 //
 
 import SwiftUI
+import TipKit
 
 // MARK: - CompositionPickerView
 
@@ -21,6 +22,7 @@ struct CompositionPickerView: View {
     let mlSuggestion: CompositionType?
     let compositions: [CompositionType]
     let onSelect: (CompositionType) -> Void
+    var onClearSubject: (() -> Void)?
 
     @State private var hasAppeared = false
 
@@ -28,17 +30,26 @@ struct CompositionPickerView: View {
         selectedComposition: CompositionType?,
         mlSuggestion: CompositionType?,
         compositions: [CompositionType] = Array(CompositionType.allCases),
-        onSelect: @escaping (CompositionType) -> Void
+        onSelect: @escaping (CompositionType) -> Void,
+        onClearSubject: (() -> Void)? = nil
     ) {
         self.selectedComposition = selectedComposition
         self.mlSuggestion = mlSuggestion
         self.compositions = compositions
         self.onSelect = onSelect
+        self.onClearSubject = onClearSubject
     }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Spacing.small) {
+                if let onClearSubject {
+                    ClearSubjectButton(action: onClearSubject)
+                        .opacity(hasAppeared ? 1 : 0)
+                        .offset(y: hasAppeared ? 0 : 20)
+                        .popoverTip(SubjectUnlockTip(), arrowEdge: .top)
+                }
+
                 ForEach(Array(compositions.enumerated()), id: \.element) { index, comp in
                     CompositionPill(
                         composition: comp,
@@ -141,6 +152,40 @@ private struct CompositionPill: View {
             RoundedRectangle(cornerRadius: AppRadius.medium)
                 .fill(.ultraThinMaterial.opacity(0.5))
         }
+    }
+}
+
+// MARK: - ClearSubjectButton
+
+private struct ClearSubjectButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: "lock.open")
+                    .font(.title3)
+                    .foregroundStyle(AppColors.textGuide)
+                    .frame(width: 32, height: 32)
+
+                Text("Clear")
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(AppColors.textGuide)
+                    .lineLimit(1)
+            }
+            .frame(width: ControlMetrics.compositionPillWidth, height: ControlMetrics.compositionPillHeight)
+            .background(
+                RoundedRectangle(cornerRadius: AppRadius.medium)
+                    .fill(.ultraThinMaterial.opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppRadius.medium)
+                    .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Clear subject")
+        .accessibilityHint("Unlocks the current subject so you can choose another")
     }
 }
 

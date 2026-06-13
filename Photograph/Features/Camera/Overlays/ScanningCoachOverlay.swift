@@ -2,7 +2,7 @@
 //  ScanningCoachOverlay.swift
 //  Photograph
 //
-//  Scanning-phase coach: breathing viewfinder, debounced saliency pulse, long-press cue.
+//  Scanning-phase coach: optional viewfinder hint, debounced saliency pulse.
 //
 
 import SwiftUI
@@ -10,6 +10,7 @@ import SwiftUI
 struct ScanningCoachOverlay: View {
     let saliencyCentroid: CGPoint?
     let faceDetected: Bool
+    let showsViewfinderHint: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -19,7 +20,7 @@ struct ScanningCoachOverlay: View {
     @State private var lastHapticCentroid: CGPoint?
     @State private var stabilityTask: Task<Void, Never>?
 
-    private let stabilityDelayNs: UInt64 = 500_000_000
+    private let stabilityDelayNs: UInt64 = 2_500_000_000
     private let stabilityThreshold: CGFloat = 0.04
 
     var body: some View {
@@ -27,8 +28,10 @@ struct ScanningCoachOverlay: View {
             let size = geo.size
 
             ZStack {
-                ScanningViewfinderHint(isAnimating: breathing && !reduceMotion)
-                    .position(x: size.width / 2, y: size.height / 2)
+                if showsViewfinderHint {
+                    ScanningViewfinderHint(isAnimating: breathing && !reduceMotion)
+                        .position(x: size.width / 2, y: size.height / 2)
+                }
 
                 if let centroid = confirmedCentroid ?? saliencyCentroid {
                     let point = pixelPoint(centroid, in: size)
@@ -39,18 +42,16 @@ struct ScanningCoachOverlay: View {
                         faceDetected: faceDetected
                     )
                     .position(point)
-
-                    if confirmedCentroid != nil {
-                        LongPressCueLabel()
-                            .position(x: point.x, y: point.y - 56)
-                            .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    }
                 }
             }
         }
         .allowsHitTesting(false)
         .ignoresSafeArea()
-        .onAppear { startBreathing() }
+        .onAppear {
+            if showsViewfinderHint {
+                startBreathing()
+            }
+        }
         .onDisappear {
             stabilityTask?.cancel()
             stabilityTask = nil
@@ -159,30 +160,5 @@ private struct SaliencyCoachMarker: View {
 
     private var ringSize: CGFloat {
         isStable ? 92 : 80
-    }
-}
-
-// MARK: - Long-press cue
-
-private struct LongPressCueLabel: View {
-    var body: some View {
-        Text("Long-press here")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(AppColors.textOnCamera)
-            .padding(.horizontal, Spacing.small)
-            .padding(.vertical, Spacing.tiny)
-            .background { cueBackground }
-            .accessibilityLabel("Long-press here to lock subject")
-    }
-
-    @ViewBuilder
-    private var cueBackground: some View {
-        if #available(iOS 26, *) {
-            Capsule()
-                .fill(Color.black.opacity(0.4))
-                .glassEffect(.regular, in: .capsule)
-        } else {
-            Capsule().fill(.ultraThinMaterial)
-        }
     }
 }

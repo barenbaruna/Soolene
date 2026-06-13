@@ -11,6 +11,7 @@ Manual QA checklist for spatial (rear ARKit) subject lock accuracy after the tru
 | 5 | Low-texture fallback | Plain wall | "Subject lock is approximate" warning; bracket stable vs tap |
 | 6 | Composition thirds | Lock head, select Thirds | Target socket frozen from lock origin, not drifted center |
 | 7 | Re-lock | Double-tap clear, lock again | Prior offset cleared; new tap honored |
+| 8 | Guidance arrow | Thirds / Diagonal, far from target | Arrow sits toward target circle; reads as move bracket toward circle |
 
 ## Automated tests
 

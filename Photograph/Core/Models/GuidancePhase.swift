@@ -24,7 +24,7 @@ import Foundation
 enum GuidancePhase: Equatable {
 
     /// No subject selected. Vision runs saliency at low FPS for visual hints.
-    /// UI: Faint ghost grid, scanning viewfinder, saliency hint circles.
+    /// UI: Clean preview; optional scanning coach (viewfinder / saliency hints only).
     case scanning
 
     /// User has long-pressed a subject. VNTrackObjectRequest is active.
@@ -78,6 +78,14 @@ enum GuidancePhase: Equatable {
         switch self {
         case .scanning: return false
         default: return true
+        }
+    }
+
+    /// True when the full composition grid overlay should render.
+    var showsCompositionGrid: Bool {
+        switch self {
+        case .guiding, .perfect: return true
+        default: return false
         }
     }
 }

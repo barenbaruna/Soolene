@@ -104,7 +104,6 @@ struct CameraControlsView: View {
             activePanel = nil
             viewModel.cycleFlash()
         case .timer:
-            withAnimation { activePanel = activePanel == .timer ? nil : .timer }
             viewModel.cycleTimer()
         case .aspect:
             withAnimation { activePanel = activePanel == .aspect ? nil : .aspect }

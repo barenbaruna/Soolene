@@ -13,7 +13,6 @@ enum CaptureTelemetry {
 
     enum CaptureMode: String {
         case `default`
-        case maxQuality
         case frontClassic
     }
 
@@ -21,7 +20,6 @@ enum CaptureTelemetry {
         case ar
         case av
         case avFallback
-        case maxQuality
     }
 
     private static let log = Logger(

@@ -59,7 +59,6 @@ final class CameraViewModel {
     let captureCoordinator: CaptureCoordinator
     let sessionCoordinator: CameraSessionCoordinator
     let compositionCoordinator: CompositionCoordinator
-    let captureSettings = CaptureSettings.shared
 
     // MARK: - Motion State
 

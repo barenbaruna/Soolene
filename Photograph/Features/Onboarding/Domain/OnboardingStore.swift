@@ -23,6 +23,8 @@ final class OnboardingStore {
     private enum StorageKey {
         static let completedSplash = "visula_hasCompletedSplash"
         static let completedWalkthrough = "visula_hasCompletedWalkthrough"
+        static let scanCoachSessions = "coach.scanSessionsShown"
+        static let hasLockedSubjectOnce = "coach.hasLockedSubjectOnce"
     }
 
     var hasCompletedSplash: Bool {
@@ -39,12 +41,38 @@ final class OnboardingStore {
         !hasCompletedWalkthrough
     }
 
+    /// Subtle center viewfinder hint for the first two post-walkthrough scanning sessions.
+    var showsScanningViewfinderHint: Bool {
+        hasCompletedWalkthrough && scanCoachSessionsShown < 2
+    }
+
+    /// Increments after walkthrough when the user enters a new scanning session.
+    private(set) var scanCoachSessionsShown: Int
+
+    /// Set after the user locks a subject for the first time (TipKit gating).
+    private(set) var hasLockedSubjectOnce: Bool
+
     init() {
         hasCompletedSplash = UserDefaults.standard.bool(forKey: StorageKey.completedSplash)
         hasCompletedWalkthrough = UserDefaults.standard.bool(forKey: StorageKey.completedWalkthrough)
+        scanCoachSessionsShown = UserDefaults.standard.integer(forKey: StorageKey.scanCoachSessions)
+        hasLockedSubjectOnce = UserDefaults.standard.bool(forKey: StorageKey.hasLockedSubjectOnce)
         if hasCompletedWalkthrough {
             currentStep = .congratulation
         }
+    }
+
+    func recordScanningCoachSession() {
+        guard hasCompletedWalkthrough else { return }
+        guard scanCoachSessionsShown < 2 else { return }
+        scanCoachSessionsShown += 1
+        UserDefaults.standard.set(scanCoachSessionsShown, forKey: StorageKey.scanCoachSessions)
+    }
+
+    func recordFirstSubjectLock() {
+        guard !hasLockedSubjectOnce else { return }
+        hasLockedSubjectOnce = true
+        UserDefaults.standard.set(true, forKey: StorageKey.hasLockedSubjectOnce)
     }
 
     func advanceStep() {

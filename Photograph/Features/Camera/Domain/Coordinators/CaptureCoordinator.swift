@@ -152,15 +152,11 @@ final class CaptureCoordinator {
 
         switch cameraMode {
         case .rearSpatial:
-            if CaptureSettings.shared.maxQualityCaptureActive {
-                await runMaxQualityCapture(aspectRatio: aspectRatio, shutterStart: shutterStart)
-            } else {
-                await runDefaultRearCapture(
-                    aspectRatio: aspectRatio,
-                    captureMode: captureMode,
-                    shutterStart: shutterStart
-                )
-            }
+            await runDefaultRearCapture(
+                aspectRatio: aspectRatio,
+                captureMode: captureMode,
+                shutterStart: shutterStart
+            )
         case .frontClassic:
             cameraManager.capturePhoto(aspectRatio: aspectRatio)
             await waitForClassicCaptureCompletion()
@@ -182,7 +178,7 @@ final class CaptureCoordinator {
         case .frontClassic:
             return .frontClassic
         case .rearSpatial:
-            return CaptureSettings.shared.maxQualityCaptureActive ? .maxQuality : .default
+            return .default
         }
     }
 
@@ -253,20 +249,6 @@ final class CaptureCoordinator {
                 arErrorCode: spatialEngine.lastCaptureARErrorCode,
                 thermal: ProcessInfo.processInfo.thermalState.rawValue
             )
-        }
-    }
-
-    private func runMaxQualityCapture(
-        aspectRatio: AspectRatioMode,
-        shutterStart: CFAbsoluteTime
-    ) async {
-        await runRearAVHandoff(
-            aspectRatio: aspectRatio,
-            shutterStart: shutterStart,
-            telemetryMode: .maxQuality,
-            telemetryPath: .maxQuality
-        ) { snapshot in
-            await sessionCoordinator.captureRearPhotoViaAV(snapshot: snapshot)
         }
     }
 

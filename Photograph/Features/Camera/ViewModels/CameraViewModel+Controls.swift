@@ -127,8 +127,8 @@ extension CameraViewModel {
         HapticManager.selection()
         switch timerLength {
         case 0: timerLength = 3
-        case 3: timerLength = 10
-        case 10: timerLength = 0
+        case 3: timerLength = 5
+        case 5: timerLength = 0
         default: timerLength = 0
         }
     }

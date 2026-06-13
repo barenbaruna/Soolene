@@ -104,11 +104,6 @@ final class CameraSessionCoordinator {
         }
     }
 
-    /// Max Quality Mode — AV capture on every rear shutter (Option E).
-    func captureRearPhotoViaAV(snapshot: CaptureHandoffSnapshot) async -> CaptureHandoffResult {
-        await performRearAVHandoff(snapshot: snapshot, telemetryPath: .maxQuality)
-    }
-
     /// AR → AV → AR when rear hi-res capture fails (Option F default mode).
     func captureRearViaAVFallback(snapshot: CaptureHandoffSnapshot) async -> CaptureHandoffResult {
         await performRearAVHandoff(snapshot: snapshot, telemetryPath: .avFallback)

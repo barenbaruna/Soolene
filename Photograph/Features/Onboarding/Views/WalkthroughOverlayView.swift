@@ -62,7 +62,7 @@ struct WalkthroughOverlayView: View {
         case .compositionSuggestion where context == .camera:
             TooltipView(
                 title: "Lock Your Subject",
-                description: "Long-press on any subject to lock focus. The app will suggest the best composition for your scene.",
+                description: "Long-press on any subject to lock focus. Use Clear subject later to pick a different focus.",
                 anchor: .bottom,
                 onPrimary: { store.advanceStep() },
                 onSecondary: { store.skipWalkthrough() }

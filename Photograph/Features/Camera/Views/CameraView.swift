@@ -159,9 +159,6 @@ struct CameraView: View {
         if viewModel.isHandoffRecovering {
             return "Realigning guidance…"
         }
-        if viewModel.isMaxQualityCaptureEnabled {
-            return "Capturing at maximum quality…"
-        }
         return "Capturing…"
     }
 
@@ -174,6 +171,7 @@ struct CameraView: View {
 
     private func handleSubjectPin(at screenPoint: CGPoint, normalizedPoint: CGPoint) {
         viewModel.pinSubject(at: normalizedPoint)
+        onboarding.recordFirstSubjectLock()
         playLockAnimation(at: screenPoint)
         showIndicator(at: screenPoint, style: .pin)
     }

@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		A8TEST032FBACA5C0039F503 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A8B2C4C32FBACA5C0039F503 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A8B2C4CA2FBACA5C0039F503;
+			remoteInfo = Photograph;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A8B2C4CB2FBACA5C0039F503 /* Photograph.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Photograph.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8TEST012FBACA5C0039F503 /* PhotographTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PhotographTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -23,16 +33,6 @@
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXContainerItemProxy section */
-		A8TEST032FBACA5C0039F503 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A8B2C4C32FBACA5C0039F503 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A8B2C4CA2FBACA5C0039F503;
-			remoteInfo = Photograph;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A8B2C4C82FBACA5C0039F503 /* Frameworks */ = {

@@ -118,26 +118,6 @@ extension CameraViewModel {
         spatialEngine.handoffFrozenPreviewImage
     }
 
-    /// Shown when engineering flag allows Max Quality on rear spatial camera.
-    var showsMaxQualityToggle: Bool {
-        cameraMode == .rearSpatial && CaptureArchitectureFlags.maxQualityCaptureEnabled
-    }
-
-    /// User + flag effective Max Quality Mode (capture path wired in Epic 4b).
-    var isMaxQualityCaptureEnabled: Bool {
-        captureSettings.maxQualityCaptureActive
-    }
-
-    func toggleMaxQualityCapture() {
-        guard showsMaxQualityToggle else { return }
-        HapticManager.selection()
-        let turningOn = !captureSettings.maxQualityCapture
-        captureSettings.maxQualityCapture = turningOn
-        if turningOn {
-            showInlineToast("Max Quality pauses briefly for best photo quality.")
-        }
-    }
-
     func startCountdown() {
         guard !isCountingDown else { return }
         guard captureReadiness.isShutterEnabled else { return }

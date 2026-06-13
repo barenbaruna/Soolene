@@ -17,18 +17,6 @@ struct CameraTopToolbar: View {
 
     var body: some View {
         HStack(spacing: Spacing.large) {
-            if viewModel.showsMaxQualityToggle {
-                toolbarButton(
-                    icon: "camera.aperture",
-                    isActive: viewModel.isMaxQualityCaptureEnabled,
-                    label: viewModel.isMaxQualityCaptureEnabled
-                        ? "Max Quality Capture on"
-                        : "Max Quality Capture off"
-                ) {
-                    viewModel.toggleMaxQualityCapture()
-                }
-            }
-
             toolbarButton(
                 icon: flashIcon,
                 isActive: viewModel.isFlashActive || activePanel == .flash,
@@ -45,13 +33,7 @@ struct CameraTopToolbar: View {
                 onPanelTapped(.exposure)
             }
 
-            toolbarButton(
-                icon: timerIcon,
-                isActive: viewModel.timerLength > 0 || activePanel == .timer,
-                label: timerAccessibilityLabel
-            ) {
-                onPanelTapped(.timer)
-            }
+            timerButton
 
             toolbarButton(
                 icon: viewModel.selectedAspectRatio.symbolName,
@@ -62,6 +44,32 @@ struct CameraTopToolbar: View {
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var timerButton: some View {
+        Button {
+            HapticManager.selection()
+            onPanelTapped(.timer)
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                Image(systemName: "timer")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(viewModel.timerLength > 0 ? AppColors.controlActive : AppColors.textOnCamera)
+
+                if viewModel.timerLength > 0 {
+                    Text("\(viewModel.timerLength)")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(AppColors.controlActive)
+                        .offset(x: 4, y: -4)
+                }
+            }
+            .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(timerAccessibilityLabel)
+        .accessibilityAddTraits(viewModel.timerLength > 0 ? .isSelected : [])
+        .rotationEffect(.degrees(iconRotation))
     }
 
     private func toolbarButton(
@@ -86,18 +94,10 @@ struct CameraTopToolbar: View {
         .rotationEffect(.degrees(iconRotation))
     }
 
-    private var timerIcon: String {
-        switch viewModel.timerLength {
-        case 3: return "3.arrow.trianglehead.counterclockwise"
-        case 10: return "10.arrow.trianglehead.counterclockwise"
-        default: return "timer"
-        }
-    }
-
     private var timerAccessibilityLabel: String {
         switch viewModel.timerLength {
         case 3: return "3 second timer"
-        case 10: return "10 second timer"
+        case 5: return "5 second timer"
         default: return "Timer off"
         }
     }

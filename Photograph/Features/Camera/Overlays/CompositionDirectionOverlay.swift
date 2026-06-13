@@ -366,46 +366,63 @@ private struct DashedConnectorLine: View {
     let to: CGPoint
     let color: Color
 
-    var body: some View {
-        Canvas { context, _ in
-            var path = Path()
-            path.move(to: from)
-            path.addLine(to: to)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var dashPhase: CGFloat = 0
 
-            // Shadow for contrast on any background
-            context.stroke(
-                path,
-                with: .color(.black.opacity(0.25)),
-                style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
-            )
-            // Dashed main line
-            context.stroke(
-                path,
-                with: .color(color.opacity(0.4)),
-                style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: [6, 4])
-            )
+    var body: some View {
+        TimelineView(.animation(minimumInterval: reduceMotion ? 1.0 : 0.05)) { _ in
+            Canvas { context, _ in
+                var path = Path()
+                path.move(to: from)
+                path.addLine(to: to)
+
+                context.stroke(
+                    path,
+                    with: .color(.black.opacity(0.25)),
+                    style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                )
+                context.stroke(
+                    path,
+                    with: .color(color.opacity(0.4)),
+                    style: StrokeStyle(
+                        lineWidth: 1.5,
+                        lineCap: .round,
+                        dash: [6, 4],
+                        dashPhase: reduceMotion ? 0 : dashPhase
+                    )
+                )
+            }
+        }
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
+                dashPhase = 20
+            }
         }
     }
 }
 
 // MARK: - DirectionArrow
 
-/// A small chevron arrow at the midpoint of the connector, pointing toward the target.
+/// Arrow biased toward the target so guidance reads “move subject toward the circle.”
 private struct DirectionArrow: View {
     let from: CGPoint
     let to: CGPoint
     let color: Color
 
+    /// Position along connector (0 = subject, 1 = target).
+    private let biasTowardTarget: CGFloat = 0.8
+
     var body: some View {
-        let midX = (from.x + to.x) / 2
-        let midY = (from.y + to.y) / 2
+        let anchorX = from.x + (to.x - from.x) * biasTowardTarget
+        let anchorY = from.y + (to.y - from.y) * biasTowardTarget
         let angle = atan2(to.y - from.y, to.x - from.x)
 
-        Image(systemName: "chevron.forward")
-            .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(color.opacity(0.6))
+        Image(systemName: "arrowtriangle.forward.fill")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(color.opacity(0.75))
             .rotationEffect(.radians(angle))
-            .position(x: midX, y: midY)
-            .shadow(color: .black.opacity(0.3), radius: 1)
+            .position(x: anchorX, y: anchorY)
+            .shadow(color: .black.opacity(0.35), radius: 1)
     }
 }
