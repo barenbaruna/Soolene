@@ -17,6 +17,10 @@ final class GalleryViewModel {
     var readPermission: PermissionStatus = .notDetermined
     var isRequestingPermission = false
 
+    var allAssets: [PHAsset] = []
+    var assetsByComposition: [CompositionType: [PHAsset]] = [:]
+    var assetCompositionMap: [String: CompositionType] = [:]
+
     private let gallery: GalleryRepository
     private let permissions: PermissionChecking
 
@@ -60,31 +64,50 @@ final class GalleryViewModel {
 
     private func loadLibrary() async {
         let counts = await gallery.fetchCompositionCounts()
-        var previews: [CompositionType: PHAsset] = [:]
-
+        
+        // 1. Fetch all assets from custom album
+        var loadedAssets: [PHAsset] = []
+        if let fetchResult = await GalleryManager.shared.fetchAllPhotos() {
+            fetchResult.enumerateObjects { asset, _, _ in
+                loadedAssets.append(asset)
+            }
+        }
+        
+        // 2. Fetch all composition metadata to map local identifiers
+        let metadata = await gallery.fetchAllCompositionMetadata()
+        let metadataMap = Dictionary(uniqueKeysWithValues: metadata.map { ($0.assetIdentifier, $0.composition) })
+        
+        // 3. Group assets by composition
+        var byComp: [CompositionType: [PHAsset]] = [:]
         for type in CompositionType.allCases {
-            let identifiers = await gallery.fetchPhotoIdentifiers(for: type)
-            if let firstID = identifiers.first,
-               let asset = fetchAsset(localIdentifier: firstID) {
-                previews[type] = asset
+            byComp[type] = []
+        }
+        for asset in loadedAssets {
+            if let comp = metadataMap[asset.localIdentifier] {
+                byComp[comp, default: []].append(asset)
             }
         }
-
-        var recent: PHAsset?
-        var recentComp = CompositionType.ruleOfThirds
-        if let recentID = await gallery.fetchMostRecentAssetLocalIdentifier(),
-           let asset = fetchAsset(localIdentifier: recentID) {
-            recent = asset
-            let metadata = await gallery.fetchAllCompositionMetadata()
-            if let match = metadata.first(where: { $0.assetIdentifier == recentID }) {
-                recentComp = match.composition
+        
+        // Populate previewAssets (first asset in each composition)
+        var previews: [CompositionType: PHAsset] = [:]
+        for type in CompositionType.allCases {
+            if let firstAsset = byComp[type]?.first {
+                previews[type] = firstAsset
             }
         }
-
-        compositionCounts = counts
-        previewAssets = previews
-        recentAsset = recent
-        recentComposition = recentComp
+        
+        self.allAssets = loadedAssets
+        self.assetsByComposition = byComp
+        self.assetCompositionMap = metadataMap
+        self.compositionCounts = counts
+        self.previewAssets = previews
+        
+        self.recentAsset = loadedAssets.first
+        if let recentID = loadedAssets.first?.localIdentifier,
+           let match = metadata.first(where: { $0.assetIdentifier == recentID }) {
+            self.recentComposition = match.composition
+        }
+        
         isLoading = false
     }
 

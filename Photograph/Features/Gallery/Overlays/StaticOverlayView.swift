@@ -18,7 +18,7 @@ struct StaticOverlayView: View {
         CompositionGridView(
             composition: composition,
             rect: drawRect,
-            color: Color.white.opacity(0.6),
+            color: Color.green.opacity(0.6),
             isPerfect: false,
             showSubjectBox: false
         )
