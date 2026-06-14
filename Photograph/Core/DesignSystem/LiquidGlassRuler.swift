@@ -37,6 +37,8 @@ struct RulerPanelDismissScrim: View {
 /// Light capsule glass behind the tick track only — avoids a heavy full-panel box.
 struct RulerTrackGlassBackground: ViewModifier {
     var isDragging: Bool = false
+    var glassID: String? = nil
+    var glassNamespace: Namespace.ID? = nil
 
     func body(content: Content) -> some View {
         content.background {
@@ -44,12 +46,20 @@ struct RulerTrackGlassBackground: ViewModifier {
                 let glass: Glass = isDragging
                     ? .clear.interactive()
                     : .clear
-                Color.clear
-                    .glassEffect(glass, in: .capsule)
+                
+                let base = Color.clear
+                    .glassEffect(glass, in: .rect(cornerRadius: 30))
                     .allowsHitTesting(false)
+                
+                if let id = glassID, let ns = glassNamespace {
+                    base.glassEffectID(id, in: ns)
+                } else {
+                    base
+                }
             } else {
-                Capsule()
-                    .fill(.ultraThinMaterial.opacity(0.55))
+                RoundedRectangle(cornerRadius: 30)
+                    .fill(.ultraThinMaterial)
+                    .allowsHitTesting(false)
             }
         }
     }
@@ -85,18 +95,21 @@ struct LiquidGlassRuler: View {
     let onValueChanged: (CGFloat) -> Void
     var onDragBegan: (() -> Void)?
     var onDragEnded: (() -> Void)?
+    var glassID: String? = nil
+    var glassNamespace: Namespace.ID? = nil
 
     @State private var dragStart: CGFloat?
 
     private let tickCount = 41
 
     var body: some View {
-        VStack(spacing: Spacing.tiny) {
+        HStack(spacing: Spacing.small) {
             RulerValueLabel(
                 text: formattedValue,
                 color: activeColor,
                 numericValue: Double(value)
             )
+            .padding(.leading, Spacing.standard)
 
             rulerTrack(width: nil) { width in
                 let knobX = knobOffset(in: width)
@@ -108,10 +121,10 @@ struct LiquidGlassRuler: View {
                         .offset(x: knobX - 11)
                 }
             }
-            .padding(.horizontal, ControlMetrics.rulerTrackHorizontalPadding)
-            .padding(.vertical, ControlMetrics.rulerTrackVerticalPadding)
-            .modifier(RulerTrackGlassBackground(isDragging: isDragging))
+            .padding(.trailing, ControlMetrics.rulerTrackHorizontalPadding)
         }
+        .padding(.vertical, ControlMetrics.rulerTrackVerticalPadding)
+        .modifier(RulerTrackGlassBackground(isDragging: isDragging, glassID: glassID, glassNamespace: glassNamespace))
     }
 
     private var glassKnob: some View {
@@ -216,17 +229,21 @@ struct LiquidGlassCenterRuler: View {
     let onValueChanged: (CGFloat) -> Void
     var onDragBegan: (() -> Void)?
     var onDragEnded: (() -> Void)?
+    var glassID: String? = nil
+    var glassNamespace: Namespace.ID? = nil
 
     @State private var dragStart: CGFloat?
     @State private var didBeginDrag = false
 
     var body: some View {
-        VStack(spacing: Spacing.tiny) {
+        HStack(spacing: Spacing.small) {
             RulerValueLabel(
                 text: formattedValue,
                 color: activeColor,
                 numericValue: Double(value)
             )
+            .frame(minWidth: 44, alignment: .leading)
+            .padding(.leading, Spacing.standard)
 
             GeometryReader { geo in
                 let width = geo.size.width
@@ -242,10 +259,10 @@ struct LiquidGlassCenterRuler: View {
                 .gesture(dragGesture(in: width))
             }
             .frame(height: ControlMetrics.rulerTrackHeight)
-            .padding(.horizontal, ControlMetrics.rulerTrackHorizontalPadding)
-            .padding(.vertical, ControlMetrics.rulerTrackVerticalPadding)
-            .modifier(RulerTrackGlassBackground(isDragging: isDragging))
+            .padding(.trailing, ControlMetrics.rulerTrackHorizontalPadding)
         }
+        .padding(.vertical, ControlMetrics.rulerTrackVerticalPadding)
+        .modifier(RulerTrackGlassBackground(isDragging: isDragging, glassID: glassID, glassNamespace: glassNamespace))
     }
 
     private func centerIndicator(centerX: CGFloat, trackMidY: CGFloat) -> some View {
@@ -315,6 +332,5 @@ extension ControlMetrics {
     static let rulerPanelWidth: CGFloat = exposureControlWidth
     static let rulerTrackHorizontalPadding: CGFloat = Spacing.standard
     static let rulerTrackVerticalPadding: CGFloat = Spacing.small
-    static let rulerPanelContentHeight: CGFloat = rulerTrackHeight
-        + Spacing.tiny + 22 + rulerTrackVerticalPadding * 2
+    static let rulerPanelContentHeight: CGFloat = rulerTrackHeight + rulerTrackVerticalPadding * 2
 }

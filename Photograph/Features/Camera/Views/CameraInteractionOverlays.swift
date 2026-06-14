@@ -17,6 +17,7 @@ struct CameraInteractionOverlays: View {
     let focusedPoint: CGPoint?
     @Binding var exposureBias: Float
     let onResetExposure: () -> Void
+    let onDragExposure: () -> Void
 
     var body: some View {
         ZStack {
@@ -37,7 +38,8 @@ struct CameraInteractionOverlays: View {
                 FocusExposureOverlay(
                     point: focusedPoint,
                     exposureBias: $exposureBias,
-                    onReset: onResetExposure
+                    onReset: onResetExposure,
+                    onDrag: onDragExposure
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.92)))
             }
@@ -51,6 +53,7 @@ struct FocusExposureOverlay: View {
     let point: CGPoint
     @Binding var exposureBias: Float
     let onReset: () -> Void
+    let onDrag: () -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -62,7 +65,8 @@ struct FocusExposureOverlay: View {
 
                 ExposureRail(
                     value: $exposureBias,
-                    onReset: onReset
+                    onReset: onReset,
+                    onDrag: onDrag
                 )
                 .position(
                     x: railX(focusPoint: clampedPoint, in: proxy.size),
@@ -126,56 +130,43 @@ private struct FocusBox: View {
 private struct ExposureRail: View {
     @Binding var value: Float
     let onReset: () -> Void
+    let onDrag: () -> Void
     @State private var dragStartValue: Float?
 
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(AppColors.primary.opacity(0.8))
-                .frame(width: 1, height: ControlMetrics.exposureRailHeight)
-
-            Image(systemName: "sun.max.fill")
-                .font(.title3)
-                .foregroundStyle(AppColors.primary)
-                .background(Circle().fill(Color.black.opacity(0.2)).frame(width: 24, height: 24))
-                .offset(y: knobOffset)
-                .shadow(color: .black.opacity(0.35), radius: 2, x: 0, y: 1)
-        }
-        .frame(width: ControlMetrics.exposureRailWidth, height: ControlMetrics.exposureRailHeight)
-        .contentShape(Rectangle())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { gesture in
-                    if dragStartValue == nil {
-                        dragStartValue = value
+        Color.clear
+            .frame(width: ControlMetrics.exposureRailWidth, height: ControlMetrics.exposureRailHeight)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { gesture in
+                        onDrag()
+                        if dragStartValue == nil {
+                            dragStartValue = value
+                        }
+                        if let start = dragStartValue {
+                            let delta = Float(-gesture.translation.height / 100.0)
+                            value = min(max(start + delta, -2), 2)
+                        }
                     }
-                    if let start = dragStartValue {
-                        let delta = Float(-gesture.translation.height / 100.0)
-                        value = min(max(start + delta, -2), 2)
+                    .onEnded { _ in
+                        dragStartValue = nil
                     }
+            )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Exposure")
+            .accessibilityValue(formattedValue)
+            .accessibilityAdjustableAction { direction in
+                onDrag()
+                switch direction {
+                case .increment:
+                    value = min(value + 0.1, 2)
+                case .decrement:
+                    value = max(value - 0.1, -2)
+                @unknown default:
+                    break
                 }
-                .onEnded { _ in
-                    dragStartValue = nil
-                }
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Exposure")
-        .accessibilityValue(formattedValue)
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment:
-                value = min(value + 0.1, 2)
-            case .decrement:
-                value = max(value - 0.1, -2)
-            @unknown default:
-                break
             }
-        }
-    }
-
-    private var knobOffset: CGFloat {
-        let normalized = CGFloat((value + 2) / 4)
-        return (0.5 - normalized) * ControlMetrics.exposureRailHeight
     }
 
     private var formattedValue: String {

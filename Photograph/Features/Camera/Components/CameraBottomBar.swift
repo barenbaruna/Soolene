@@ -28,11 +28,8 @@ struct CameraBottomBar: View {
                     }
                 }
                 .frame(width: ControlMetrics.galleryThumbnail, height: ControlMetrics.galleryThumbnail)
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.small))
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.small)
-                        .strokeBorder(AppColors.textOnCamera.opacity(0.35), lineWidth: 1)
-                )
+                .clipShape(Circle())
+                .background(glassButtonBackground)
                 .rotationEffect(.degrees(iconRotation))
             }
             .accessibilityLabel("Gallery")
@@ -69,7 +66,7 @@ struct CameraBottomBar: View {
 
             Button { viewModel.switchCamera() } label: {
                 ZStack {
-                    Image(systemName: "arrow.triangle.2.circlepath.camera")
+                    Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
                         .font(.title2)
                         .opacity(viewModel.isSwitchingCamera ? 0 : 1)
 
@@ -80,6 +77,7 @@ struct CameraBottomBar: View {
                 }
                 .foregroundStyle(AppColors.textOnCamera)
                 .frame(width: ControlMetrics.iconButton, height: ControlMetrics.iconButton)
+                .background(glassButtonBackground)
                 .rotationEffect(.degrees(iconRotation))
             }
             .disabled(viewModel.isSwitchingCamera || !onboarding.allowsCameraSwitch)
@@ -88,7 +86,19 @@ struct CameraBottomBar: View {
         .padding(.horizontal, Spacing.medium)
         .padding(.vertical, Spacing.standard)
         .frame(maxWidth: .infinity)
-        .background(AppColors.surface)
+    }
+
+    @ViewBuilder
+    private var glassButtonBackground: some View {
+        if #available(iOS 26, *) {
+            Color.clear
+                .glassEffect(.regular, in: .circle)
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+        } else {
+            Circle()
+                .fill(.ultraThinMaterial)
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+        }
     }
 
     private func openGallery() {

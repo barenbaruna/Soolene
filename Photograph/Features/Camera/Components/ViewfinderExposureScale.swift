@@ -9,6 +9,10 @@ import SwiftUI
 
 struct ViewfinderExposureScale: View {
     @Binding var exposureBias: Float
+    var glassID: String? = nil
+    var glassNamespace: Namespace.ID? = nil
+    var onDragBegan: (() -> Void)? = nil
+    var onDragEnded: (() -> Void)? = nil
 
     @State private var isDragging = false
     @State private var hapticEngine = RulerHapticEngine()
@@ -34,15 +38,19 @@ struct ViewfinderExposureScale: View {
                     lastDragValue = newValue
                 },
                 onDragBegan: {
+                    self.onDragBegan?()
                     isDragging = true
                     lastDragValue = CGFloat(exposureBias)
                     hapticEngine.prepareForDrag()
                     hapticEngine.resetDragState()
                 },
                 onDragEnded: {
+                    self.onDragEnded?()
                     isDragging = false
                     hapticEngine.resetDragState()
-                }
+                },
+                glassID: glassID,
+                glassNamespace: glassNamespace
             )
         }
         .animation(.snappy, value: isDragging)

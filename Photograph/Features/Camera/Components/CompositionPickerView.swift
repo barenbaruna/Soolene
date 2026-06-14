@@ -25,6 +25,7 @@ struct CompositionPickerView: View {
     var onClearSubject: (() -> Void)?
 
     @State private var hasAppeared = false
+    @State private var scrolledID: CompositionType?
 
     init(
         selectedComposition: CompositionType?,
@@ -41,34 +42,66 @@ struct CompositionPickerView: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.small) {
-                if let onClearSubject {
-                    ClearSubjectButton(action: onClearSubject)
-                        .opacity(hasAppeared ? 1 : 0)
-                        .offset(y: hasAppeared ? 0 : 20)
-                        .popoverTip(SubjectUnlockTip(), arrowEdge: .top)
-                }
-
-                ForEach(Array(compositions.enumerated()), id: \.element) { index, comp in
-                    CompositionPill(
-                        composition: comp,
-                        isSelected: selectedComposition == comp,
-                        isRecommended: mlSuggestion == comp,
-                        onTap: { onSelect(comp) }
-                    )
+        VStack(spacing: Spacing.standard) {
+            if let onClearSubject {
+                ClearSubjectButton(action: onClearSubject)
                     .opacity(hasAppeared ? 1 : 0)
-                    .offset(y: hasAppeared ? 0 : 20)
-                    .animation(
-                        .spring(response: 0.45, dampingFraction: 0.75)
-                            .delay(Double(index) * 0.06),
-                        value: hasAppeared
-                    )
+                    .offset(y: hasAppeared ? 0 : 10)
+                    .popoverTip(SubjectUnlockTip(), arrowEdge: .top)
+            }
+
+            GeometryReader { proxy in
+                let halfWidth = proxy.size.width / 2
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: Spacing.standard) {
+                        ForEach(Array(compositions.enumerated()), id: \.element) { index, comp in
+                            CompositionPill(
+                                composition: comp,
+                                isSelected: selectedComposition == comp,
+                                isRecommended: mlSuggestion == comp,
+                                onTap: { 
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                        onSelect(comp)
+                                        scrolledID = comp
+                                    }
+                                }
+                            )
+                            .id(comp)
+                            .opacity(hasAppeared ? 1 : 0)
+                            .offset(y: hasAppeared ? 0 : 20)
+                            .animation(
+                                .spring(response: 0.45, dampingFraction: 0.75)
+                                    .delay(Double(index) * 0.06),
+                                value: hasAppeared
+                            )
+                        }
+                    }
+                    .padding(.bottom, 12)
+                    .scrollTargetLayout()
+                }
+                .scrollPosition(id: $scrolledID, anchor: .center)
+                .scrollTargetBehavior(.viewAligned)
+                .safeAreaPadding(.horizontal, max(0, halfWidth - 45))
+                .onChange(of: scrolledID) { _, newValue in
+                    if let newValue, newValue != selectedComposition {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                            onSelect(newValue)
+                        }
+                    }
+                }
+                .onChange(of: selectedComposition) { _, newValue in
+                    if newValue != scrolledID {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                            scrolledID = newValue
+                        }
+                    }
+                }
+                .onAppear {
+                    scrolledID = selectedComposition
                 }
             }
-            .padding(.horizontal, Spacing.standard)
+            .frame(height: 120) // fixed height for GeometryReader
         }
-        .frame(height: ControlMetrics.compositionPickerHeight)
         .onAppear {
             withAnimation {
                 hasAppeared = true
@@ -82,8 +115,6 @@ struct CompositionPickerView: View {
 
 // MARK: - CompositionPill
 
-/// A single composition option in the picker.
-/// Frosted glass pill with icon, label, and optional recommendation badge.
 private struct CompositionPill: View {
     let composition: CompositionType
     let isSelected: Bool
@@ -94,41 +125,18 @@ private struct CompositionPill: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 6) {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: composition.symbolName)
-                        .font(.title3)
-                        .foregroundStyle(isSelected ? AppColors.controlActive : .white.opacity(0.8))
-                        .contentTransition(.symbolEffect(.replace))
-                        .frame(width: 32, height: 32)
-
-                    if isRecommended {
-                        RecommendationBadge()
-                            .offset(x: 0, y: -18)
-                    }
+            ZStack(alignment: .bottom) {
+                if isSelected {
+                    selectedPill
+                } else {
+                    unselectedPill
                 }
-
-                Text(composition.shortLabel)
-                    .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? AppColors.textOnCamera : AppColors.textGuide)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
-            .frame(width: ControlMetrics.compositionPillWidth, height: ControlMetrics.compositionPillHeight)
-            .background(pillBackground)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.medium))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.medium)
-                    .strokeBorder(
-                        isSelected ? AppColors.controlActive.opacity(0.6) : .white.opacity(0.1),
-                        lineWidth: isSelected ? 1.5 : 0.5
-                    )
-            )
-            .scaleEffect(isPressed ? 0.92 : (isSelected ? 1.0 : 0.95))
-            .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isSelected)
-            .animation(.spring(response: 0.15, dampingFraction: 0.7), value: isPressed)
         }
         .buttonStyle(.plain)
+        .scaleEffect(isPressed ? 0.92 : 1.0)
+        .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isSelected)
+        .animation(.spring(response: 0.15, dampingFraction: 0.7), value: isPressed)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in isPressed = true }
@@ -139,19 +147,66 @@ private struct CompositionPill: View {
         .accessibilityHint(isRecommended ? "Best fit recommendation" : "")
     }
 
-    @ViewBuilder
-    private var pillBackground: some View {
-        if isSelected {
-            RoundedRectangle(cornerRadius: AppRadius.medium)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.medium)
-                        .fill(AppColors.controlActive.opacity(0.12))
-                )
-        } else {
-            RoundedRectangle(cornerRadius: AppRadius.medium)
-                .fill(.ultraThinMaterial.opacity(0.5))
+    private var selectedPill: some View {
+        VStack(spacing: 8) {
+            if isRecommended {
+                RecommendationBadge()
+            } else {
+                Spacer().frame(height: 14)
+            }
+
+            Image(systemName: composition.symbolName)
+                .font(.title2)
+                .foregroundStyle(.white)
+
+            Text(composition.shortLabel)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.white)
         }
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .frame(width: 90)
+        .background {
+            if #available(iOS 26, *) {
+                RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge)
+                    .fill(Color.black.opacity(0.35))
+                    .glassEffect(.regular, in: .rect(cornerRadius: Spacing.cornerRadiusLarge))
+            } else {
+                RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge)
+                    .fill(.ultraThinMaterial)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge)
+                .strokeBorder(AppColors.controlActive, lineWidth: 1.5)
+        )
+    }
+
+    private var unselectedPill: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                if #available(iOS 26, *) {
+                    RoundedRectangle(cornerRadius: Spacing.cornerRadiusMedium)
+                        .fill(Color.black.opacity(0.35))
+                        .glassEffect(.regular, in: .rect(cornerRadius: Spacing.cornerRadiusMedium))
+                } else {
+                    RoundedRectangle(cornerRadius: Spacing.cornerRadiusMedium)
+                        .fill(.ultraThinMaterial.opacity(0.5))
+                }
+                
+                Image(systemName: composition.symbolName)
+                    .font(.title2)
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 60, height: 60)
+
+            Text(composition.shortLabel)
+                .font(.system(size: 12, weight: .regular))
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+        }
+        .frame(width: 64)
     }
 }
 
@@ -162,25 +217,27 @@ private struct ClearSubjectButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: "lock.open")
-                    .font(.title3)
-                    .foregroundStyle(AppColors.textGuide)
-                    .frame(width: 32, height: 32)
-
-                Text("Clear")
-                    .font(.system(size: 10, weight: .regular))
-                    .foregroundStyle(AppColors.textGuide)
-                    .lineLimit(1)
+            HStack(spacing: 6) {
+                Image(systemName: "lock.open.fill")
+                    .font(.subheadline.weight(.medium))
+                Text("Clear subject")
+                    .font(.subheadline.weight(.medium))
             }
-            .frame(width: ControlMetrics.compositionPillWidth, height: ControlMetrics.compositionPillHeight)
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.medium)
-                    .fill(.ultraThinMaterial.opacity(0.5))
-            )
+            .foregroundStyle(AppColors.controlActive)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background {
+                if #available(iOS 26, *) {
+                    Capsule()
+                        .fill(Color.black.opacity(0.35))
+                        .glassEffect(.regular, in: .capsule)
+                } else {
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                }
+            }
             .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.medium)
-                    .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
+                Capsule().strokeBorder(AppColors.controlActive.opacity(0.5), lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
@@ -191,17 +248,17 @@ private struct ClearSubjectButton: View {
 
 // MARK: - RecommendationBadge
 
-/// Explicit "Best fit" label for the ML-suggested composition.
 private struct RecommendationBadge: View {
     var body: some View {
         Text("Best fit")
-            .font(.system(size: 8, weight: .semibold))
+            .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(.white)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .background(
                 Capsule()
-                    .fill(AppColors.primary)
+                    .fill(Color.green.opacity(0.3)) // Subtler green background matching design
+                    .overlay(Capsule().strokeBorder(Color.green, lineWidth: 0.5))
             )
             .accessibilityLabel("Best fit recommendation")
     }

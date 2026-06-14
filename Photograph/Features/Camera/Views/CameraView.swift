@@ -97,7 +97,8 @@ struct CameraView: View {
                     get: { viewModel.exposureBias },
                     set: { viewModel.setExposure($0) }
                 ),
-                onResetExposure: { viewModel.resetExposure() }
+                onResetExposure: { viewModel.resetExposure() },
+                onDragExposure: { viewModel.showExposureTemporarily() }
             )
 
             CameraControlsView(
