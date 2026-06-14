@@ -6,7 +6,7 @@
 //
 //  Tooltip positions (1:1 with Hi-Fi mockups):
 //  ┌─────────────────────────────────┐
-//  │ Step 1: Composition Suggestion  │  → Left of overlay circle, pointing at guides
+//  │ Step 1: Hold and lock scene     │  → Centered because the user picks the scene
 //  │ Step 2: Follow the Guide        │  → Below guidance tip pill, center
 //  │ Step 3: Ready to Shoot          │  → Just above capture button, center
 //  │ Step 4: View Your Shots         │  → Above gallery thumbnail, bottom-left
@@ -35,9 +35,11 @@ enum WalkthroughContext {
 struct WalkthroughOverlayView: View {
     @Environment(OnboardingStore.self) private var store
     let context: WalkthroughContext
+    var anchors: [WalkthroughAnchorID: CGRect] = [:]
+    var hidesDuringCapture: Bool = false
 
     var body: some View {
-        if store.isWalkthroughActive {
+        if store.isWalkthroughActive, !shouldHideForCapture {
             GeometryReader { geo in
                 ZStack {
                     tooltipForCurrentStep(in: geo)
@@ -48,97 +50,138 @@ struct WalkthroughOverlayView: View {
         }
     }
 
+    private var shouldHideForCapture: Bool {
+        hidesDuringCapture && context == .camera && store.currentStep == .readyToShoot
+    }
+
     // MARK: - Step Router
 
     @ViewBuilder
     private func tooltipForCurrentStep(in geo: GeometryProxy) -> some View {
         let screenW = geo.size.width
         let screenH = geo.size.height
+        let containerFrame = geo.frame(in: .global)
 
         switch store.currentStep {
 
-        // ── Step 1: Composition Suggestion ────────────────
-        // Left side, vertically centered near the overlay circle
         case .compositionSuggestion where context == .camera:
             TooltipView(
-                title: "Lock Your Subject",
-                description: "Long-press on any subject to lock focus. Use Clear subject later to pick a different focus.",
-                anchor: .bottom,
+                title: "Hold and lock scene",
+                description: "Long-press scene you want to capture",
+                anchor: .none,
                 onPrimary: { store.advanceStep() },
                 onSecondary: { store.skipWalkthrough() }
             )
-            .frame(width: min(screenW * 0.72, 280))
-            .position(x: screenW * 0.40, y: screenH * 0.38)
+            .frame(width: min(screenW * 0.82, 340))
+            .position(
+                x: screenW * 0.50,
+                y: screenH * 0.36
+            )
 
-        // ── Step 2: Follow the Guide ─────────────────────
-        // Below the guidance tip pill, horizontally centered
         case .followGuide where context == .camera:
             TooltipView(
-                title: "Choose & Follow",
-                description: "Pick a composition style, then align the bracket with the target circle on screen.",
+                title: "Follow the Guide",
+                description: "Follow the on-screen directions and adjust your framing",
                 anchor: .top,
-                onPrimary: { store.advanceStep() },
+                onPrimary: { store.advanceAfterGuideAcknowledgement() },
                 onSecondary: { store.skipWalkthrough() }
             )
-            .frame(width: min(screenW * 0.72, 280))
-            .position(x: screenW * 0.50, y: screenH * 0.32)
+            .frame(width: min(screenW * 0.82, 340))
+            .position(
+                tooltipPosition(
+                    for: .guidanceTip,
+                    style: .top,
+                    screenW: screenW,
+                    screenH: screenH,
+                    safeAreaTop: geo.safeAreaInsets.top,
+                    containerFrame: containerFrame
+                )
+            )
 
-        // ── Step 3: Ready to Shoot ───────────────────────
-        // Just above the capture button (bottom center)
         case .readyToShoot where context == .camera:
             TooltipView(
-                title: "Perfect Shot",
-                description: "When the guides turn green, your composition is aligned. Tap the shutter to capture!",
+                title: "Ready to Shoot",
+                description: "Tap this button to capture your photo once you've lined up the perfect composition guidelines.",
+                primaryLabel: nil,
+                secondaryLabel: "Skip",
                 anchor: .bottom,
-                onPrimary: { store.advanceStep() },
                 onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.80, 320))
-            .position(x: screenW * 0.50, y: screenH * 0.72)
+            .position(
+                tooltipPosition(
+                    for: .shutter,
+                    style: .bottom,
+                    screenW: screenW,
+                    screenH: screenH,
+                    safeAreaTop: geo.safeAreaInsets.top,
+                    containerFrame: containerFrame
+                )
+            )
 
-        // ── Step 4: View Your Shots ──────────────────────
-        // Above the gallery thumbnail (bottom-left corner)
         case .viewShots where context == .camera:
             TooltipView(
                 title: "View Your Shots",
                 description: "Tap here to view and review all the photos you have captured using the composition guides.",
-                anchor: .bottomLeading,
-                onPrimary: { store.advanceStep() },
+                primaryLabel: nil,
+                secondaryLabel: "Skip",
+                anchor: .bottomTrailing,
                 onSecondary: { store.skipWalkthrough() }
             )
-            .frame(width: min(screenW * 0.68, 260))
-            .position(x: screenW * 0.38, y: screenH * 0.72)
+            .frame(width: min(screenW * 0.82, 340))
+            .position(
+                tooltipPosition(
+                    for: .gallery,
+                    style: .bottomTrailing,
+                    screenW: screenW,
+                    screenH: screenH,
+                    safeAreaTop: geo.safeAreaInsets.top,
+                    containerFrame: containerFrame
+                )
+            )
 
-        // ── Step 5: Grid Guide ───────────────────────────
-        // Below the grid toggle button (top-right of detail view)
         case .gridGuide where context == .detail:
             TooltipView(
                 title: "Grid Guide",
                 description: "Tap to overlay the composition grid on your photo.",
-                anchor: .top,
-                onPrimary: { store.advanceStep() },
+                primaryLabel: nil,
+                secondaryLabel: "Skip",
+                anchor: .topTrailing,
                 onSecondary: { store.skipWalkthrough() }
             )
-            .frame(width: min(screenW * 0.72, 280))
-            .position(x: screenW * 0.60, y: screenH * 0.18)
+            .frame(width: min(screenW * 0.82, 340))
+            .position(
+                tooltipPosition(
+                    for: .gridToggle,
+                    style: .topTrailing,
+                    screenW: screenW,
+                    screenH: screenH,
+                    safeAreaTop: geo.safeAreaInsets.top,
+                    containerFrame: containerFrame
+                )
+            )
 
-        // ── Step 6: Hide Grid ────────────────────────────
-        // Same position as grid guide
         case .hideGrid where context == .detail:
             TooltipView(
                 title: "Hide Grid",
                 description: "Tap here to turn off the grid and see the full image.",
-                primaryLabel: "Finish",
-                secondaryLabel: nil,
-                anchor: .top,
-                onPrimary: { store.advanceStep() },
-                onSecondary: nil
+                primaryLabel: nil,
+                secondaryLabel: "Skip",
+                anchor: .topTrailing,
+                onSecondary: { store.skipWalkthrough() }
             )
-            .frame(width: min(screenW * 0.72, 280))
-            .position(x: screenW * 0.60, y: screenH * 0.18)
+            .frame(width: min(screenW * 0.82, 340))
+            .position(
+                tooltipPosition(
+                    for: .gridToggle,
+                    style: .topTrailing,
+                    screenW: screenW,
+                    screenH: screenH,
+                    safeAreaTop: geo.safeAreaInsets.top,
+                    containerFrame: containerFrame
+                )
+            )
 
-        // ── Step 7: Congratulation ───────────────────────
-        // Centered card
         case .congratulation where context == .detail:
             CongratulationView {
                 store.finishWalkthrough()
@@ -147,6 +190,51 @@ struct WalkthroughOverlayView: View {
 
         default:
             EmptyView()
+        }
+    }
+
+    private func tooltipPosition(
+        for anchorID: WalkthroughAnchorID,
+        style: TooltipAnchor,
+        screenW: CGFloat,
+        screenH: CGFloat,
+        safeAreaTop: CGFloat,
+        containerFrame: CGRect
+    ) -> CGPoint {
+        if let anchor = anchors[anchorID] {
+            return WalkthroughTooltipLayout.position(
+                for: anchor,
+                style: style,
+                in: containerFrame
+            )
+        }
+
+        return fallbackPosition(
+            for: anchorID,
+            screenW: screenW,
+            screenH: screenH,
+            safeAreaTop: safeAreaTop
+        )
+    }
+
+    private func fallbackPosition(
+        for anchorID: WalkthroughAnchorID,
+        screenW: CGFloat,
+        screenH: CGFloat,
+        safeAreaTop: CGFloat = 0
+    ) -> CGPoint {
+        switch anchorID {
+        case .guidanceTip:
+            return CGPoint(x: screenW * 0.50, y: screenH * 0.22)
+        case .shutter:
+            return CGPoint(x: screenW * 0.50, y: screenH * 0.76)
+        case .gallery:
+            return CGPoint(x: screenW * 0.50, y: screenH * 0.76)
+        case .gridToggle:
+            return CGPoint(
+                x: screenW - Spacing.standard - ControlMetrics.compactIconButton / 2,
+                y: safeAreaTop + 22
+            )
         }
     }
 }

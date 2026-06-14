@@ -23,6 +23,7 @@ struct CameraTopRow: View {
                     ?? viewModel.resolvedComposition,
                 captureReadiness: viewModel.captureReadiness
             )
+            .walkthroughAnchor(.guidanceTip)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, Spacing.standard)
             .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.45, dampingFraction: 0.82),

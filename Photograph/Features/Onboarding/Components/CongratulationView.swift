@@ -17,14 +17,12 @@ struct CongratulationView: View {
 
     var body: some View {
         VStack(spacing: Spacing.medium) {
-            // Title
-            Text("Congratulation")
-                .font(Typography.title)
+            Text("Congratulations")
+                .font(.title.weight(.semibold))
                 .foregroundStyle(.white)
 
-            // Description
             Text("You're ready to go. Follow composition guides as you frame your shot.")
-                .font(Typography.subheadline)
+                .font(.body)
                 .foregroundStyle(.white.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.standard)
@@ -33,17 +31,18 @@ struct CongratulationView: View {
             Button(action: onStart) {
                 Text("Start")
                     .font(Typography.buttonCTA)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(AppColors.gridlineWhite)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(AppColors.primary, in: RoundedRectangle(cornerRadius: AppRadius.medium, style: .continuous))
+                    .background(AppColors.primary, in: RoundedRectangle(cornerRadius: AppRadius.large, style: .continuous))
             }
             .padding(.horizontal, Spacing.large)
         }
         .padding(.vertical, Spacing.large)
-        .background(.black.opacity(0.7))
+        .background(.black.opacity(0.58))
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge, style: .continuous))
+        .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
         .padding(.horizontal, Spacing.extraLarge)
     }
 }

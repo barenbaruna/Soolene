@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CameraControlsView: View {
+    @Environment(OnboardingStore.self) private var onboarding
     @Bindable var viewModel: CameraViewModel
     @Binding var isShowingGallery: Bool
 
@@ -18,7 +19,7 @@ struct CameraControlsView: View {
         ZStack {
             mainControls
 
-            if activePanel == .exposure {
+            if activePanel == .exposure, onboarding.allowsCameraToolbar {
                 RulerPanelDismissScrim {
                     withAnimation(.snappy) { activePanel = nil }
                 }
@@ -50,6 +51,11 @@ struct CameraControlsView: View {
         .sensoryFeedback(.success, trigger: viewModel.captureReadiness) { old, new in
             new.showsGreenCelebration && !old.showsGreenCelebration
         }
+        .onChange(of: onboarding.currentStep) { _, _ in
+            if !onboarding.allowsCameraToolbar {
+                activePanel = nil
+            }
+        }
     }
 
     private var mainControls: some View {
@@ -77,6 +83,7 @@ struct CameraControlsView: View {
                 activePanel: activePanel,
                 onPanelTapped: handlePanelTap
             )
+            .disabled(!onboarding.allowsCameraToolbar)
             .padding(.top, Spacing.small)
 
             CameraTopRow(
@@ -99,6 +106,7 @@ struct CameraControlsView: View {
     }
 
     private func handlePanelTap(_ panel: CameraControlPanel) {
+        guard onboarding.allowsCameraToolbar else { return }
         switch panel {
         case .flash:
             activePanel = nil

@@ -8,8 +8,10 @@ import SwiftUI
 import UIKit
 
 struct GalleryView: View {
+    @Environment(OnboardingStore.self) private var onboarding
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = AppDependencies.shared.makeGalleryViewModel()
+    @State private var navigationPath: [String] = []
 
     private let columns = [
         GridItem(.flexible(), spacing: Spacing.standard),
@@ -17,7 +19,7 @@ struct GalleryView: View {
     ]
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Group {
                 if viewModel.isLoading {
                     ProgressView("Loading…")
@@ -26,7 +28,12 @@ struct GalleryView: View {
                     PhotoLibraryPermissionView(
                         readStatus: viewModel.readPermission,
                         isRequesting: viewModel.isRequestingPermission,
-                        onRequestAccess: { Task { await viewModel.requestReadAccess() } },
+                        onRequestAccess: {
+                            Task {
+                                await viewModel.requestReadAccess()
+                                openRecentPhotoForWalkthroughIfNeeded()
+                            }
+                        },
                         onOpenSettings: { PrivacyPermissionService.openSettings() },
                         onManageLimited: { PrivacyPermissionService.presentLimitedLibraryPicker() }
                     )
@@ -48,15 +55,36 @@ struct GalleryView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(role: .close) { dismiss() }
                         .accessibilityLabel("Close Library")
+                        .disabled(onboarding.isWalkthroughActive)
                 }
             }
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationDestination(for: String.self) { identifier in
+                if let asset = viewModel.asset(localIdentifier: identifier) {
+                    PhotoDetailView(asset: asset, composition: viewModel.recentComposition)
+                } else {
+                    ContentUnavailableView(
+                        "Photo Unavailable",
+                        systemImage: "photo",
+                        description: Text("The guided photo could not be opened.")
+                    )
+                }
+            }
         }
         .tint(AppColors.secondary)
         .preferredColorScheme(.dark)
-        .task { await viewModel.bootstrap() }
+        .task {
+            await viewModel.bootstrap()
+            openRecentPhotoForWalkthroughIfNeeded()
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            Task { await viewModel.refresh() }
+            Task {
+                await viewModel.refresh()
+                openRecentPhotoForWalkthroughIfNeeded()
+            }
+        }
+        .onChange(of: viewModel.recentAsset?.localIdentifier) { _, _ in
+            openRecentPhotoForWalkthroughIfNeeded()
         }
     }
 
@@ -97,6 +125,7 @@ struct GalleryView: View {
             }
             .padding(.top, Spacing.small)
         }
+        .allowsHitTesting(onboarding.allowsGalleryBrowsing)
         .contentMargins(.bottom, Spacing.large, for: .scrollContent)
     }
 
@@ -143,5 +172,12 @@ struct GalleryView: View {
             .foregroundStyle(AppColors.textGuide)
             .textCase(.uppercase)
             .padding(.horizontal, Spacing.standard)
+    }
+
+    private func openRecentPhotoForWalkthroughIfNeeded() {
+        guard onboarding.shouldAutoOpenRecentPhoto else { return }
+        guard navigationPath.isEmpty else { return }
+        guard let recentIdentifier = viewModel.recentAsset?.localIdentifier else { return }
+        navigationPath = [recentIdentifier]
     }
 }

@@ -20,6 +20,7 @@ struct CameraView: View {
     @State private var lockRingAnimating = false
     @State private var showLockIcon = false
     @State private var previewSize: CGSize = .zero
+    @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
 
     var body: some View {
         Group {
@@ -43,9 +44,10 @@ struct CameraView: View {
         ZStack {
             CameraPreviewLayer(
                 viewModel: viewModel,
-                onFocusTap: handleFocusTap,
-                onSubjectPin: handleSubjectPin,
-                onClearPin: clearPinnedSubject
+                onFocusTap: onboarding.allowsCameraFocusControls ? handleFocusTap : nil,
+                onSubjectPin: onboarding.allowsSceneLock ? handleSubjectPin : nil,
+                onClearPin: onboarding.allowsCameraFocusControls ? clearPinnedSubject : nil,
+                allowsZoomGestures: onboarding.allowsCameraFocusControls
             )
             .background {
                 GeometryReader { geo in
@@ -91,7 +93,17 @@ struct CameraView: View {
                 )
             }
 
-            WalkthroughOverlayView(context: .camera)
+            WalkthroughOverlayView(
+                context: .camera,
+                anchors: walkthroughAnchors,
+                hidesDuringCapture: viewModel.isCapturing
+            )
+        }
+        .onPreferenceChange(WalkthroughAnchorPreferenceKey.self) { walkthroughAnchors = $0 }
+        .onChange(of: viewModel.isCapturing) { wasCapturing, isCapturing in
+            if wasCapturing, !isCapturing {
+                onboarding.advanceAfterCapture()
+            }
         }
         .onChange(of: isShowingGallery) { _, showing in
             if showing {
@@ -172,6 +184,7 @@ struct CameraView: View {
     private func handleSubjectPin(at screenPoint: CGPoint, normalizedPoint: CGPoint) {
         viewModel.pinSubject(at: normalizedPoint)
         onboarding.recordFirstSubjectLock()
+        onboarding.advanceAfterSceneLock()
         playLockAnimation(at: screenPoint)
         showIndicator(at: screenPoint, style: .pin)
     }

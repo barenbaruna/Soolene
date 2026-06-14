@@ -41,6 +41,54 @@ final class OnboardingStore {
         !hasCompletedWalkthrough
     }
 
+    var allowsSceneLock: Bool {
+        !isWalkthroughActive || currentStep == .compositionSuggestion
+    }
+
+    var allowsCameraFocusControls: Bool {
+        !isWalkthroughActive
+    }
+
+    var allowsCameraToolbar: Bool {
+        !isWalkthroughActive
+    }
+
+    var allowsCompositionControls: Bool {
+        !isWalkthroughActive
+    }
+
+    var allowsShutter: Bool {
+        !isWalkthroughActive || currentStep == .readyToShoot
+    }
+
+    var allowsGalleryButton: Bool {
+        !isWalkthroughActive || currentStep == .viewShots
+    }
+
+    var allowsCameraSwitch: Bool {
+        !isWalkthroughActive
+    }
+
+    var allowsGalleryBrowsing: Bool {
+        !isWalkthroughActive
+    }
+
+    var allowsPhotoDetailExit: Bool {
+        !isWalkthroughActive
+    }
+
+    var allowsPhotoDelete: Bool {
+        !isWalkthroughActive
+    }
+
+    var allowsPhotoGridToggle: Bool {
+        !isWalkthroughActive || currentStep == .gridGuide || currentStep == .hideGrid
+    }
+
+    var shouldAutoOpenRecentPhoto: Bool {
+        isWalkthroughActive && currentStep == .gridGuide
+    }
+
     /// Subtle center viewfinder hint for the first two post-walkthrough scanning sessions.
     var showsScanningViewfinderHint: Bool {
         hasCompletedWalkthrough && scanCoachSessionsShown < 2
@@ -73,6 +121,35 @@ final class OnboardingStore {
         guard !hasLockedSubjectOnce else { return }
         hasLockedSubjectOnce = true
         UserDefaults.standard.set(true, forKey: StorageKey.hasLockedSubjectOnce)
+    }
+
+    func advanceAfterSceneLock() {
+        guard isWalkthroughActive, currentStep == .compositionSuggestion else { return }
+        advanceStep()
+    }
+
+    func advanceAfterGuideAcknowledgement() {
+        guard isWalkthroughActive, currentStep == .followGuide else { return }
+        advanceStep()
+    }
+
+    func advanceAfterCapture() {
+        guard isWalkthroughActive, currentStep == .readyToShoot else { return }
+        advanceStep()
+    }
+
+    func advanceAfterOpeningGallery() {
+        guard isWalkthroughActive, currentStep == .viewShots else { return }
+        advanceStep()
+    }
+
+    func advanceAfterGridToggle(isShowingOverlay: Bool) {
+        guard isWalkthroughActive else { return }
+        if currentStep == .gridGuide, isShowingOverlay {
+            advanceStep()
+        } else if currentStep == .hideGrid, !isShowingOverlay {
+            advanceStep()
+        }
     }
 
     func advanceStep() {
