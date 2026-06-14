@@ -111,13 +111,13 @@ enum PrivacyPermissionService {
     static func photoBrowseMessage(for status: PermissionStatus) -> String {
         switch status {
         case .notDetermined:
-            return "Allow \(AppIdentity.displayName) to show your saved photos in Library."
+            return "Allow \(AppIdentity.displayName) to show your saved photos in Gallery."
         case .denied:
-            return "Photo access denied. Enable Photos for \(AppIdentity.displayName) in Settings."
+            return "\(AppIdentity.displayName) needs Gallery access. Enable Photos in Settings to continue."
         case .restricted:
-            return "Photo Library access is restricted on this device."
+            return "Gallery access is restricted on this device. Check Screen Time or device management settings."
         case .limited:
-            return "Limited access — \(AppIdentity.displayName) can only show photos you have selected. Tap Manage to grant more."
+            return "Limited Gallery access - \(AppIdentity.displayName) can only show photos you have selected. Tap Manage to grant more."
         case .authorized:
             return ""
         }

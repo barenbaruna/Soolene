@@ -51,6 +51,12 @@ enum AppColors {
     static let gridlineGreen = neutralGridlineGreen
     static let gridlineWhite = Color.white.opacity(0.6)
 
+    static let permissionSurface = Color.white
+    static let permissionTextPrimary = primary
+    static let permissionTextSecondary = Color(hex: 0x5F6658)
+    static let permissionDivider = primary.opacity(0.16)
+    static let permissionIconInactive = Color(hex: 0xA5AB9D)
+
     // MARK: - Derived / Phase Animation
 
     /// #12A0FF — Interactive accent (level indicator, tracking border).
