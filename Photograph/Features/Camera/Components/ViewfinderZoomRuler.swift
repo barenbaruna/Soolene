@@ -10,6 +10,8 @@ import SwiftUI
 struct ViewfinderZoomRuler: View {
     @Bindable var viewModel: CameraViewModel
     let isEnabled: Bool
+    var glassID: String? = nil
+    var glassNamespace: Namespace.ID? = nil
 
     @State private var isDragging = false
 
@@ -17,32 +19,27 @@ struct ViewfinderZoomRuler: View {
 
     var body: some View {
         ViewfinderRulerPanel {
-            VStack(spacing: 2) {
-                LiquidGlassCenterRuler(
-                    value: zoomController.displayMultiplier,
-                    range: zoomController.displayRange,
-                    formattedValue: formattedZoom(zoomController.displayMultiplier),
-                    activeColor: AppColors.controlActive,
-                    tickLayout: zoomController.tickLayout,
-                    isDragging: isDragging,
-                    onValueChanged: { viewModel.setZoomMultiplier($0, isFinal: false) },
-                    onDragBegan: {
-                        isDragging = true
-                        viewModel.onZoomRulerDragBegan()
-                    },
-                    onDragEnded: {
-                        isDragging = false
-                        viewModel.setZoomMultiplier(zoomController.displayMultiplier, isFinal: true)
-                    }
-                )
-
-                if zoomController.isPreviewApproximate {
-                    Text("Preview approximate")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .accessibilityHidden(true)
-                }
-            }
+            LiquidGlassCenterRuler(
+                value: zoomController.displayMultiplier,
+                range: zoomController.displayRange,
+                formattedValue: formattedZoom(zoomController.displayMultiplier),
+                activeColor: AppColors.controlActive,
+                tickLayout: zoomController.tickLayout,
+                isDragging: isDragging,
+                onValueChanged: { viewModel.setZoomMultiplier($0, isFinal: false) },
+                onDragBegan: {
+                    isDragging = true
+                    viewModel.cancelZoomHideTimer()
+                    viewModel.onZoomRulerDragBegan()
+                },
+                onDragEnded: {
+                    isDragging = false
+                    viewModel.setZoomMultiplier(zoomController.displayMultiplier, isFinal: true)
+                    viewModel.showZoomRulerTemporarily()
+                },
+                glassID: glassID,
+                glassNamespace: glassNamespace
+            )
         }
         .animation(.snappy, value: isDragging)
         .opacity(isEnabled ? 1 : 0.5)

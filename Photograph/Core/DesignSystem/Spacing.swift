@@ -19,6 +19,7 @@ enum Spacing {
     static let medium: CGFloat     = 24
     static let large: CGFloat      = 32
     static let extraLarge: CGFloat = 48
+    static let massive: CGFloat    = 64
 
     // MARK: - Corner Radius
 

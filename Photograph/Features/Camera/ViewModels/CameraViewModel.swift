@@ -31,6 +31,45 @@ final class CameraViewModel {
     var pinchStartMultiplier: CGFloat?
     let zoomController = ZoomController()
 
+    var activePanel: CameraControlPanel?
+    var isZoomRulerActive = false
+    private var zoomHideTask: Task<Void, Never>?
+    private var exposureHideTask: Task<Void, Never>?
+
+    func showZoomRulerTemporarily() {
+        isZoomRulerActive = true
+        activePanel = nil
+        zoomHideTask?.cancel()
+        zoomHideTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { self.isZoomRulerActive = false }
+        }
+    }
+
+    func cancelZoomHideTimer() {
+        zoomHideTask?.cancel()
+    }
+
+    func showExposureTemporarily() {
+        activePanel = .exposure
+        isZoomRulerActive = false
+        exposureHideTask?.cancel()
+        exposureHideTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { 
+                if self.activePanel == .exposure {
+                    self.activePanel = nil
+                }
+            }
+        }
+    }
+
+    func cancelExposureHideTimer() {
+        exposureHideTask?.cancel()
+    }
+
     // MARK: - Permissions
 
     var cameraPermission: PermissionStatus = .notDetermined
@@ -41,7 +80,8 @@ final class CameraViewModel {
     var inlineToastMessage: String?
 
     var hasCameraPermission: Bool { cameraPermission.allowsCamera }
-    var hasPhotoPermission: Bool { photoAddPermission.allowsPhotoSave }
+    var hasPhotoPermission: Bool { photoReadPermission.allowsPhotoBrowse }
+    var hasRequiredPermissions: Bool { hasCameraPermission && hasPhotoPermission }
 
     // MARK: - Camera Mode
 

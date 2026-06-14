@@ -39,8 +39,9 @@ extension CameraViewModel {
         guard let data = activeCapturedPhotoData else { return }
 
         await refreshPermissions()
-        guard photoAddPermission.allowsPhotoSave else {
-            let message = PrivacyPermissionService.photoSaveMessage(for: photoAddPermission)
+        guard photoAddPermission.allowsPhotoSave || photoReadPermission.allowsPhotoBrowse else {
+            let status = photoReadPermission.needsSettings ? photoReadPermission : photoAddPermission
+            let message = PrivacyPermissionService.photoSaveMessage(for: status)
             saveError = message
             showInlineToast(message)
             return

@@ -24,10 +24,12 @@ struct PhotoDetailView: View {
     @State private var assetsList: [PHAsset]
     @State private var currentIndex: Int
 
+    @Environment(OnboardingStore.self) private var onboarding
     @Environment(\.dismiss) private var dismiss
     @State private var fullImage: UIImage?
     @State private var isShowingOverlay = false
     @State private var isShowingDeleteConfirmation = false
+    @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
 
     init(
         assets: [PHAsset],
@@ -111,10 +113,45 @@ struct PhotoDetailView: View {
                 .padding(.bottom, Spacing.standard)
             }
 
-            WalkthroughOverlayView(context: .detail)
-
             if isShowingDeleteConfirmation {
                 customDeleteDialog
+            // Walkthrough Overlay
+            WalkthroughOverlayView(context: .detail, anchors: walkthroughAnchors)
+        }
+        .overlay {
+            gridToggleWalkthroughAnchor
+        }
+        .onPreferenceChange(WalkthroughAnchorPreferenceKey.self) { walkthroughAnchors = $0 }
+        .navigationBarBackButtonHidden(true)
+        .navigationTitle(composition.galleryLabel)
+        .toolbarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(AppColors.textOnCamera)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back")
+                .disabled(!onboarding.allowsPhotoDetailExit)
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: toggleGridOverlay) {
+                    Image(systemName: "square.grid.3x3")
+                        .fontWeight(.medium)
+                        .foregroundStyle(isShowingOverlay ? AppColors.surface : AppColors.controlActive)
+                        .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
+                        .background(
+                            isShowingOverlay ? AnyShapeStyle(AppColors.controlActive) : AnyShapeStyle(Color.white.opacity(0.12)),
+                            in: Circle()
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isShowingOverlay ? "Hide Overlay" : "Show Overlay")
+                .disabled(!onboarding.allowsPhotoGridToggle)
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -127,6 +164,34 @@ struct PhotoDetailView: View {
     }
 
     private var customHeader: some View {
+    // MARK: - Delete Bar
+
+    /// Invisible anchor aligned with the navigation bar grid toggle.
+    /// Manually computes the global rect because `.walkthroughAnchor()` cannot
+    /// correctly report position when combined with `.position()` inside a GeometryReader.
+//     private var gridToggleWalkthroughAnchor: some View {
+//         GeometryReader { geo in
+//             let globalFrame = geo.frame(in: .global)
+//             let buttonSize = ControlMetrics.compactIconButton
+//             let centerX = geo.size.width - Spacing.standard - buttonSize / 2
+//             let centerY = geo.safeAreaInsets.top + 22
+//             let buttonGlobalRect = CGRect(
+//                 x: globalFrame.minX + centerX - buttonSize / 2,
+//                 y: globalFrame.minY + centerY - buttonSize / 2,
+//                 width: buttonSize,
+//                 height: buttonSize
+//             )
+//             Color.clear
+//                 .preference(
+//                     key: WalkthroughAnchorPreferenceKey.self,
+//                     value: [.gridToggle: buttonGlobalRect]
+//                 )
+//         }
+//         .allowsHitTesting(false)
+//     }
+
+    /// Small capsule delete button — bottom trailing
+//     private var deleteBar: some View {
         HStack {
             Button {
                 dismiss()
@@ -180,6 +245,8 @@ struct PhotoDetailView: View {
                     )
             }
             .buttonStyle(.plain)
+//             .accessibilityLabel("Delete Photo")
+//             .disabled(!onboarding.allowsPhotoDelete)
         }
         .padding(.horizontal, Spacing.medium)
         .padding(.top, Spacing.small)
@@ -263,6 +330,16 @@ struct PhotoDetailView: View {
         }
         .transition(.opacity)
     }
+//     private func toggleGridOverlay() {
+//         guard onboarding.allowsPhotoGridToggle else { return }
+//         HapticManager.selection()
+//         withAnimation(.easeInOut(duration: 0.2)) {
+//             isShowingOverlay.toggle()
+//         }
+//         onboarding.advanceAfterGridToggle(isShowingOverlay: isShowingOverlay)
+//     }
+
+    // MARK: - Helpers
 
     private func imageFitSize(image: UIImage, in containerSize: CGSize) -> CGSize {
         let r = image.size.width / image.size.height

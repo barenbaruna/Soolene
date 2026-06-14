@@ -1,7 +1,17 @@
 import SwiftUI
 
 /// Standardized typography matching the Design System spec.
-/// Following iOS 26 HIG: Uses semantic styles for Dynamic Type support instead of hardcoded sizes.
+///
+/// Font Family: SF Pro Text
+/// Following iOS 26 HIG: Uses semantic styles for Dynamic Type support.
+///
+/// Design System tokens:
+///   Large Title (SF Pro Text, Bold, 34)
+///   Title (SF Pro Text, Semibold, 28)
+///   Headline (SF Pro Text, Semibold, 17)
+///   Body (SF Pro Text, Regular, 17)
+///   Subheadline (SF Pro Text, Regular, 15)
+///   Caption (SF Pro Text, Regular, 12)
 struct Typography {
     
     /// Large Title / Bold / 34

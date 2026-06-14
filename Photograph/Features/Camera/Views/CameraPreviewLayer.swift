@@ -8,9 +8,10 @@ import SwiftUI
 /// Rear spatial or front classic camera preview with gesture handlers.
 struct CameraPreviewLayer: View {
     let viewModel: CameraViewModel
-    let onFocusTap: (CGPoint, CGPoint) -> Void
-    let onSubjectPin: (CGPoint, CGPoint) -> Void
-    let onClearPin: () -> Void
+    let onFocusTap: ((CGPoint, CGPoint) -> Void)?
+    let onSubjectPin: ((CGPoint, CGPoint) -> Void)?
+    let onClearPin: (() -> Void)?
+    var allowsZoomGestures = true
 
     var body: some View {
         Group {
@@ -21,9 +22,9 @@ struct CameraPreviewLayer: View {
                     onTap: onFocusTap,
                     onLongPress: onSubjectPin,
                     onDoubleTap: onClearPin,
-                    onPinch: { magnification, isFinal in
+                    onPinch: allowsZoomGestures ? { magnification, isFinal in
                         viewModel.updateZoom(magnification: magnification, isFinal: isFinal)
-                    }
+                    } : nil
                 )
             } else {
                 CameraPreviewView(
@@ -31,9 +32,9 @@ struct CameraPreviewLayer: View {
                     onTap: onFocusTap,
                     onLongPress: onSubjectPin,
                     onDoubleTap: onClearPin,
-                    onPinch: { magnification, isFinal in
+                    onPinch: allowsZoomGestures ? { magnification, isFinal in
                         viewModel.updateZoom(magnification: magnification, isFinal: isFinal)
-                    }
+                    } : nil
                 )
             }
         }

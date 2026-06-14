@@ -37,6 +37,7 @@ extension CameraViewModel {
             && cameraMode == .rearSpatial
             && !isCountingDown
             && !guidancePhase.isLocked
+            && isZoomRulerActive
     }
 
     func setZoomMultiplier(_ multiplier: CGFloat, isFinal: Bool) {
@@ -60,10 +61,12 @@ extension CameraViewModel {
     }
 
     func onZoomRulerDragBegan() {
+        showZoomRulerTemporarily()
         zoomController.onRulerDragBegan()
     }
 
     func updateZoom(magnification: CGFloat, isFinal: Bool) {
+        showZoomRulerTemporarily()
         guard !isSwitchingCamera else { return }
         guard !guidancePhase.isActive else { return }
 

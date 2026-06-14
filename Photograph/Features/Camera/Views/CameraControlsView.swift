@@ -8,33 +8,21 @@
 import SwiftUI
 
 struct CameraControlsView: View {
+    @Environment(OnboardingStore.self) private var onboarding
     @Bindable var viewModel: CameraViewModel
     @Binding var isShowingGallery: Bool
 
     @State private var iconRotation: Double = 0
-    @State private var activePanel: CameraControlPanel?
 
     var body: some View {
         ZStack {
-            mainControls
-
-            if activePanel == .exposure {
+            if viewModel.activePanel == .exposure, onboarding.allowsCameraToolbar {
                 RulerPanelDismissScrim {
-                    withAnimation(.snappy) { activePanel = nil }
-                }
-
-                VStack {
-                    Spacer()
-                    ViewfinderExposureScale(
-                        exposureBias: Binding(
-                            get: { viewModel.exposureBias },
-                            set: { viewModel.setExposure($0) }
-                        )
-                    )
-                    .padding(.bottom, Spacing.standard)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    withAnimation(.snappy) { viewModel.activePanel = nil }
                 }
             }
+
+            mainControls
         }
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
@@ -49,6 +37,11 @@ struct CameraControlsView: View {
         }
         .sensoryFeedback(.success, trigger: viewModel.captureReadiness) { old, new in
             new.showsGreenCelebration && !old.showsGreenCelebration
+        }
+        .onChange(of: onboarding.currentStep) { _, _ in
+            if !onboarding.allowsCameraToolbar {
+                activePanel = nil
+            }
         }
     }
 
@@ -70,13 +63,14 @@ struct CameraControlsView: View {
     }
 
     private var topSection: some View {
-        VStack(spacing: Spacing.small) {
+        VStack(spacing: Spacing.massive) {
             CameraTopToolbar(
                 viewModel: viewModel,
                 iconRotation: iconRotation,
-                activePanel: activePanel,
+                activePanel: viewModel.activePanel,
                 onPanelTapped: handlePanelTap
             )
+            .disabled(!onboarding.allowsCameraToolbar)
             .padding(.top, Spacing.small)
 
             CameraTopRow(
@@ -99,18 +93,23 @@ struct CameraControlsView: View {
     }
 
     private func handlePanelTap(_ panel: CameraControlPanel) {
+        guard onboarding.allowsCameraToolbar else { return }
         switch panel {
         case .flash:
-            activePanel = nil
+            viewModel.activePanel = nil
             viewModel.cycleFlash()
         case .timer:
             viewModel.cycleTimer()
         case .aspect:
-            withAnimation { activePanel = activePanel == .aspect ? nil : .aspect }
+            withAnimation { viewModel.activePanel = viewModel.activePanel == .aspect ? nil : .aspect }
             cycleAspectRatio()
         case .exposure:
             withAnimation(.snappy) {
-                activePanel = activePanel == .exposure ? nil : .exposure
+                if viewModel.activePanel == .exposure {
+                    viewModel.activePanel = nil
+                } else {
+                    viewModel.showExposureTemporarily()
+                }
             }
         }
     }

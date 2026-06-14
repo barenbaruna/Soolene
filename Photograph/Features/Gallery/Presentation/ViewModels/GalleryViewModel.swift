@@ -114,4 +114,8 @@ final class GalleryViewModel {
     private func fetchAsset(localIdentifier: String) -> PHAsset? {
         PHAsset.fetchAssets(withLocalIdentifiers: [localIdentifier], options: nil).firstObject
     }
+
+    func asset(localIdentifier: String) -> PHAsset? {
+        fetchAsset(localIdentifier: localIdentifier)
+    }
 }

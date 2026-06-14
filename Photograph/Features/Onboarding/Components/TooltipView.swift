@@ -16,9 +16,12 @@ import SwiftUI
 
 /// Where the caret arrow points relative to the card.
 enum TooltipAnchor {
-    case top       // Caret on top → card appears BELOW the target
-    case bottom    // Caret on bottom → card appears ABOVE the target
-    case bottomLeading  // Caret on bottom-left
+    case none
+    case top          // Caret on top → card appears BELOW the target
+    case topTrailing  // Caret on top-right
+    case bottom       // Caret on bottom → card appears ABOVE the target
+    case bottomLeading   // Caret on bottom-left
+    case bottomTrailing  // Caret on bottom-right
 }
 
 // MARK: - TooltipView
@@ -26,20 +29,20 @@ enum TooltipAnchor {
 struct TooltipView: View {
     let title: String
     let description: String
-    let primaryLabel: String
+    let primaryLabel: String?
     let secondaryLabel: String?
     let anchor: TooltipAnchor
-    let onPrimary: () -> Void
+    let onPrimary: (() -> Void)?
     let onSecondary: (() -> Void)?
 
     /// Convenience initialiser with defaults matching Hi-Fi.
     init(
         title: String,
         description: String,
-        primaryLabel: String = "Got it",
+        primaryLabel: String? = "Got it",
         secondaryLabel: String? = "Skip",
         anchor: TooltipAnchor = .bottom,
-        onPrimary: @escaping () -> Void,
+        onPrimary: (() -> Void)? = nil,
         onSecondary: (() -> Void)? = nil
     ) {
         self.title = title
@@ -53,72 +56,114 @@ struct TooltipView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Caret on top
-            if anchor == .top {
-                caretTriangle(pointsUp: true)
-                    .padding(.leading, Spacing.medium)
-            }
+            topCaret
 
-            // Card content
             VStack(alignment: .leading, spacing: Spacing.small) {
                 Text(title)
-                    .font(Typography.headline)
+                    .font(.headline.weight(.semibold))
                     .foregroundStyle(.white)
 
                 Text(description)
-                    .font(Typography.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.75))
                     .fixedSize(horizontal: false, vertical: true)
 
-                Divider()
-                    .background(.white.opacity(0.2))
+                if showsActions {
+                    Divider()
+                        .background(.white.opacity(0.2))
 
-                // Action row
-                HStack {
-                    Button(action: onPrimary) {
-                        Text(primaryLabel)
-                            .font(Typography.headline)
-                            .foregroundStyle(.white)
-                    }
-
-                    Spacer()
-
-                    if let secondaryLabel, let onSecondary {
-                        Button(action: onSecondary) {
-                            Text(secondaryLabel)
-                                .font(Typography.subheadline)
-                                .foregroundStyle(AppColors.gridlineRed)
-                        }
-                    }
+                    actionRow
                 }
             }
             .padding(Spacing.standard)
-            .background(.black.opacity(0.7))
+            .background(.black.opacity(0.58))
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: Spacing.cornerRadiusMedium, style: .continuous))
+            .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
 
-            // Caret on bottom
-            if anchor == .bottom || anchor == .bottomLeading {
-                HStack {
-                    if anchor == .bottomLeading {
-                        caretTriangle(pointsUp: false)
-                            .padding(.leading, Spacing.medium)
-                        Spacer()
-                    } else {
-                        Spacer()
-                        caretTriangle(pointsUp: false)
-                        Spacer()
-                    }
+            bottomCaret
+        }
+        .accessibilityElement(children: .contain)
+        .allowsHitTesting(showsActions)
+    }
+
+    private var showsActions: Bool {
+        (primaryLabel != nil && onPrimary != nil)
+            || (secondaryLabel != nil && onSecondary != nil)
+    }
+
+    @ViewBuilder
+    private var actionRow: some View {
+        HStack {
+            if let primaryLabel, let onPrimary {
+                Button(action: onPrimary) {
+                    Text(primaryLabel)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+
+            Spacer()
+
+            if let secondaryLabel, let onSecondary {
+                Button(action: onSecondary) {
+                    Text(secondaryLabel)
+                        .font(.headline.weight(.regular))
+                        .foregroundStyle(AppColors.gridlineRed)
                 }
             }
         }
     }
 
-    // MARK: - Caret Shape
+    @ViewBuilder
+    private var topCaret: some View {
+        switch anchor {
+        case .top:
+            HStack {
+                Spacer()
+                caretTriangle(pointsUp: true)
+                Spacer()
+            }
+        case .topTrailing:
+            HStack {
+                Spacer()
+                caretTriangle(pointsUp: true)
+                    .padding(.trailing, Spacing.medium)
+            }
+        default:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private var bottomCaret: some View {
+        switch anchor {
+        case .bottom:
+            HStack {
+                Spacer()
+                caretTriangle(pointsUp: false)
+                Spacer()
+            }
+        case .bottomLeading:
+            HStack {
+                caretTriangle(pointsUp: false)
+                    .padding(.leading, Spacing.medium)
+                Spacer()
+            }
+        case .bottomTrailing:
+            HStack {
+                Spacer()
+                caretTriangle(pointsUp: false)
+                    .padding(.trailing, Spacing.medium)
+            }
+        default:
+            EmptyView()
+        }
+    }
 
     private func caretTriangle(pointsUp: Bool) -> some View {
         Triangle()
-            .fill(.black.opacity(0.7))
+            .fill(.black.opacity(0.58))
             .frame(width: 16, height: 8)
             .rotationEffect(.degrees(pointsUp ? 0 : 180))
     }

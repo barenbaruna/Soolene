@@ -19,8 +19,8 @@ struct GuidanceTipView: View {
         labelContent
             .id(phaseIdentity)
             .transition(phaseTransition)
-            .padding(.horizontal, Spacing.standard)
-            .padding(.vertical, Spacing.small)
+            .padding(.horizontal, Spacing.large)
+            .padding(.vertical, Spacing.standard)
             .background { pillBackground }
             .animation(phaseAnimation, value: phaseIdentity)
             .accessibilityLabel(accessibilityText)
@@ -30,17 +30,17 @@ struct GuidanceTipView: View {
         HStack(spacing: Spacing.small) {
             if showsReadyIcon {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(AppColors.gridlineGreen)
                     .accessibilityHidden(true)
                     .transition(.scale.combined(with: .opacity))
             }
 
             Text(displayText)
-                .font(.headline.weight(.medium))
+                .font(.title3.weight(.medium))
                 .foregroundStyle(foregroundColor)
                 .multilineTextAlignment(.center)
-                .lineLimit(3)
+                .lineLimit(2)
                 .minimumScaleFactor(0.85)
                 .contentTransition(reduceMotion ? .identity : .interpolate)
         }
