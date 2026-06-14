@@ -12,29 +12,16 @@ struct CameraControlsView: View {
     @Binding var isShowingGallery: Bool
 
     @State private var iconRotation: Double = 0
-    @State private var activePanel: CameraControlPanel?
 
     var body: some View {
         ZStack {
-            mainControls
-
-            if activePanel == .exposure {
+            if viewModel.activePanel == .exposure {
                 RulerPanelDismissScrim {
-                    withAnimation(.snappy) { activePanel = nil }
-                }
-
-                VStack {
-                    Spacer()
-                    ViewfinderExposureScale(
-                        exposureBias: Binding(
-                            get: { viewModel.exposureBias },
-                            set: { viewModel.setExposure($0) }
-                        )
-                    )
-                    .padding(.bottom, Spacing.standard)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    withAnimation(.snappy) { viewModel.activePanel = nil }
                 }
             }
+
+            mainControls
         }
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
@@ -70,11 +57,11 @@ struct CameraControlsView: View {
     }
 
     private var topSection: some View {
-        VStack(spacing: Spacing.small) {
+        VStack(spacing: Spacing.massive) {
             CameraTopToolbar(
                 viewModel: viewModel,
                 iconRotation: iconRotation,
-                activePanel: activePanel,
+                activePanel: viewModel.activePanel,
                 onPanelTapped: handlePanelTap
             )
             .padding(.top, Spacing.small)
@@ -101,16 +88,20 @@ struct CameraControlsView: View {
     private func handlePanelTap(_ panel: CameraControlPanel) {
         switch panel {
         case .flash:
-            activePanel = nil
+            viewModel.activePanel = nil
             viewModel.cycleFlash()
         case .timer:
             viewModel.cycleTimer()
         case .aspect:
-            withAnimation { activePanel = activePanel == .aspect ? nil : .aspect }
+            withAnimation { viewModel.activePanel = viewModel.activePanel == .aspect ? nil : .aspect }
             cycleAspectRatio()
         case .exposure:
             withAnimation(.snappy) {
-                activePanel = activePanel == .exposure ? nil : .exposure
+                if viewModel.activePanel == .exposure {
+                    viewModel.activePanel = nil
+                } else {
+                    viewModel.showExposureTemporarily()
+                }
             }
         }
     }

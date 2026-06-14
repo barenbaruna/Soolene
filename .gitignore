@@ -10,3 +10,7 @@ specs/
 
 # Local derived data (agent / CI scratch builds)
 .derivedData/
+.agents
+docs/
+
+.DS_Store

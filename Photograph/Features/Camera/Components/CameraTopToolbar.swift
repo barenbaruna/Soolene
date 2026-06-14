@@ -16,6 +16,22 @@ struct CameraTopToolbar: View {
     let onPanelTapped: (CameraControlPanel) -> Void
 
     var body: some View {
+        pillContent
+            .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private var pillContent: some View {
+        if #available(iOS 26, *) {
+            toolbarStack
+                .glassEffect(.regular, in: .rect(cornerRadius: Spacing.cornerRadiusCapsule))
+        } else {
+            toolbarStack
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Spacing.cornerRadiusCapsule))
+        }
+    }
+
+    private var toolbarStack: some View {
         HStack(spacing: Spacing.large) {
             toolbarButton(
                 icon: flashIcon,
@@ -26,7 +42,7 @@ struct CameraTopToolbar: View {
             }
 
             toolbarButton(
-                icon: "plus.forwardslash.minus",
+                icon: "plusminus",
                 isActive: viewModel.exposureBias != 0 || activePanel == .exposure,
                 label: "Exposure"
             ) {
@@ -43,7 +59,7 @@ struct CameraTopToolbar: View {
                 onPanelTapped(.aspect)
             }
         }
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, Spacing.standard)
     }
 
     private var timerButton: some View {

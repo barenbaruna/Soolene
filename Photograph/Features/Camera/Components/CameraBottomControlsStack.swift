@@ -13,6 +13,8 @@ struct CameraBottomControlsStack: View {
     @Binding var isShowingGallery: Bool
     let iconRotation: Double
 
+    @Namespace private var glassNS
+
     var body: some View {
         VStack(spacing: Spacing.small) {
             if let toast = viewModel.inlineToastMessage {
@@ -38,10 +40,24 @@ struct CameraBottomControlsStack: View {
     }
 
     /// Composition picker and zoom ruler share one HUD slot above the shutter bar.
+    /// Also handles Exposure scale when active, replacing Zoom with a morphing animation.
     @ViewBuilder
     private var compositionOrZoomSlot: some View {
         Group {
-            if !viewModel.isCountingDown, viewModel.guidancePhase.showPicker {
+            if viewModel.activePanel == .exposure {
+                ViewfinderExposureScale(
+                    exposureBias: Binding(
+                        get: { viewModel.exposureBias },
+                        set: { viewModel.setExposure($0) }
+                    ),
+                    glassID: "ruler",
+                    glassNamespace: glassNS,
+                    onDragBegan: { viewModel.cancelExposureHideTimer() },
+                    onDragEnded: { viewModel.showExposureTemporarily() }
+                )
+                .frame(height: ControlMetrics.rulerPanelContentHeight)
+                .transition(.blurReplace)
+            } else if !viewModel.isCountingDown, viewModel.guidancePhase.showPicker {
                 CompositionPickerView(
                     selectedComposition: viewModel.userSelectedComposition,
                     mlSuggestion: viewModel.mlSuggestion,
@@ -67,13 +83,19 @@ struct CameraBottomControlsStack: View {
             } else if viewModel.showsZoomRuler {
                 ViewfinderZoomRuler(
                     viewModel: viewModel,
-                    isEnabled: !viewModel.isSwitchingCamera
+                    isEnabled: !viewModel.isSwitchingCamera,
+                    glassID: "ruler",
+                    glassNamespace: glassNS
                 )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .frame(height: ControlMetrics.rulerPanelContentHeight)
+                .transition(.blurReplace)
+            } else {
+                Spacer()
+                    .frame(height: ControlMetrics.rulerPanelContentHeight)
             }
         }
-        .frame(height: ControlMetrics.rulerPanelContentHeight)
-        .padding(.bottom, Spacing.tiny)
+        .padding(.bottom, Spacing.standard)
+        .animation(.snappy, value: viewModel.activePanel)
         .animation(.snappy, value: viewModel.guidancePhase.isLocked)
         .animation(.snappy, value: viewModel.showsZoomRuler)
     }
