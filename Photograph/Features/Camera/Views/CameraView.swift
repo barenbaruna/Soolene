@@ -20,22 +20,48 @@ struct CameraView: View {
     @State private var lockRingAnimating = false
     @State private var showLockIcon = false
     @State private var previewSize: CGSize = .zero
+    @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
+    @State private var permissionAlert: PermissionAlertKind?
+    @State private var hasCompletedPermissionFlow = false
 
     var body: some View {
         Group {
-            if viewModel.hasCameraPermission {
+            if viewModel.hasRequiredPermissions && hasCompletedPermissionFlow {
                 cameraExperience
             } else {
                 CameraPermissionGateView(
-                    status: viewModel.cameraPermission,
-                    isRequesting: viewModel.isRequestingCameraPermission,
-                    onRequestAccess: { Task { await viewModel.requestCameraAccess() } },
-                    onOpenSettings: { viewModel.openAppSettings() }
+                    cameraStatus: viewModel.cameraPermission,
+                    photoStatus: viewModel.photoReadPermission,
+                    isRequestingCamera: viewModel.isRequestingCameraPermission,
+                    isRequestingPhoto: viewModel.isRequestingPhotoPermission,
+                    onRequestCameraAccess: { requestCameraAccess() },
+                    onRequestPhotoAccess: { requestPhotoAccess() },
+                    onComplete: { completePermissionFlow() }
                 )
+            }
+        }
+        .task {
+            await viewModel.refreshPermissions()
+            if viewModel.hasRequiredPermissions {
+                hasCompletedPermissionFlow = true
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Task { await viewModel.refreshPermissions() }
+        }
+        .alert(permissionAlertTitle, isPresented: Binding(
+            get: { permissionAlert != nil },
+            set: { if !$0 { permissionAlert = nil } }
+        )) {
+            Button("Open Settings") {
+                viewModel.openAppSettings()
+                permissionAlert = nil
+            }
+            Button("Not Now", role: .cancel) {
+                permissionAlert = nil
+            }
+        } message: {
+            Text(permissionAlertMessage)
         }
     }
 
@@ -43,9 +69,10 @@ struct CameraView: View {
         ZStack {
             CameraPreviewLayer(
                 viewModel: viewModel,
-                onFocusTap: handleFocusTap,
-                onSubjectPin: handleSubjectPin,
-                onClearPin: clearPinnedSubject
+                onFocusTap: onboarding.allowsCameraFocusControls ? handleFocusTap : nil,
+                onSubjectPin: onboarding.allowsSceneLock ? handleSubjectPin : nil,
+                onClearPin: onboarding.allowsCameraFocusControls ? clearPinnedSubject : nil,
+                allowsZoomGestures: onboarding.allowsCameraFocusControls
             )
             .background {
                 GeometryReader { geo in
@@ -92,7 +119,17 @@ struct CameraView: View {
                 )
             }
 
-            WalkthroughOverlayView(context: .camera)
+            WalkthroughOverlayView(
+                context: .camera,
+                anchors: walkthroughAnchors,
+                hidesDuringCapture: viewModel.isCapturing
+            )
+        }
+        .onPreferenceChange(WalkthroughAnchorPreferenceKey.self) { walkthroughAnchors = $0 }
+        .onChange(of: viewModel.isCapturing) { wasCapturing, isCapturing in
+            if wasCapturing, !isCapturing {
+                onboarding.advanceAfterCapture()
+            }
         }
         .onChange(of: isShowingGallery) { _, showing in
             if showing {
@@ -163,6 +200,55 @@ struct CameraView: View {
         return "Capturing…"
     }
 
+    private var permissionAlertTitle: String {
+        switch permissionAlert {
+        case .camera:
+            return "Camera Access Needed"
+        case .gallery:
+            return "Gallery Access Needed"
+        case nil:
+            return ""
+        }
+    }
+
+    private var permissionAlertMessage: String {
+        switch permissionAlert {
+        case .camera:
+            return PrivacyPermissionService.cameraGateMessage(for: viewModel.cameraPermission)
+        case .gallery:
+            return PrivacyPermissionService.photoBrowseMessage(for: viewModel.photoReadPermission)
+        case nil:
+            return ""
+        }
+    }
+
+    private func requestCameraAccess() {
+        Task { @MainActor in
+            await viewModel.requestCameraAccess()
+            showSettingsAlertIfNeeded(for: .camera, status: viewModel.cameraPermission)
+        }
+    }
+
+    private func requestPhotoAccess() {
+        Task { @MainActor in
+            await viewModel.requestPhotoReadAccess()
+            showSettingsAlertIfNeeded(for: .gallery, status: viewModel.photoReadPermission)
+        }
+    }
+
+    private func showSettingsAlertIfNeeded(for kind: PermissionAlertKind, status: PermissionStatus) {
+        if status.needsSettings {
+            permissionAlert = kind
+        }
+    }
+
+    private func completePermissionFlow() {
+        guard viewModel.hasRequiredPermissions else { return }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            hasCompletedPermissionFlow = true
+        }
+    }
+
     // MARK: - Gestures
 
     private func handleFocusTap(at screenPoint: CGPoint, normalizedPoint: CGPoint) {
@@ -173,6 +259,7 @@ struct CameraView: View {
     private func handleSubjectPin(at screenPoint: CGPoint, normalizedPoint: CGPoint) {
         viewModel.pinSubject(at: normalizedPoint)
         onboarding.recordFirstSubjectLock()
+        onboarding.advanceAfterSceneLock()
         playLockAnimation(at: screenPoint)
         showIndicator(at: screenPoint, style: .pin)
     }
@@ -232,4 +319,9 @@ struct CameraView: View {
             withAnimation(.easeIn(duration: 0.3)) { showTapIndicator = false }
         }
     }
+}
+
+private enum PermissionAlertKind {
+    case camera
+    case gallery
 }

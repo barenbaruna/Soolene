@@ -29,6 +29,13 @@ extension CameraViewModel {
         photoReadPermission = PrivacyPermissionService.photoReadStatus()
     }
 
+    func requestPhotoReadAccess() async {
+        isRequestingPhotoPermission = true
+        defer { isRequestingPhotoPermission = false }
+        photoReadPermission = await PrivacyPermissionService.requestPhotoReadAccess()
+        photoAddPermission = PrivacyPermissionService.photoAddStatus()
+    }
+
     func openAppSettings() {
         PrivacyPermissionService.openSettings()
     }

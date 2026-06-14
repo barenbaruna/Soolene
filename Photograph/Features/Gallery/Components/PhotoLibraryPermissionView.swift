@@ -28,10 +28,10 @@ struct PhotoLibraryPermissionView: View {
 
     private var title: String {
         switch readStatus {
-        case .notDetermined: return "Photo Access"
-        case .denied: return "Photos Access Needed"
-        case .restricted: return "Photos Unavailable"
-        case .limited: return "Limited Photo Access"
+        case .notDetermined: return "Gallery Access"
+        case .denied: return "Gallery Access Needed"
+        case .restricted: return "Gallery Unavailable"
+        case .limited: return "Limited Gallery Access"
         case .authorized: return ""
         }
     }

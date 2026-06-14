@@ -65,6 +65,7 @@ struct CameraBottomControlsStack: View {
                     onSelect: { viewModel.selectComposition($0) },
                     onClearSubject: { viewModel.clearPinnedSubject() }
                 )
+                .allowsHitTesting(onboarding.allowsCompositionControls)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .onAppear {
                     SubjectUnlockTipController.updateShouldShow(
@@ -83,6 +84,10 @@ struct CameraBottomControlsStack: View {
             } else if viewModel.showsZoomRuler {
                 ViewfinderZoomRuler(
                     viewModel: viewModel,
+                    isEnabled: !viewModel.isSwitchingCamera && onboarding.allowsCompositionControls
+                )
+                .allowsHitTesting(onboarding.allowsCompositionControls)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
                     isEnabled: !viewModel.isSwitchingCamera,
                     glassID: "ruler",
                     glassNamespace: glassNS

@@ -21,7 +21,7 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
+            Color.white.ignoresSafeArea()
 
             VStack(spacing: 40) {
                 Spacer()
@@ -31,14 +31,13 @@ struct SplashView: View {
 
                 // App name and tagline
                 VStack(spacing: 12) {
-                    Text("Visula")
+                    Text(AppIdentity.displayName)
                         .font(Typography.title)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(AppColors.primary)
 
-                    Text("Master the art of photography composition")
+                    Text("Not every eye sees a composition")
                         .font(Typography.body)
-                        .italic()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppColors.primary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Spacing.extraLarge)
                 }

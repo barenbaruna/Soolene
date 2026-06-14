@@ -2,83 +2,212 @@
 //  CameraPermissionGateView.swift
 //  Visula
 //
-//  Shown when camera access is not granted (denied, restricted, or first launch).
+//  Shown before the camera starts when required permissions are missing.
 //
 
 import SwiftUI
 
 struct CameraPermissionGateView: View {
-    let status: PermissionStatus
-    let isRequesting: Bool
-    let onRequestAccess: () -> Void
-    let onOpenSettings: () -> Void
+    let cameraStatus: PermissionStatus
+    let photoStatus: PermissionStatus
+    let isRequestingCamera: Bool
+    let isRequestingPhoto: Bool
+    let onRequestCameraAccess: () -> Void
+    let onRequestPhotoAccess: () -> Void
+    let onComplete: () -> Void
 
     var body: some View {
         ZStack {
-            AppColors.surface.ignoresSafeArea()
+            AppColors.permissionSurface.ignoresSafeArea()
 
-            VStack(spacing: Spacing.medium) {
-                Image(systemName: iconName)
-                    .font(.system(size: 56, weight: .light))
-                    .foregroundStyle(AppColors.controlActive)
-                    .accessibilityHidden(true)
+            VStack(spacing: Spacing.large) {
+                VStack(spacing: Spacing.standard) {
+                    Image(systemName: "checklist")
+                        .font(.system(size: 58, weight: .light))
+                        .foregroundStyle(AppColors.primary)
+                        .accessibilityHidden(true)
 
-                Text(title)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(AppColors.textOnCamera)
-                    .multilineTextAlignment(.center)
+                    VStack(spacing: Spacing.small) {
+                        Text("Permissions")
+                            .font(Typography.title)
+                            .foregroundStyle(AppColors.permissionTextPrimary)
+                            .multilineTextAlignment(.center)
 
-                Text(PrivacyPermissionService.cameraGateMessage(for: status))
-                    .font(.body)
-                    .foregroundStyle(AppColors.textGuide)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Spacing.large)
+                        Text("\(AppIdentity.displayName) needs these permissions to guide your shots and keep your photos in one place.")
+                            .font(Typography.body)
+                            .foregroundStyle(AppColors.permissionTextSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
 
-                primaryAction
-                    .padding(.top, Spacing.small)
+                VStack(spacing: 0) {
+                    permissionRow(
+                        title: "Camera",
+                        message: "We need camera access to show the live viewfinder and composition guidance while you shoot.",
+                        systemImage: "camera.viewfinder",
+                        status: cameraStatus,
+                        isAllowed: cameraStatus.allowsCamera
+                    )
+
+                    Divider()
+                        .background(AppColors.permissionDivider)
+                        .padding(.leading, 58)
+
+                    permissionRow(
+                        title: "Gallery",
+                        message: "We need photo library access to save captures and show your guided compositions in Gallery.",
+                        systemImage: "photo.stack",
+                        status: photoStatus,
+                        isAllowed: photoStatus.allowsPhotoBrowse
+                    )
+                }
+
+                Button {
+                    requestNextPermission()
+                } label: {
+                    HStack(spacing: Spacing.small) {
+                        if isRequestingCurrentPermission {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                        Text(primaryActionTitle)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .font(Typography.buttonCTA)
+                .buttonStyle(.borderedProminent)
+                .tint(primaryActionTint)
+                .disabled(isRequestingCurrentPermission)
+                .controlSize(.large)
+                .padding(.top, Spacing.small)
             }
+            .frame(maxWidth: 430)
             .padding(Spacing.large)
         }
+        .preferredColorScheme(.light)
         .accessibilityElement(children: .contain)
     }
 
-    private var title: String {
-        switch status {
-        case .notDetermined: return "Camera Access"
-        case .denied: return "Camera Access Needed"
-        case .restricted: return "Camera Unavailable"
-        case .authorized, .limited: return ""
+    private var primaryActionTitle: String {
+        if !cameraStatus.allowsCamera {
+            return cameraStatus.needsSettings ? "Review Camera Access" : "Allow Camera"
         }
+
+        if !photoStatus.allowsPhotoBrowse {
+            return photoStatus.needsSettings ? "Review Gallery Access" : "Allow Gallery Access"
+        }
+
+        return "Completed"
     }
 
-    private var iconName: String {
-        switch status {
-        case .restricted: return "lock.fill"
-        case .denied: return "camera.fill"
-        default: return "camera.viewfinder"
-        }
+    private var primaryActionTint: Color {
+        cameraStatus.allowsCamera && photoStatus.allowsPhotoBrowse ? AppColors.secondary : AppColors.primary
     }
 
-    @ViewBuilder
-    private var primaryAction: some View {
-        if status.needsSettings {
-            Button("Open Settings", action: onOpenSettings)
-                .buttonStyle(.borderedProminent)
-                .tint(AppColors.primary)
+    private var isRequestingCurrentPermission: Bool {
+        if !cameraStatus.allowsCamera {
+            return isRequestingCamera
+        }
+        if !photoStatus.allowsPhotoBrowse {
+            return isRequestingPhoto
+        }
+        return false
+    }
+
+    private func requestNextPermission() {
+        if !cameraStatus.allowsCamera {
+            onRequestCameraAccess()
+        } else if !photoStatus.allowsPhotoBrowse {
+            onRequestPhotoAccess()
         } else {
-            Button {
-                onRequestAccess()
-            } label: {
-                if isRequesting {
-                    ProgressView()
-                        .tint(AppColors.textOnCamera)
-                } else {
-                    Text("Continue")
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(AppColors.primary)
-            .disabled(isRequesting)
+            onComplete()
         }
     }
+
+    private func permissionRow(
+        title: String,
+        message: String,
+        systemImage: String,
+        status: PermissionStatus,
+        isAllowed: Bool
+    ) -> some View {
+        HStack(alignment: .top, spacing: Spacing.standard) {
+            Image(systemName: isAllowed ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(isAllowed ? AppColors.primary : AppColors.permissionIconInactive)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: Spacing.small) {
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.small) {
+                    Label(title, systemImage: systemImage)
+                        .font(Typography.headline)
+                        .foregroundStyle(AppColors.permissionTextPrimary)
+                        .labelStyle(.titleAndIcon)
+
+                    Spacer(minLength: Spacing.small)
+
+                    Text(statusLabel(for: status, isAllowed: isAllowed))
+                        .font(Typography.caption)
+                        .foregroundStyle(isAllowed ? AppColors.primary : AppColors.permissionTextSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+
+                Text(message)
+                    .font(Typography.subheadline)
+                    .foregroundStyle(AppColors.permissionTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, Spacing.standard)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func statusLabel(for status: PermissionStatus, isAllowed: Bool) -> String {
+        if isAllowed {
+            return status == .limited ? "Limited" : "Allowed"
+        }
+
+        if status.needsSettings {
+            return "Needs Settings"
+        }
+
+        return "Required"
+    }
+}
+
+#Preview("Permissions") {
+    CameraPermissionGateView(
+        cameraStatus: .notDetermined,
+        photoStatus: .notDetermined,
+        isRequestingCamera: false,
+        isRequestingPhoto: false,
+        onRequestCameraAccess: {},
+        onRequestPhotoAccess: {},
+        onComplete: {}
+    )
+}
+
+#Preview("Camera Allowed") {
+    CameraPermissionGateView(
+        cameraStatus: .authorized,
+        photoStatus: .denied,
+        isRequestingCamera: false,
+        isRequestingPhoto: false,
+        onRequestCameraAccess: {},
+        onRequestPhotoAccess: {},
+        onComplete: {}
+    )
+}
+
+#Preview("Completed") {
+    CameraPermissionGateView(
+        cameraStatus: .authorized,
+        photoStatus: .authorized,
+        isRequestingCamera: false,
+        isRequestingPhoto: false,
+        onRequestCameraAccess: {},
+        onRequestPhotoAccess: {},
+        onComplete: {}
+    )
 }

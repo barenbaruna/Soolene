@@ -80,7 +80,8 @@ final class CameraViewModel {
     var inlineToastMessage: String?
 
     var hasCameraPermission: Bool { cameraPermission.allowsCamera }
-    var hasPhotoPermission: Bool { photoAddPermission.allowsPhotoSave }
+    var hasPhotoPermission: Bool { photoReadPermission.allowsPhotoBrowse }
+    var hasRequiredPermissions: Bool { hasCameraPermission && hasPhotoPermission }
 
     // MARK: - Camera Mode
 

@@ -21,10 +21,12 @@ struct PhotoDetailView: View {
     let asset: PHAsset
     let composition: CompositionType
 
+    @Environment(OnboardingStore.self) private var onboarding
     @Environment(\.dismiss) private var dismiss
     @State private var fullImage: UIImage?
     @State private var isShowingOverlay = false
     @State private var isShowingDeleteConfirmation = false
+    @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
 
     var body: some View {
         ZStack {
@@ -63,8 +65,12 @@ struct PhotoDetailView: View {
             }
 
             // Walkthrough Overlay
-            WalkthroughOverlayView(context: .detail)
+            WalkthroughOverlayView(context: .detail, anchors: walkthroughAnchors)
         }
+        .overlay {
+            gridToggleWalkthroughAnchor
+        }
+        .onPreferenceChange(WalkthroughAnchorPreferenceKey.self) { walkthroughAnchors = $0 }
         .navigationBarBackButtonHidden(true)
         .navigationTitle(composition.galleryLabel)
         .toolbarTitleDisplayMode(.inline)
@@ -78,13 +84,11 @@ struct PhotoDetailView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Back")
+                .disabled(!onboarding.allowsPhotoDetailExit)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    HapticManager.selection()
-                    withAnimation(.easeInOut(duration: 0.2)) { isShowingOverlay.toggle() }
-                } label: {
+                Button(action: toggleGridOverlay) {
                     Image(systemName: "square.grid.3x3")
                         .fontWeight(.medium)
                         .foregroundStyle(isShowingOverlay ? AppColors.surface : AppColors.controlActive)
@@ -96,6 +100,7 @@ struct PhotoDetailView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(isShowingOverlay ? "Hide Overlay" : "Show Overlay")
+                .disabled(!onboarding.allowsPhotoGridToggle)
             }
         }
         .toolbarBackground(.hidden, for: .navigationBar)
@@ -114,6 +119,30 @@ struct PhotoDetailView: View {
 
     // MARK: - Delete Bar
 
+    /// Invisible anchor aligned with the navigation bar grid toggle.
+    /// Manually computes the global rect because `.walkthroughAnchor()` cannot
+    /// correctly report position when combined with `.position()` inside a GeometryReader.
+    private var gridToggleWalkthroughAnchor: some View {
+        GeometryReader { geo in
+            let globalFrame = geo.frame(in: .global)
+            let buttonSize = ControlMetrics.compactIconButton
+            let centerX = geo.size.width - Spacing.standard - buttonSize / 2
+            let centerY = geo.safeAreaInsets.top + 22
+            let buttonGlobalRect = CGRect(
+                x: globalFrame.minX + centerX - buttonSize / 2,
+                y: globalFrame.minY + centerY - buttonSize / 2,
+                width: buttonSize,
+                height: buttonSize
+            )
+            Color.clear
+                .preference(
+                    key: WalkthroughAnchorPreferenceKey.self,
+                    value: [.gridToggle: buttonGlobalRect]
+                )
+        }
+        .allowsHitTesting(false)
+    }
+
     /// Small capsule delete button — bottom trailing
     private var deleteBar: some View {
         HStack {
@@ -130,9 +159,19 @@ struct PhotoDetailView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Delete Photo")
+            .disabled(!onboarding.allowsPhotoDelete)
         }
         .padding(.horizontal, Spacing.medium)
         .padding(.bottom, Spacing.standard)
+    }
+
+    private func toggleGridOverlay() {
+        guard onboarding.allowsPhotoGridToggle else { return }
+        HapticManager.selection()
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isShowingOverlay.toggle()
+        }
+        onboarding.advanceAfterGridToggle(isShowingOverlay: isShowingOverlay)
     }
 
     // MARK: - Helpers

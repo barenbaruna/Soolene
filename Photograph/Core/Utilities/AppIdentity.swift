@@ -8,8 +8,8 @@
 import Foundation
 
 enum AppIdentity {
-    static let displayName = "Visula"
-    static let photoAlbumName = "Visula"
+    static let displayName = "Soolene"
+    static let photoAlbumName = "Soolene"
 
     enum Privacy {
         static let camera = """
