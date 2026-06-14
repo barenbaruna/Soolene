@@ -40,7 +40,7 @@ struct CameraControlsView: View {
         }
         .onChange(of: onboarding.currentStep) { _, _ in
             if !onboarding.allowsCameraToolbar {
-                activePanel = nil
+                viewModel.activePanel = nil
             }
         }
     }

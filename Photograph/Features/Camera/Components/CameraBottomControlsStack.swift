@@ -84,14 +84,11 @@ struct CameraBottomControlsStack: View {
             } else if viewModel.showsZoomRuler {
                 ViewfinderZoomRuler(
                     viewModel: viewModel,
-                    isEnabled: !viewModel.isSwitchingCamera && onboarding.allowsCompositionControls
-                )
-                .allowsHitTesting(onboarding.allowsCompositionControls)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                    isEnabled: !viewModel.isSwitchingCamera,
+                    isEnabled: !viewModel.isSwitchingCamera && onboarding.allowsCompositionControls,
                     glassID: "ruler",
                     glassNamespace: glassNS
                 )
+                .allowsHitTesting(onboarding.allowsCompositionControls)
                 .frame(height: ControlMetrics.rulerPanelContentHeight)
                 .transition(.blurReplace)
             } else {

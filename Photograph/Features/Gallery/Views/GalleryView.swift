@@ -12,6 +12,7 @@ struct GalleryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = AppDependencies.shared.makeGalleryViewModel()
     @State private var selectedTab: GalleryTab = .recent
+    @State private var navigationPath: [String] = []
 
     enum GalleryTab {
         case recent
@@ -19,7 +20,7 @@ struct GalleryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
                 customHeader
                 
@@ -48,10 +49,11 @@ struct GalleryView: View {
                             onManageLimited: { PrivacyPermissionService.presentLimitedLibraryPicker() }
                         )
                     } else if viewModel.isLibraryEmpty {
+                        let desc = "Open the camera in " + AppIdentity.displayName + " to start capturing guided compositions."
                         ContentUnavailableView(
                             "No Photos Yet",
                             systemImage: "camera.viewfinder",
-                            description: Text("Open the camera in \(AppIdentity.displayName) to start capturing guided compositions.")
+                            description: Text(desc)
                         )
                     } else {
                         if selectedTab == .recent {
@@ -76,8 +78,15 @@ struct GalleryView: View {
             }
             .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationDestination(for: String.self) { identifier in
-                if let asset = viewModel.asset(localIdentifier: identifier) {
-                    PhotoDetailView(asset: asset, composition: viewModel.recentComposition)
+                if let idx = viewModel.allAssets.firstIndex(where: { $0.localIdentifier == identifier }) {
+                    PhotoDetailView(
+                        assets: viewModel.allAssets,
+                        currentIndex: idx,
+                        assetCompositionMap: viewModel.assetCompositionMap,
+                        onDelete: {
+                            Task { await viewModel.refresh() }
+                        }
+                    )
                 } else {
                     ContentUnavailableView(
                         "Photo Unavailable",
