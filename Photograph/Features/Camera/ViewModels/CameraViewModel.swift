@@ -20,6 +20,7 @@ final class CameraViewModel {
 
     var showShutterFlash = false
     var lastSavedThumbnail: UIImage?
+    var lastSavedAssetIdentifier: String?
     var saveError: String?
     var trackingQualityWarning: String?
 

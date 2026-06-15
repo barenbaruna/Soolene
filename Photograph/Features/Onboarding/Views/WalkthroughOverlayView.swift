@@ -153,7 +153,19 @@ struct WalkthroughOverlayView: View {
             .position(
                 tooltipPosition(
                     for: .gridToggle,
-                    style: .topTrailing,
+                    style: .custom(
+                        position: { containerW, cardWidth, localAnchor, _, estimatedCardHeight in
+                            let tooltipCenterX = min(
+                                containerW - cardWidth / 2 - Spacing.small,
+                                max(localAnchor.midX, cardWidth / 2 + Spacing.small)
+                            )
+                            
+                            return CGPoint(
+                                x: tooltipCenterX - 8,
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 24
+                            )
+                        }
+                    ),
                     screenW: screenW,
                     screenH: screenH,
                     safeAreaTop: geo.safeAreaInsets.top,
@@ -174,7 +186,19 @@ struct WalkthroughOverlayView: View {
             .position(
                 tooltipPosition(
                     for: .gridToggle,
-                    style: .topTrailing,
+                    style: .custom(
+                        position: { containerW, cardWidth, localAnchor, _, estimatedCardHeight in
+                            let tooltipCenterX = min(
+                                containerW - cardWidth / 2 - Spacing.small,
+                                max(localAnchor.midX, cardWidth / 2 + Spacing.small)
+                            )
+                            
+                            return CGPoint(
+                                x: tooltipCenterX - 8,
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 24
+                            )
+                        }
+                    ),
                     screenW: screenW,
                     screenH: screenH,
                     safeAreaTop: geo.safeAreaInsets.top,
@@ -234,8 +258,9 @@ struct WalkthroughOverlayView: View {
                 y: screenH * 0.76
             )
         case .gridToggle:
+            let cardWidth = min(screenW * 0.82, WalkthroughTooltipLayout.estimatedCardWidth)
             return CGPoint(
-                x: screenW - Spacing.standard - ControlMetrics.compactIconButton / 2,
+                x: screenW - cardWidth / 2 - Spacing.small,
                 y: safeAreaTop + 22
             )
         }

@@ -48,6 +48,7 @@ enum WalkthroughTooltipLayout {
         in containerGlobalFrame: CGRect
     ) -> CGPoint {
         let containerW = containerGlobalFrame.width
+        let cardWidth = min(containerW * 0.82, estimatedCardWidth)
         let localAnchor = CGRect(
             x: anchor.minX - containerGlobalFrame.minX,
             y: anchor.minY - containerGlobalFrame.minY,
@@ -64,32 +65,32 @@ enum WalkthroughTooltipLayout {
         case .top:
             return CGPoint(
                 x: localAnchor.midX,
-                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2
+                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - Spacing.standard
             )
         case .bottom:
             return CGPoint(
                 x: localAnchor.midX,
-                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2
+                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2 + Spacing.standard
             )
         case .bottomLeading:
             // Gallery button is at the far left — position tooltip shifted right
             // so it doesn't get cropped, with caret pointing down-left to the button.
             let tooltipCenterX = max(
-                estimatedCardWidth / 2 + Spacing.standard,
-                min(localAnchor.midX + estimatedCardWidth / 2 - Spacing.large,
-                    containerW - estimatedCardWidth / 2 - Spacing.standard)
+                cardWidth / 2 + Spacing.standard,
+                min(localAnchor.midX + cardWidth / 2 - Spacing.large,
+                    containerW - cardWidth / 2 - Spacing.standard)
             )
             return CGPoint(
                 x: tooltipCenterX,
-                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2
+                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2 + Spacing.standard
             )
         case .bottomTrailing:
             // Gallery button is at the far left — position tooltip so the
             // bottom-right caret points down toward the button area.
             let tooltipCenterX = max(
-                estimatedCardWidth / 2 + Spacing.standard,
-                min(localAnchor.midX + estimatedCardWidth / 2 - Spacing.large,
-                    containerW - estimatedCardWidth / 2 - Spacing.standard)
+                cardWidth / 2 + Spacing.standard,
+                min(localAnchor.midX + cardWidth / 2 - Spacing.large,
+                    containerW - cardWidth / 2 - Spacing.standard)
             )
             return CGPoint(
                 x: tooltipCenterX,
@@ -99,14 +100,20 @@ enum WalkthroughTooltipLayout {
             // Grid toggle is at the far right — position tooltip so it stays on-screen.
             // Anchor caret points up-right to the button.
             let tooltipCenterX = min(
-                containerW - estimatedCardWidth / 2 - Spacing.small,
-                max(localAnchor.midX, estimatedCardWidth / 2 + Spacing.small)
+                containerW - cardWidth / 2 - Spacing.small,
+                max(localAnchor.midX, cardWidth / 2 + Spacing.small)
             )
             return CGPoint(
                 x: tooltipCenterX,
                 y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2
             )
+        case .custom(let position):
+            let point = position(containerW, cardWidth, localAnchor, estimatedCardWidth, estimatedCardHeight)
+            
+            return CGPoint(
+                x: point.x,
+                y: point.y
+            )
         }
     }
 }
-
