@@ -43,7 +43,7 @@ struct CameraTopToolbar: View {
 
             toolbarButton(
                 icon: "plusminus",
-                isActive: viewModel.exposureBias != 0 || activePanel == .exposure,
+                isActive: activePanel == .exposure,
                 label: "Exposure"
             ) {
                 onPanelTapped(.exposure)
@@ -53,7 +53,7 @@ struct CameraTopToolbar: View {
 
             toolbarButton(
                 icon: viewModel.selectedAspectRatio.symbolName,
-                isActive: viewModel.selectedAspectRatio != .free || activePanel == .aspect,
+                isActive: viewModel.selectedAspectRatio != .free,
                 label: "Aspect ratio"
             ) {
                 onPanelTapped(.aspect)

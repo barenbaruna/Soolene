@@ -12,7 +12,6 @@ struct GalleryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = AppDependencies.shared.makeGalleryViewModel()
     @State private var selectedTab: GalleryTab = .recent
-    @State private var navigationPath: [String] = []
 
     enum GalleryTab {
         case recent
@@ -20,7 +19,7 @@ struct GalleryView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack {
             VStack(spacing: 0) {
                 customHeader
                 
@@ -42,18 +41,16 @@ struct GalleryView: View {
                             onRequestAccess: { 
                               Task {
                                   await viewModel.requestReadAccess()
-                                  openRecentPhotoForWalkthroughIfNeeded()
                               }
                             },
                             onOpenSettings: { PrivacyPermissionService.openSettings() },
                             onManageLimited: { PrivacyPermissionService.presentLimitedLibraryPicker() }
                         )
                     } else if viewModel.isLibraryEmpty {
-                        let desc = "Open the camera in " + AppIdentity.displayName + " to start capturing guided compositions."
                         ContentUnavailableView(
                             "No Photos Yet",
                             systemImage: "camera.viewfinder",
-                            description: Text(desc)
+                            description: Text("Open the camera in \(AppIdentity.displayName) to start capturing guided compositions.")
                         )
                     } else {
                         if selectedTab == .recent {
@@ -100,16 +97,11 @@ struct GalleryView: View {
         .preferredColorScheme(.dark)
         .task {
             await viewModel.bootstrap()
-            openRecentPhotoForWalkthroughIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Task {
                 await viewModel.refresh()
-                openRecentPhotoForWalkthroughIfNeeded()
             }
-        }
-        .onChange(of: viewModel.recentAsset?.localIdentifier) { _, _ in
-            openRecentPhotoForWalkthroughIfNeeded()
         }
     }
 
@@ -306,10 +298,5 @@ struct GalleryView: View {
         }
     }
 
-    private func openRecentPhotoForWalkthroughIfNeeded() {
-        guard onboarding.shouldAutoOpenRecentPhoto else { return }
-        guard navigationPath.isEmpty else { return }
-        guard let recentIdentifier = viewModel.recentAsset?.localIdentifier else { return }
-        navigationPath = [recentIdentifier]
-    }
+
 }

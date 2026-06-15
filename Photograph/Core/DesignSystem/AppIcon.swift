@@ -19,5 +19,7 @@ enum AppIcon {
     static let iconPlusMinus = "plus.minus"
     static let iconCameraMetering = "camera.metering"
     static let iconFlipCamera = "arrow.trianglehead.2.clockwise.rotate.90"
+    static let iconGallery = "photo.on.rectangle.angled"
+    static let iconShowsReadyIconCheckMark = "checkmark.circle.fill"
     
 }

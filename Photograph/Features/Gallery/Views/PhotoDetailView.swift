@@ -51,8 +51,6 @@ struct PhotoDetailView: View {
         return assetCompositionMap[asset.localIdentifier] ?? .ruleOfThirds
     }
 
-    // MARK: - Body
-
     var body: some View {
         ZStack {
             Color.white.ignoresSafeArea()
@@ -82,18 +80,45 @@ struct PhotoDetailView: View {
                 .opacity(isShowingDeleteConfirmation ? 0 : 1)
             }
 
-            // Walkthrough Overlay
-            WalkthroughOverlayView(context: .detail, anchors: walkthroughAnchors)
-
-            // Delete Confirmation Dialog
             if isShowingDeleteConfirmation {
                 customDeleteDialog
             }
-        }
-        .overlay {
-            gridToggleWalkthroughAnchor
+            // Walkthrough Overlay
+            WalkthroughOverlayView(context: .detail, anchors: walkthroughAnchors)
         }
         .onPreferenceChange(WalkthroughAnchorPreferenceKey.self) { walkthroughAnchors = $0 }
+        .navigationBarBackButtonHidden(true)
+        .navigationTitle(currentComposition.galleryLabel)
+        .toolbarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(AppColors.textOnCamera)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back")
+                .disabled(!onboarding.allowsPhotoDetailExit)
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: toggleGridOverlay) {
+                    Image(systemName: "square.grid.3x3")
+                        .fontWeight(.medium)
+                        .foregroundStyle(isShowingOverlay ? AppColors.surface : AppColors.controlActive)
+                        .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
+                        .background(
+                            isShowingOverlay ? AnyShapeStyle(AppColors.controlActive) : AnyShapeStyle(Color.white.opacity(0.12)),
+                            in: Circle()
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isShowingOverlay ? "Hide Overlay" : "Show Overlay")
+                .disabled(!onboarding.allowsPhotoGridToggle)
+            }
+        }
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.light)
         .toolbar(.hidden, for: .navigationBar)
@@ -204,6 +229,34 @@ struct PhotoDetailView: View {
     // MARK: - Custom Header
 
     private var customHeader: some View {
+    // MARK: - Delete Bar
+
+    /// Invisible anchor aligned with the navigation bar grid toggle.
+    /// Manually computes the global rect because `.walkthroughAnchor()` cannot
+    /// correctly report position when combined with `.position()` inside a GeometryReader.
+//     private var gridToggleWalkthroughAnchor: some View {
+//         GeometryReader { geo in
+//             let globalFrame = geo.frame(in: .global)
+//             let buttonSize = ControlMetrics.compactIconButton
+//             let centerX = geo.size.width - Spacing.standard - buttonSize / 2
+//             let centerY = geo.safeAreaInsets.top + 22
+//             let buttonGlobalRect = CGRect(
+//                 x: globalFrame.minX + centerX - buttonSize / 2,
+//                 y: globalFrame.minY + centerY - buttonSize / 2,
+//                 width: buttonSize,
+//                 height: buttonSize
+//             )
+//             Color.clear
+//                 .preference(
+//                     key: WalkthroughAnchorPreferenceKey.self,
+//                     value: [.gridToggle: buttonGlobalRect]
+//                 )
+//         }
+//         .allowsHitTesting(false)
+//     }
+
+    /// Small capsule delete button — bottom trailing
+//     private var deleteBar: some View {
         HStack {
             // Back button
             backButton
@@ -350,8 +403,6 @@ struct PhotoDetailView: View {
         .frame(height: 50)
     }
 
-    // MARK: - Delete Dialog
-
     private var customDeleteDialog: some View {
         ZStack(alignment: .bottomTrailing) {
             Color.black.opacity(0.001)
@@ -363,63 +414,48 @@ struct PhotoDetailView: View {
                     }
                 }
 
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Delete")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
+            VStack {
+                Spacer()
 
-                Text("Are you sure you want to delete the photo from this app?")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.white.opacity(0.7))
-                    .padding(.bottom, 4)
-
-                Button {
-                    deletePhoto()
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isShowingDeleteConfirmation = false
-                    }
-                } label: {
+                VStack(alignment: .leading, spacing: Spacing.small) {
                     Text("Delete")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color(hex: 0xFF453A))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 38)
-                        .background(Color.white.opacity(0.12))
-                        .clipShape(Capsule())
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+
+                    Text("Are you sure you want to delete the photo from this app?")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.white.opacity(0.7))
+                        .padding(.bottom, Spacing.medium)
+
+                    Button {
+                        deletePhoto()
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isShowingDeleteConfirmation = false
+                        }
+                    } label: {
+                        Text("Delete")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color(hex: 0xFF453A))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
                 }
-                .buttonStyle(.plain)
+                .padding(Spacing.large)
+                .background(Color(hex: 0x1C1C1E).opacity(0.85))
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .padding(.horizontal, Spacing.medium)
+                .padding(.bottom, Spacing.large)
             }
-            .padding(16)
-            .frame(width: 230)
-            .background {
-                if #available(iOS 26, *) {
-                    RoundedRectangle(cornerRadius: 30)
-                        .fill(Color.black.opacity(0.55))
-                        .glassEffect(.regular, in: .rect(cornerRadius: 30))
-                } else {
-                    RoundedRectangle(cornerRadius: 30)
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 30)
-                                .fill(Color.black.opacity(0.45))
-                        )
-                }
-            }
-            .padding(.trailing, Spacing.standard)
-            .padding(.bottom, Spacing.standard)
         }
         .transition(.opacity)
     }
-
-    // MARK: - Actions
-
     private func toggleGridOverlay() {
-        guard onboarding.allowsPhotoGridToggle else { return }
         HapticManager.selection()
         withAnimation(.easeInOut(duration: 0.2)) {
             isShowingOverlay.toggle()
         }
-        onboarding.advanceAfterGridToggle(isShowingOverlay: isShowingOverlay)
     }
 
     // MARK: - Helpers

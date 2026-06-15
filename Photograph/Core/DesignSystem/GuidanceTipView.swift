@@ -29,7 +29,7 @@ struct GuidanceTipView: View {
     private var labelContent: some View {
         HStack(spacing: Spacing.small) {
             if showsReadyIcon {
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: AppIcon.iconShowsReadyIconCheckMark)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(AppColors.gridlineGreen)
                     .accessibilityHidden(true)
