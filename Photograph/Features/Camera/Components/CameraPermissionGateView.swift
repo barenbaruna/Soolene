@@ -40,27 +40,32 @@ struct CameraPermissionGateView: View {
                     }
                 }
 
-                VStack(spacing: 0) {
-                    permissionRow(
+                VStack(spacing: Spacing.small) {
+                    permissionActionCard(
                         title: "Camera",
                         message: "We need camera access to show the live viewfinder and composition guidance while you shoot.",
                         systemImage: "camera.viewfinder",
                         status: cameraStatus,
-                        isAllowed: cameraStatus.allowsCamera
+                        isAllowed: cameraStatus.allowsCamera,
+                        isRequesting: isRequestingCamera,
+                        action: onRequestCameraAccess
                     )
 
-                    Divider()
-                        .background(AppColors.permissionDivider)
-                        .padding(.leading, 58)
-
-                    permissionRow(
+                    permissionActionCard(
                         title: "Gallery",
                         message: "We need photo library access to save captures and show your guided compositions in Gallery.",
                         systemImage: "photo.stack",
                         status: photoStatus,
-                        isAllowed: photoStatus.allowsPhotoBrowse
+                        isAllowed: photoStatus.allowsPhotoBrowse,
+                        isRequesting: isRequestingPhoto,
+                        action: onRequestPhotoAccess
                     )
                 }
+
+                Text("\(completedPermissionCount) of 2 permissions ready")
+                    .font(Typography.caption)
+                    .foregroundStyle(AppColors.permissionTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Button {
                     requestNextPermission()
@@ -123,43 +128,128 @@ struct CameraPermissionGateView: View {
         }
     }
 
-    private func permissionRow(
+    private var completedPermissionCount: Int {
+        [cameraStatus.allowsCamera, photoStatus.allowsPhotoBrowse].filter(\.self).count
+    }
+
+    @ViewBuilder
+    private func permissionActionCard(
         title: String,
         message: String,
         systemImage: String,
         status: PermissionStatus,
-        isAllowed: Bool
+        isAllowed: Bool,
+        isRequesting: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        if isAllowed {
+            permissionCardContent(
+                title: title,
+                message: message,
+                systemImage: systemImage,
+                status: status,
+                isAllowed: true,
+                isRequesting: false
+            )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(accessibilityLabel(for: title, status: status, isAllowed: true, isRequesting: false))
+        } else {
+            Button(action: action) {
+                permissionCardContent(
+                    title: title,
+                    message: message,
+                    systemImage: systemImage,
+                    status: status,
+                    isAllowed: false,
+                    isRequesting: isRequesting
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(isRequestingCurrentPermission)
+            .accessibilityLabel(accessibilityLabel(for: title, status: status, isAllowed: false, isRequesting: isRequesting))
+        }
+    }
+
+    private func permissionCardContent(
+        title: String,
+        message: String,
+        systemImage: String,
+        status: PermissionStatus,
+        isAllowed: Bool,
+        isRequesting: Bool
     ) -> some View {
         HStack(alignment: .top, spacing: Spacing.standard) {
-            Image(systemName: isAllowed ? "checkmark.circle.fill" : "circle")
+            Image(systemName: systemImage)
                 .font(.title3)
-                .foregroundStyle(isAllowed ? AppColors.primary : AppColors.permissionIconInactive)
+                .foregroundStyle(isAllowed ? AppColors.primary : AppColors.permissionTextPrimary)
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(isAllowed ? AppColors.primary.opacity(0.12) : AppColors.permissionIconInactive.opacity(0.16))
+                )
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: Spacing.small) {
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.small) {
-                    Label(title, systemImage: systemImage)
-                        .font(Typography.headline)
-                        .foregroundStyle(AppColors.permissionTextPrimary)
-                        .labelStyle(.titleAndIcon)
-
-                    Spacer(minLength: Spacing.small)
-
-                    Text(statusLabel(for: status, isAllowed: isAllowed))
-                        .font(Typography.caption)
-                        .foregroundStyle(isAllowed ? AppColors.primary : AppColors.permissionTextSecondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-                }
+                Text(title)
+                    .font(Typography.subheadline)
+                    .foregroundStyle(AppColors.permissionTextPrimary)
 
                 Text(message)
-                    .font(Typography.subheadline)
+                    .font(Typography.caption)
                     .foregroundStyle(AppColors.permissionTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            Spacer(minLength: Spacing.small)
+
+            permissionStatusIndicator(status: status, isAllowed: isAllowed, isRequesting: isRequesting)
         }
-        .padding(.vertical, Spacing.standard)
-        .accessibilityElement(children: .combine)
+        .padding(Spacing.standard)
+        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.medium)
+                .fill(Color.white.opacity(isAllowed ? 0.78 : 0.92))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.medium)
+                .stroke(isAllowed ? AppColors.primary.opacity(0.28) : AppColors.permissionDivider, lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: AppRadius.medium))
+    }
+
+    @ViewBuilder
+    private func permissionStatusIndicator(
+        status: PermissionStatus,
+        isAllowed: Bool,
+        isRequesting: Bool
+    ) -> some View {
+        if isRequesting {
+            ProgressView()
+                .tint(AppColors.primary)
+                .accessibilityHidden(true)
+        } else if isAllowed {
+            HStack(spacing: Spacing.tiny) {
+                Image(systemName: "checkmark.circle.fill")
+                Text(statusLabel(for: status, isAllowed: true))
+            }
+            .font(Typography.caption)
+            .foregroundStyle(AppColors.primary)
+            .lineLimit(1)
+        } else {
+            HStack(spacing: Spacing.tiny) {
+                Text(actionLabel(for: status))
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+            }
+            .font(Typography.caption)
+            .foregroundStyle(AppColors.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.82)
+        }
+    }
+
+    private func actionLabel(for status: PermissionStatus) -> String {
+        status.needsSettings ? "Review" : "Allow"
     }
 
     private func statusLabel(for status: PermissionStatus, isAllowed: Bool) -> String {
@@ -172,6 +262,27 @@ struct CameraPermissionGateView: View {
         }
 
         return "Required"
+    }
+
+    private func accessibilityLabel(
+        for title: String,
+        status: PermissionStatus,
+        isAllowed: Bool,
+        isRequesting: Bool
+    ) -> String {
+        if isRequesting {
+            return "\(title), requesting access"
+        }
+
+        if isAllowed {
+            return "\(title), \(statusLabel(for: status, isAllowed: true).lowercased())"
+        }
+
+        if status.needsSettings {
+            return "\(title), needs settings, review \(title.lowercased()) access"
+        }
+
+        return "\(title), required, allow \(title.lowercased()) access"
     }
 }
 
@@ -190,7 +301,43 @@ struct CameraPermissionGateView: View {
 #Preview("Camera Allowed") {
     CameraPermissionGateView(
         cameraStatus: .authorized,
+        photoStatus: .notDetermined,
+        isRequestingCamera: false,
+        isRequestingPhoto: false,
+        onRequestCameraAccess: {},
+        onRequestPhotoAccess: {},
+        onComplete: {}
+    )
+}
+
+#Preview("Camera Denied") {
+    CameraPermissionGateView(
+        cameraStatus: .denied,
+        photoStatus: .notDetermined,
+        isRequestingCamera: false,
+        isRequestingPhoto: false,
+        onRequestCameraAccess: {},
+        onRequestPhotoAccess: {},
+        onComplete: {}
+    )
+}
+
+#Preview("Gallery Denied") {
+    CameraPermissionGateView(
+        cameraStatus: .authorized,
         photoStatus: .denied,
+        isRequestingCamera: false,
+        isRequestingPhoto: false,
+        onRequestCameraAccess: {},
+        onRequestPhotoAccess: {},
+        onComplete: {}
+    )
+}
+
+#Preview("Gallery Limited") {
+    CameraPermissionGateView(
+        cameraStatus: .authorized,
+        photoStatus: .limited,
         isRequestingCamera: false,
         isRequestingPhoto: false,
         onRequestCameraAccess: {},

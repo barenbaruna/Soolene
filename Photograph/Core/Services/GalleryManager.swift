@@ -22,7 +22,7 @@ actor GalleryManager {
     /// - Parameters:
     ///   - photoData: Raw JPEG data including EXIF metadata
     ///   - composition: The detected composition type to store as metadata
-    func savePhoto(_ photoData: Data, composition: CompositionType) async throws {
+    func savePhoto(_ photoData: Data, composition: CompositionType) async throws -> String {
         // Check authorization
         let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
         if status == .notDetermined {
@@ -53,8 +53,11 @@ actor GalleryManager {
             }
         }
 
-        // Save composition metadata locally using the actual asset identifier
+        guard !localIdentifier.isEmpty else { throw GalleryError.saveFailed }
+
+        // Save composition metadata locally using the actual asset identifier.
         await saveCompositionMetadata(composition: composition, localIdentifier: localIdentifier)
+        return localIdentifier
     }
 
     // MARK: - Fetch Photos

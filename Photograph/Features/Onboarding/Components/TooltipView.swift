@@ -17,11 +17,14 @@ import SwiftUI
 /// Where the caret arrow points relative to the card.
 enum TooltipAnchor {
     case none
-    case top          // Caret on top → card appears BELOW the target
-    case topTrailing  // Caret on top-right
-    case bottom       // Caret on bottom → card appears ABOVE the target
-    case bottomLeading   // Caret on bottom-left
-    case bottomTrailing  // Caret on bottom-right
+    case top // Caret on top → card appears BELOW the target
+    case topTrailing // Caret on top-right
+    case bottom // Caret on bottom → card appears ABOVE the target
+    case bottomLeading // Caret on bottom-left
+    case bottomTrailing // Caret on bottom-right
+    case custom(
+        position: (CGFloat, CGFloat, CGRect, CGFloat, CGFloat) -> CGPoint
+    ) // custom position
 }
 
 // MARK: - TooltipView
@@ -92,7 +95,6 @@ struct TooltipView: View {
             || (secondaryLabel != nil && onSecondary != nil)
     }
 
-    @ViewBuilder
     private var actionRow: some View {
         HStack {
             if let primaryLabel, let onPrimary {

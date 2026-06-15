@@ -154,7 +154,7 @@ struct CameraView: View {
             advanceGuideWalkthroughIfReady()
         }
         .fullScreenCover(isPresented: $isShowingGallery) {
-            GalleryView()
+            GalleryView(initialPhotoIdentifier: viewModel.lastSavedAssetIdentifier)
         }
         .onChange(of: viewModel.spatialEngine.capturedPhotoData) { _, newData in
             if newData != nil {
@@ -165,6 +165,10 @@ struct CameraView: View {
             if newData != nil {
                 Task { await viewModel.savePhoto() }
             }
+        }
+        .onChange(of: viewModel.lastSavedAssetIdentifier) { _, identifier in
+            guard let identifier else { return }
+            onboarding.recordWalkthroughPhotoIdentifier(identifier)
         }
         .onChange(of: viewModel.trackingStabilityProgress) { _, _ in
             viewModel.syncHandoffRecovery()
