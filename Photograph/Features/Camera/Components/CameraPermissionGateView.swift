@@ -84,7 +84,6 @@ struct CameraPermissionGateView: View {
             .frame(maxWidth: 430)
             .padding(Spacing.large)
         }
-        .preferredColorScheme(.light)
         .accessibilityElement(children: .contain)
     }
 
@@ -97,7 +96,7 @@ struct CameraPermissionGateView: View {
             return photoStatus.needsSettings ? "Review Gallery Access" : "Allow Gallery Access"
         }
 
-        return "Completed"
+        return "Continue"
     }
 
     private var primaryActionTint: Color {
