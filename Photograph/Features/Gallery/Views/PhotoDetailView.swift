@@ -4,10 +4,8 @@
 //
 //  Full-screen photo viewer with composition overlay toggle.
 //
-//  HIG §8.1: Toolbar with .principal for date pill, .topBarTrailing for toggle
-//  HIG §15.1: .regularMaterial for date capsule, .ultraThinMaterial for controls
-//  HIG §12.4: .confirmationDialog for delete
-//  HIG §4.6: .buttonStyle(.glass) for interactive buttons
+//  Uses Liquid Glass (iOS 26+) for header buttons, date pill, and delete dialog.
+//  Falls back to manual styling for iOS < 26.
 //
 //  Uses Design System: Typography, Spacing, AppColors.
 //
@@ -57,60 +55,29 @@ struct PhotoDetailView: View {
         ZStack {
             Color.white.ignoresSafeArea()
 
-            VStack(spacing: Spacing.medium) {
+            VStack(spacing: 0) {
+                // 1) Header
                 customHeader
+                    .padding(.bottom, Spacing.small)
 
-                Group {
-                    if let fullImage {
-                        GeometryReader { geo in
-                            let cardWidth = geo.size.width
-                            let cardHeight = geo.size.height
-                            
-                            ZStack {
-                                Image(uiImage: fullImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: cardWidth, height: cardHeight)
-                                    .clipShape(RoundedRectangle(cornerRadius: 40))
-                                
-                                if isShowingOverlay {
-                                    StaticOverlayView(composition: currentComposition, size: CGSize(width: cardWidth, height: cardHeight))
-                                        .clipShape(RoundedRectangle(cornerRadius: 40))
-                                }
-                            }
-                        }
-                        .padding(.horizontal, Spacing.medium)
-                    } else {
-                        ProgressView()
-                            .tint(AppColors.primary)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // 2) Main Photo — takes remaining space but capped
+                mainPhotoCard
+                    .padding(.horizontal, Spacing.standard)
 
+                Spacer(minLength: Spacing.small)
+
+                // 3) Thumbnail carousel — centered, below photo
                 thumbnailCarousel
-                    .padding(.vertical, Spacing.small)
+                    .padding(.bottom, Spacing.small)
 
+                // 4) Trash button — trailing, below carousel
                 HStack {
                     Spacer()
-                    Button {
-                        HapticManager.selection()
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isShowingDeleteConfirmation = true
-                        }
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.system(size: 20))
-                            .foregroundStyle(AppColors.secondary)
-                            .frame(width: 48, height: 48)
-                            .background(Color.white)
-                            .clipShape(Circle())
-                            .shadow(color: Color.black.opacity(0.12), radius: 5, x: 0, y: 2)
-                    }
-                    .buttonStyle(.plain)
+                    trashButton
                 }
                 .padding(.horizontal, Spacing.large)
                 .padding(.bottom, Spacing.standard)
+                .opacity(isShowingDeleteConfirmation ? 0 : 1)
             }
 
             if isShowingDeleteConfirmation {
@@ -161,6 +128,106 @@ struct PhotoDetailView: View {
         }
     }
 
+    // MARK: - Main Photo Card
+
+    private var mainPhotoCard: some View {
+        Group {
+            if let fullImage {
+                GeometryReader { geo in
+                    ZStack {
+                        Image(uiImage: fullImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: geo.size.width, height: geo.size.height)
+                            .clipped()
+
+                        if isShowingOverlay {
+                            CompositionGridView(
+                                composition: currentComposition,
+                                rect: CGRect(origin: .zero, size: geo.size),
+                                color: AppColors.gridlineGreen,
+                                isPerfect: false,
+                                showSubjectBox: false
+                            )
+                            .frame(width: geo.size.width, height: geo.size.height)
+                        }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 40))
+                    .frame(width: geo.size.width, height: geo.size.height)
+                }
+            } else {
+                ProgressView()
+                    .tint(AppColors.primary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+
+    // MARK: - Trash Button
+
+    private var trashButton: some View {
+        Group {
+            if #available(iOS 26, *) {
+                Button {
+                    HapticManager.selection()
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isShowingDeleteConfirmation = true
+                    }
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 18))
+                        .foregroundStyle(AppColors.secondary)
+                }
+                .buttonStyle(.glass)
+                .disabled(!onboarding.allowsPhotoDelete)
+            } else {
+                Button {
+                    HapticManager.selection()
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isShowingDeleteConfirmation = true
+                    }
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 20))
+                        .foregroundStyle(AppColors.secondary)
+                        .frame(width: 48, height: 48)
+                        .background(Color.white)
+                        .clipShape(Circle())
+                        .shadow(color: Color.black.opacity(0.12), radius: 5, x: 0, y: 2)
+                        .overlay(Circle().stroke(Color.black.opacity(0.1), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .disabled(!onboarding.allowsPhotoDelete)
+            }
+        }
+    }
+
+    // MARK: - Walkthrough Anchor
+
+    /// Invisible anchor aligned with the header grid toggle button.
+    private var gridToggleWalkthroughAnchor: some View {
+        GeometryReader { geo in
+            let globalFrame = geo.frame(in: .global)
+            let buttonSize = ControlMetrics.compactIconButton
+            let centerX = geo.size.width - Spacing.standard - buttonSize / 2
+            let centerY = geo.safeAreaInsets.top + 22
+            let buttonGlobalRect = CGRect(
+                x: globalFrame.minX + centerX - buttonSize / 2,
+                y: globalFrame.minY + centerY - buttonSize / 2,
+                width: buttonSize,
+                height: buttonSize
+            )
+            Color.clear
+                .preference(
+                    key: WalkthroughAnchorPreferenceKey.self,
+                    value: [.gridToggle: buttonGlobalRect]
+                )
+        }
+        .allowsHitTesting(false)
+    }
+
+    // MARK: - Custom Header
+
     private var customHeader: some View {
     // MARK: - Delete Bar
 
@@ -191,64 +258,119 @@ struct PhotoDetailView: View {
     /// Small capsule delete button — bottom trailing
 //     private var deleteBar: some View {
         HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(AppColors.primary)
-                    .frame(width: 40, height: 40)
-                    .background(Color.white)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().stroke(Color.black.opacity(0.1), lineWidth: 1)
-                    )
-            }
-            .buttonStyle(.plain)
+            // Back button
+            backButton
+                .disabled(!onboarding.allowsPhotoDetailExit)
 
             Spacer()
 
-            VStack(spacing: 2) {
-                Text(dateParts.date)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(AppColors.primary)
-                Text(dateParts.time)
-                    .font(.system(size: 10, weight: .regular))
-                    .foregroundStyle(AppColors.primary.opacity(0.7))
-            }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 24)
-            .background(Color.white)
-            .clipShape(Capsule())
-            .overlay(
-                Capsule().stroke(Color.black.opacity(0.1), lineWidth: 1)
-            )
+            // Date pill
+            datePill
 
             Spacer()
 
-            Button {
-                HapticManager.selection()
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isShowingOverlay.toggle()
-                }
-            } label: {
-                Image(systemName: "scope")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(isShowingOverlay ? .white : AppColors.primary)
-                    .frame(width: 40, height: 40)
-                    .background(isShowingOverlay ? AppColors.primary : Color.white)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().stroke(isShowingOverlay ? Color.clear : Color.black.opacity(0.1), lineWidth: 1)
-                    )
-            }
-            .buttonStyle(.plain)
-//             .accessibilityLabel("Delete Photo")
-//             .disabled(!onboarding.allowsPhotoDelete)
+            // Scope / grid overlay toggle
+            scopeButton
+                .disabled(!onboarding.allowsPhotoGridToggle)
         }
         .padding(.horizontal, Spacing.medium)
         .padding(.top, Spacing.small)
     }
+
+    // MARK: - Header Sub-components
+
+    private var backButton: some View {
+        Group {
+            if #available(iOS 26, *) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(AppColors.primary)
+                }
+                .buttonStyle(.glass)
+            } else {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(AppColors.primary)
+                        .frame(width: 40, height: 40)
+                        .background(Color.white)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.black.opacity(0.1), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var datePill: some View {
+        Group {
+            if #available(iOS 26, *) {
+                VStack(spacing: 2) {
+                    Text(dateParts.date)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppColors.primary)
+                    Text(dateParts.time)
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundStyle(AppColors.primary.opacity(0.7))
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 24)
+                .glassEffect(.regular, in: .capsule)
+            } else {
+                VStack(spacing: 2) {
+                    Text(dateParts.date)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppColors.primary)
+                    Text(dateParts.time)
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundStyle(AppColors.primary.opacity(0.7))
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 24)
+                .background(Color.white)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.black.opacity(0.1), lineWidth: 1))
+            }
+        }
+    }
+
+    private var scopeButton: some View {
+        Group {
+            if #available(iOS 26, *) {
+                if isShowingOverlay {
+                    Button { toggleGridOverlay() } label: {
+                        Image(systemName: "scope")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(.white)
+                    }
+                    .buttonStyle(.glassProminent)
+                } else {
+                    Button { toggleGridOverlay() } label: {
+                        Image(systemName: "scope")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(AppColors.primary)
+                    }
+                    .buttonStyle(.glass)
+                }
+            } else {
+                Button { toggleGridOverlay() } label: {
+                    Image(systemName: "scope")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(isShowingOverlay ? .white : AppColors.primary)
+                        .frame(width: 40, height: 40)
+                        .background(isShowingOverlay ? AppColors.primary : Color.white)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle().stroke(isShowingOverlay ? Color.clear : Color.black.opacity(0.1), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Thumbnail Carousel
 
     private var thumbnailCarousel: some View {
         GeometryReader { carouselGeo in
@@ -282,9 +404,10 @@ struct PhotoDetailView: View {
     }
 
     private var customDeleteDialog: some View {
-        ZStack {
-            Color.black.opacity(0.2)
+        ZStack(alignment: .bottomTrailing) {
+            Color.black.opacity(0.001)
                 .ignoresSafeArea()
+                .contentShape(Rectangle())
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isShowingDeleteConfirmation = false
@@ -336,14 +459,6 @@ struct PhotoDetailView: View {
     }
 
     // MARK: - Helpers
-
-    private func imageFitSize(image: UIImage, in containerSize: CGSize) -> CGSize {
-        let r = image.size.width / image.size.height
-        let cr = containerSize.width / containerSize.height
-        return r > cr
-            ? CGSize(width: containerSize.width, height: containerSize.width / r)
-            : CGSize(width: containerSize.height * r, height: containerSize.height)
-    }
 
     private var dateParts: (date: String, time: String) {
         guard let asset = currentAsset, let date = asset.creationDate else { return ("", "") }

@@ -108,21 +108,30 @@ struct GalleryView: View {
     private var customHeader: some View {
         VStack(spacing: Spacing.medium) {
             HStack(spacing: Spacing.medium) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(AppColors.primary)
-                        .frame(width: 40, height: 40)
-                        .background(Color(white: 0.95))
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(Color.black.opacity(0.1), lineWidth: 1)
-                        )
+                Group {
+                    if #available(iOS 26, *) {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(AppColors.primary)
+                        }
+                        .buttonStyle(.glass)
+                    } else {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(AppColors.primary)
+                                .frame(width: 40, height: 40)
+                                .background(Color(white: 0.95))
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
                 
                 Text("Collections")
                     .font(.system(size: 30, weight: .bold))
@@ -133,56 +142,26 @@ struct GalleryView: View {
             .padding(.horizontal, Spacing.standard)
             
             // Custom sliding Segmented Control (Native iOS Liquid Glass design)
-            HStack(spacing: 0) {
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                        selectedTab = .recent
-                    }
-                } label: {
-                    Text("Recent")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(selectedTab == .recent ? AppColors.primary : Color(hex: 0x8E8E93))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 40)
-                }
-                .buttonStyle(.plain)
-                
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                        selectedTab = .library
-                    }
-                } label: {
-                    Text("Library")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(selectedTab == .library ? AppColors.primary : Color(hex: 0x8E8E93))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 40)
-                }
-                .buttonStyle(.plain)
-            }
-            .background {
-                GeometryReader { geo in
-                    let width = geo.size.width / 2
-                    Capsule()
-                        .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
-                        .frame(width: width, height: geo.size.height)
-                        .offset(x: selectedTab == .recent ? 0 : width)
-                }
-            }
-            .clipShape(Capsule())
-            .glassEffect(.regular, in: .capsule)
-            .frame(width: 240)
+            segmentedControl
         }
         .padding(.top, Spacing.small)
         .padding(.bottom, Spacing.medium)
         .background(Color.white)
     }
 
+    private var segmentedControl: some View {
+        Picker("Tab", selection: $selectedTab) {
+            Text("Recent").tag(GalleryTab.recent)
+            Text("Library").tag(GalleryTab.library)
+        }
+        .pickerStyle(.segmented)
+        .frame(width: 240)
+    }
+
     private var recentContent: some View {
         let screenWidth = UIScreen.main.bounds.width
         let cardWidth = (screenWidth - 48) / 2
-        let cardHeight = cardWidth * 1.25
+        let cardHeight = cardWidth * 1.05
         let recentRows = [
             GridItem(.fixed(cardHeight), spacing: Spacing.standard),
             GridItem(.fixed(cardHeight), spacing: Spacing.standard),
@@ -224,14 +203,14 @@ struct GalleryView: View {
     private var libraryContent: some View {
         let screenWidth = UIScreen.main.bounds.width
         let cardWidth = (screenWidth - 48) / 2
-        let cardHeight = cardWidth * 1.25
+        let cardHeight = cardWidth * 1.05
         
         return ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: Spacing.large) {
                 ForEach(CompositionType.allCases) { type in
                     let assets = viewModel.assetsByComposition[type] ?? []
-                    
-                    VStack(alignment: .leading, spacing: Spacing.small) {
+                    if !assets.isEmpty {
+                        VStack(alignment: .leading, spacing: Spacing.small) {
                         HStack {
                             Text(type.rawValue)
                                 .font(.system(size: 18, weight: .bold))
@@ -255,51 +234,35 @@ struct GalleryView: View {
                         
                         ScrollView(.horizontal, showsIndicators: false) {
                             LazyHStack(spacing: 12) {
-                                if assets.isEmpty {
-                                    RoundedRectangle(cornerRadius: 35)
-                                        .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [6]))
-                                        .foregroundStyle(Color.gray.opacity(0.4))
-                                        .frame(width: cardWidth, height: cardHeight)
-                                        .overlay {
-                                            VStack(spacing: 4) {
-                                                Image(systemName: "photo.badge.plus")
-                                                    .font(.title2)
-                                                    .foregroundStyle(Color.gray)
-                                                Text("No photos")
-                                                    .font(.caption)
-                                                    .foregroundStyle(Color.gray)
-                                            }
-                                        }
-                                } else {
-                                    ForEach(Array(assets.enumerated()), id: \.element.localIdentifier) { index, asset in
-                                        NavigationLink {
-                                            PhotoDetailView(
-                                                assets: assets,
-                                                currentIndex: index,
-                                                assetCompositionMap: viewModel.assetCompositionMap,
-                                                onDelete: {
-                                                    Task {
-                                                        await viewModel.refresh()
-                                                    }
+                                ForEach(Array(assets.enumerated()), id: \.element.localIdentifier) { index, asset in
+                                    NavigationLink {
+                                        PhotoDetailView(
+                                            assets: assets,
+                                            currentIndex: index,
+                                            assetCompositionMap: viewModel.assetCompositionMap,
+                                            onDelete: {
+                                                Task {
+                                                    await viewModel.refresh()
                                                 }
+                                            }
+                                        )
+                                    } label: {
+                                        PhotoThumbnailView(asset: asset)
+                                            .frame(width: cardWidth, height: cardHeight)
+                                            .clipShape(RoundedRectangle(cornerRadius: 35))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 35)
+                                                    .stroke(AppColors.secondary, lineWidth: 3)
                                             )
-                                        } label: {
-                                            PhotoThumbnailView(asset: asset)
-                                                .frame(width: cardWidth, height: cardHeight)
-                                                .clipShape(RoundedRectangle(cornerRadius: 35))
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 35)
-                                                        .stroke(AppColors.secondary, lineWidth: 3)
-                                                )
-                                        }
-                                        .buttonStyle(.plain)
                                     }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal, Spacing.standard)
                         }
                         .frame(height: cardHeight + 6)
                     }
+                }
                 }
             }
             .padding(.top, Spacing.small)
@@ -323,7 +286,16 @@ struct GalleryView: View {
             .foregroundStyle(AppColors.primary)
         }
         .padding(Spacing.small)
-        .background(Color.black.opacity(0.05), in: RoundedRectangle(cornerRadius: AppRadius.small))
+        .background {
+            if #available(iOS 26, *) {
+                RoundedRectangle(cornerRadius: AppRadius.small)
+                    .fill(Color.clear)
+                    .glassEffect(.regular, in: .rect(cornerRadius: AppRadius.small))
+            } else {
+                RoundedRectangle(cornerRadius: AppRadius.small)
+                    .fill(Color.black.opacity(0.05))
+            }
+        }
     }
 
 

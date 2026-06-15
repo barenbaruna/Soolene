@@ -50,21 +50,30 @@ struct CompositionPhotoListView: View {
 
     private var customHeader: some View {
         HStack(spacing: Spacing.medium) {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(AppColors.primary)
-                    .frame(width: 40, height: 40)
-                    .background(Color(white: 0.95))
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle()
-                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
-                    )
+            Group {
+                if #available(iOS 26, *) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(AppColors.primary)
+                    }
+                    .buttonStyle(.glass)
+                } else {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(AppColors.primary)
+                            .frame(width: 40, height: 40)
+                            .background(Color(white: 0.95))
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .buttonStyle(.plain)
             
             Text(viewModel.composition.rawValue)
                 .font(.system(size: 24, weight: .bold))
@@ -94,15 +103,16 @@ struct CompositionPhotoListView: View {
                             }
                         )
                     } label: {
-                        PhotoThumbnailView(asset: asset)
-                            .aspectRatio(4/5, contentMode: .fill)
-                            .frame(minWidth: 0, maxWidth: .infinity)
-                            .aspectRatio(4/5, contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 35))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 35)
-                                    .stroke(AppColors.secondary, lineWidth: 3)
-                            )
+                        GeometryReader { cellGeo in
+                            PhotoThumbnailView(asset: asset)
+                                .frame(width: cellGeo.size.width, height: cellGeo.size.width * 1.05)
+                                .clipShape(RoundedRectangle(cornerRadius: 35))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 35)
+                                        .stroke(AppColors.secondary, lineWidth: 3)
+                                )
+                        }
+                        .aspectRatio(1/1.05, contentMode: .fit)
                     }
                     .buttonStyle(.plain)
                 }
