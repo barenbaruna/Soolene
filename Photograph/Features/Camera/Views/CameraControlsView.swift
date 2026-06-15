@@ -101,7 +101,6 @@ struct CameraControlsView: View {
         case .timer:
             viewModel.cycleTimer()
         case .aspect:
-            withAnimation { viewModel.activePanel = viewModel.activePanel == .aspect ? nil : .aspect }
             cycleAspectRatio()
         case .exposure:
             withAnimation(.snappy) {

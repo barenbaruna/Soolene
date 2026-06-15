@@ -14,6 +14,17 @@ struct CameraGuidanceOverlayStack: View {
 
     var body: some View {
         ZStack {
+            if viewModel.selectedAspectRatio != .free {
+                GeometryReader { proxy in
+                    let fullRect = proxy.frame(in: .local)
+                    let drawRect = aspectMaskedRect(in: fullRect, aspectRatio: viewModel.selectedAspectRatio)
+                    AspectMask(fullRect: fullRect, contentRect: drawRect)
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .animation(.easeInOut(duration: 0.3), value: viewModel.selectedAspectRatio)
+            }
+
             if viewModel.guidancePhase.showsCompositionGrid,
                let composition = viewModel.guidancePhase.composition {
                 CompositionOverlayView(
@@ -78,5 +89,28 @@ struct CameraGuidanceOverlayStack: View {
             if case .scanning = phase { return }
             recordedScanCoachSession = false
         }
+    }
+
+    private func aspectMaskedRect(in rect: CGRect, aspectRatio: AspectRatioMode) -> CGRect {
+        guard aspectRatio != .free else { return rect }
+
+        let ratio: CGFloat
+        switch aspectRatio {
+        case .oneOne: ratio = 1.0
+        case .fourThree: ratio = 3.0 / 4.0
+        case .sixteenNine: ratio = 9.0 / 16.0
+        case .free: return rect
+        }
+
+        var w = rect.width
+        var h = w / ratio
+        if h > rect.height { h = rect.height; w = h * ratio }
+
+        return CGRect(
+            x: rect.midX - w / 2,
+            y: rect.midY - h / 2,
+            width: w,
+            height: h
+        )
     }
 }

@@ -22,7 +22,7 @@ struct CameraBottomBar: View {
                             .resizable()
                             .scaledToFill()
                     } else {
-                        Image(systemName: "photo.on.rectangle.angled")
+                        Image(AppIcon.iconGallery)
                             .font(.title2)
                             .foregroundStyle(AppColors.textOnCamera)
                     }
@@ -66,7 +66,7 @@ struct CameraBottomBar: View {
 
             Button { viewModel.switchCamera() } label: {
                 ZStack {
-                    Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                    Image(systemName: AppIcon.iconFlipCamera)
                         .font(.title2)
                         .opacity(viewModel.isSwitchingCamera ? 0 : 1)
 
