@@ -128,7 +128,7 @@ final class OnboardingStore {
         advanceStep()
     }
 
-    func advanceAfterGuideAcknowledgement() {
+    func advanceAfterGuideCompletion() {
         guard isWalkthroughActive, currentStep == .followGuide else { return }
         advanceStep()
     }
