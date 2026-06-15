@@ -41,7 +41,6 @@ struct GalleryView: View {
                             onRequestAccess: { 
                               Task {
                                   await viewModel.requestReadAccess()
-                                  openRecentPhotoForWalkthroughIfNeeded()
                               }
                             },
                             onOpenSettings: { PrivacyPermissionService.openSettings() },
@@ -76,8 +75,15 @@ struct GalleryView: View {
             }
             .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationDestination(for: String.self) { identifier in
-                if let asset = viewModel.asset(localIdentifier: identifier) {
-                    PhotoDetailView(asset: asset, composition: viewModel.recentComposition)
+                if let idx = viewModel.allAssets.firstIndex(where: { $0.localIdentifier == identifier }) {
+                    PhotoDetailView(
+                        assets: viewModel.allAssets,
+                        currentIndex: idx,
+                        assetCompositionMap: viewModel.assetCompositionMap,
+                        onDelete: {
+                            Task { await viewModel.refresh() }
+                        }
+                    )
                 } else {
                     ContentUnavailableView(
                         "Photo Unavailable",
@@ -91,16 +97,11 @@ struct GalleryView: View {
         .preferredColorScheme(.dark)
         .task {
             await viewModel.bootstrap()
-            openRecentPhotoForWalkthroughIfNeeded()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Task {
                 await viewModel.refresh()
-                openRecentPhotoForWalkthroughIfNeeded()
             }
-        }
-        .onChange(of: viewModel.recentAsset?.localIdentifier) { _, _ in
-            openRecentPhotoForWalkthroughIfNeeded()
         }
     }
 
@@ -325,10 +326,5 @@ struct GalleryView: View {
         .background(Color.black.opacity(0.05), in: RoundedRectangle(cornerRadius: AppRadius.small))
     }
 
-    private func openRecentPhotoForWalkthroughIfNeeded() {
-        guard onboarding.shouldAutoOpenRecentPhoto else { return }
-        guard navigationPath.isEmpty else { return }
-        guard let recentIdentifier = viewModel.recentAsset?.localIdentifier else { return }
-        navigationPath = [recentIdentifier]
-    }
+
 }

@@ -115,15 +115,13 @@ struct PhotoDetailView: View {
 
             if isShowingDeleteConfirmation {
                 customDeleteDialog
+            }
             // Walkthrough Overlay
             WalkthroughOverlayView(context: .detail, anchors: walkthroughAnchors)
         }
-        .overlay {
-            gridToggleWalkthroughAnchor
-        }
         .onPreferenceChange(WalkthroughAnchorPreferenceKey.self) { walkthroughAnchors = $0 }
         .navigationBarBackButtonHidden(true)
-        .navigationTitle(composition.galleryLabel)
+        .navigationTitle(currentComposition.galleryLabel)
         .toolbarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
@@ -330,14 +328,12 @@ struct PhotoDetailView: View {
         }
         .transition(.opacity)
     }
-//     private func toggleGridOverlay() {
-//         guard onboarding.allowsPhotoGridToggle else { return }
-//         HapticManager.selection()
-//         withAnimation(.easeInOut(duration: 0.2)) {
-//             isShowingOverlay.toggle()
-//         }
-//         onboarding.advanceAfterGridToggle(isShowingOverlay: isShowingOverlay)
-//     }
+    private func toggleGridOverlay() {
+        HapticManager.selection()
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isShowingOverlay.toggle()
+        }
+    }
 
     // MARK: - Helpers
 
