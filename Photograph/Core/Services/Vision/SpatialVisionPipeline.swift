@@ -51,7 +51,8 @@ enum SpatialVisionPipeline {
             }
             let offsetResult = AlignmentAnalyzer.computeSubjectOffset(
                 for: updated.detectedComposition,
-                geometry: updated.sceneGeometry
+                geometry: updated.sceneGeometry,
+                wasPerfect: current.isCompositionPerfect
             )
             updated.subjectOffset = offsetResult.vector
             updated.isCompositionPerfect = offsetResult.isPerfect

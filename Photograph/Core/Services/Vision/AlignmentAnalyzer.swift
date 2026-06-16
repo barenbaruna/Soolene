@@ -15,6 +15,7 @@
 
 import AVFoundation
 import CoreGraphics
+import UIKit
 import Foundation
 
 struct AlignmentAnalyzer {
@@ -26,6 +27,9 @@ struct AlignmentAnalyzer {
 
     /// Horizon must be within this many degrees to count as level.
     private static let horizontalPerfectAngleThreshold: Double = 2.0
+    
+    /// Horizon exit threshold for hysteresis (prevents rapid flickering).
+    private static let horizontalExitAngleThreshold: Double = 2.5
 
     // MARK: - Subject Point Resolution
 
@@ -98,7 +102,8 @@ struct AlignmentAnalyzer {
     /// intersection/diagonal to pick. Once chosen, the target never moves.
     static func computeFixedTarget(
         for composition: CompositionType,
-        subjectAtLockTime subject: CGPoint
+        subjectAtLockTime subject: CGPoint,
+        orientation: UIDeviceOrientation = UIDevice.current.orientation
     ) -> CGPoint {
         switch composition {
         case .center:
@@ -118,12 +123,10 @@ struct AlignmentAnalyzer {
             }) ?? CGPoint(x: 1.0/3.0, y: 1.0/3.0)
 
         case .horizontal:
-            // Horizontal center line, preserve initial X
-            return CGPoint(x: subject.x, y: 0.5)
+            return orientation.isLandscape ? CGPoint(x: 0.5, y: subject.y) : CGPoint(x: subject.x, y: 0.5)
 
         case .vertical:
-            // Vertical center axis, preserve initial Y
-            return CGPoint(x: 0.5, y: subject.y)
+            return orientation.isLandscape ? CGPoint(x: subject.x, y: 0.5) : CGPoint(x: 0.5, y: subject.y)
 
         case .diagonal:
             // Nearest point on the nearest diagonal at lock time
@@ -141,7 +144,12 @@ struct AlignmentAnalyzer {
     /// given the current composition type and the subject's current position.
     /// NOTE: When `lockedTargetPoint` is set (after user picks composition),
     /// this method returns the locked value immediately — no recalculation.
-    static func targetPoint(for composition: CompositionType, subject: CGPoint, geometry: SceneGeometry) -> CGPoint? {
+    static func targetPoint(
+        for composition: CompositionType, 
+        subject: CGPoint, 
+        geometry: SceneGeometry,
+        orientation: UIDeviceOrientation = UIDevice.current.orientation
+    ) -> CGPoint? {
         if let locked = geometry.lockedTargetPoint {
             return locked
         }
@@ -165,12 +173,10 @@ struct AlignmentAnalyzer {
             return CGPoint(x: 0.5, y: 0.5)
 
         case .horizontal:
-            // Guide the subject/horizon to horizontal center line, preserving X
-            return CGPoint(x: subject.x, y: 0.5)
+            return orientation.isLandscape ? CGPoint(x: 0.5, y: subject.y) : CGPoint(x: subject.x, y: 0.5)
 
         case .vertical:
-            // Guide the subject to the center vertical axis, preserve Y
-            return CGPoint(x: 0.5, y: subject.y)
+            return orientation.isLandscape ? CGPoint(x: subject.x, y: 0.5) : CGPoint(x: 0.5, y: subject.y)
 
         case .diagonal:
             // Two diagonals: y=x (top-left→bottom-right) and y=1−x (top-right→bottom-left)
@@ -189,19 +195,27 @@ struct AlignmentAnalyzer {
     static func computeSubjectOffset(
         for composition: CompositionType,
         geometry: SceneGeometry,
-        depthData: AVDepthData? = nil
+        depthData: AVDepthData? = nil,
+        orientation: UIDeviceOrientation = UIDevice.current.orientation,
+        wasPerfect: Bool = false
     ) -> (vector: CGVector, isPerfect: Bool, guidanceDistance: CGFloat) {
         switch composition {
         case .horizontal:
             let angleDeg = effectiveHorizonAngle(geometry: geometry)
-            let isPerfect = abs(angleDeg) < horizontalPerfectAngleThreshold
-            let dy = CGFloat(angleDeg / 15.0) * 0.25
+            let threshold = wasPerfect ? horizontalExitAngleThreshold : horizontalPerfectAngleThreshold
+            let isPerfect = abs(angleDeg) < threshold
+            let offset = CGFloat(angleDeg / 15.0) * 0.25
             let guidanceDistance = CGFloat(min(abs(angleDeg) / 15.0, 1.0))
-            return (CGVector(dx: 0, dy: dy), isPerfect, guidanceDistance)
+            
+            if orientation.isLandscape {
+                return (CGVector(dx: offset, dy: 0), isPerfect, guidanceDistance)
+            } else {
+                return (CGVector(dx: 0, dy: offset), isPerfect, guidanceDistance)
+            }
 
         case .ruleOfThirds, .center, .diagonal, .vertical:
             guard let subject = geometry.smoothedSubjectPoint ?? resolveSubjectPoint(from: geometry, depthData: depthData),
-                  let target = targetPoint(for: composition, subject: subject, geometry: geometry)
+                  let target = targetPoint(for: composition, subject: subject, geometry: geometry, orientation: orientation)
             else {
                 return (.zero, false, 1.0)
             }
@@ -222,7 +236,8 @@ struct AlignmentAnalyzer {
         for composition: CompositionType,
         geometry: SceneGeometry,
         isPerfect: Bool,
-        depthData: AVDepthData? = nil
+        depthData: AVDepthData? = nil,
+        orientation: UIDeviceOrientation = UIDevice.current.orientation
     ) -> Float {
         switch composition {
 
@@ -235,7 +250,7 @@ struct AlignmentAnalyzer {
 
         case .ruleOfThirds, .center, .diagonal, .vertical:
             guard let subject = geometry.smoothedSubjectPoint ?? resolveSubjectPoint(from: geometry, depthData: depthData),
-                  let target  = targetPoint(for: composition, subject: subject, geometry: geometry)
+                  let target  = targetPoint(for: composition, subject: subject, geometry: geometry, orientation: orientation)
             else { return 0.0 }
 
             let dist = distance(subject, target)
@@ -251,7 +266,10 @@ struct AlignmentAnalyzer {
             return geometry.horizonAngle
         }
         if let roll = geometry.deviceRollDegrees {
-            return roll
+            let mod = roll.truncatingRemainder(dividingBy: 90.0)
+            if mod > 45 { return mod - 90 }
+            if mod < -45 { return mod + 90 }
+            return mod
         }
         return geometry.horizonAngle
     }
