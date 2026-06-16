@@ -55,6 +55,12 @@ struct PhotoDetailView: View {
             Color.white.ignoresSafeArea()
 
             VStack(spacing: 0) {
+                Text(currentComposition.galleryLabel.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(AppColors.secondary)
+                    .opacity(isShowingOverlay ? 1 : 0)
+                    .padding(.vertical, 8)
+
                 // 1) Main Photo — takes remaining space but capped
                 mainPhotoCard
                     .padding(.horizontal, Spacing.standard)
