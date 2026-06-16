@@ -23,8 +23,6 @@ struct CompositionPhotoListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            customHeader
-            
             Group {
                 if viewModel.isLoading {
                     ProgressView()
@@ -44,47 +42,23 @@ struct CompositionPhotoListView: View {
         }
         .background(Color.white)
         .preferredColorScheme(.light)
-        .toolbar(.hidden, for: .navigationBar)
-        .task { await viewModel.loadPhotos() }
-    }
-
-    private var customHeader: some View {
-        HStack(spacing: Spacing.medium) {
-            Group {
-                if #available(iOS 26, *) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(AppColors.primary)
+        .navigationTitle(viewModel.composition.rawValue)
+        .navigationBarTitleDisplayMode(.large)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.backward")
+                            .font(.system(size: 17, weight: .semibold))
                     }
-                    .buttonStyle(.glass)
-                } else {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(AppColors.primary)
-                            .frame(width: 40, height: 40)
-                            .background(Color(white: 0.95))
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
+                    .foregroundStyle(AppColors.primary)
                 }
             }
-            
-            Text(viewModel.composition.rawValue)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(AppColors.primary)
-            
-            Spacer()
         }
-        .padding(.horizontal, Spacing.standard)
-        .padding(.top, Spacing.small)
-        .padding(.bottom, Spacing.medium)
-        .background(Color.white)
+        .task { await viewModel.loadPhotos() }
     }
 
     private var photoGrid: some View {

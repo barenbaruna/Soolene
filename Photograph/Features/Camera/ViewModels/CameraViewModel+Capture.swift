@@ -38,6 +38,9 @@ extension CameraViewModel {
 
     func savePhoto() async {
         guard let data = activeCapturedPhotoData else { return }
+        
+        // Clear data synchronously to prevent duplicate saves from multiple SwiftUI onChange triggers
+        captureCoordinator.clearCapturedPhotoData()
 
         await refreshPermissions()
         guard photoAddPermission.allowsPhotoSave || photoReadPermission.allowsPhotoBrowse else {
@@ -53,14 +56,21 @@ extension CameraViewModel {
         do {
             lastSavedAssetIdentifier = try await GalleryManager.shared.savePhoto(data, composition: resolvedComposition)
 
-            if let image = UIImage(data: data) {
-                let renderer = UIGraphicsImageRenderer(size: CGSize(width: 80, height: 80))
-                let thumb = renderer.image { _ in
-                    image.draw(in: CGRect(x: 0, y: 0, width: 80, height: 80))
+            Task.detached(priority: .userInitiated) {
+                if let source = CGImageSourceCreateWithData(data as CFData, nil) {
+                    let options: [CFString: Any] = [
+                        kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+                        kCGImageSourceCreateThumbnailWithTransform: true,
+                        kCGImageSourceThumbnailMaxPixelSize: 160
+                    ]
+                    if let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) {
+                        let thumb = UIImage(cgImage: cgImage)
+                        Task { @MainActor in
+                            self.lastSavedThumbnail = thumb
+                        }
+                    }
                 }
-                lastSavedThumbnail = thumb
             }
-            captureCoordinator.clearCapturedPhotoData()
         } catch {
             let message = error.localizedDescription
             saveError = message
