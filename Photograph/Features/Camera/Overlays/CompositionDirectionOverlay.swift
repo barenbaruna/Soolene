@@ -48,6 +48,17 @@ struct CompositionDirectionOverlay: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @State private var orientation: UIDeviceOrientation = UIDevice.current.orientation
+
+    private var rotationAngle: Double {
+        switch orientation {
+        case .landscapeLeft: return 90
+        case .landscapeRight: return -90
+        case .portraitUpsideDown: return 180
+        default: return 0
+        }
+    }
+
     // MARK: - Proximity State
 
     private enum ProximityState {
@@ -175,6 +186,7 @@ struct CompositionDirectionOverlay: View {
                             PerfectCheckmark(color: anchorColor)
                                 .frame(width: ControlMetrics.dualAnchorBracketSize,
                                        height: ControlMetrics.dualAnchorBracketSize)
+                                .rotationEffect(.degrees(rotationAngle))
                                 .position(subjectPx)
                                 .transition(.scale(scale: 0.5).combined(with: .opacity))
                         } else {
@@ -199,6 +211,11 @@ struct CompositionDirectionOverlay: View {
                 }
             }
             .allowsHitTesting(false)
+            .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+                withAnimation(.spring(response: 0.3)) {
+                    orientation = UIDevice.current.orientation
+                }
+            }
         )
     }
 
