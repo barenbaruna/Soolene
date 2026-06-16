@@ -122,6 +122,7 @@ struct PhotoDetailView: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(isShowingOverlay ? AppColors.secondary : AppColors.primary)
                 }
+                .walkthroughAnchor(.gridToggle)
                 .disabled(!onboarding.allowsPhotoGridToggle)
             }
         }
