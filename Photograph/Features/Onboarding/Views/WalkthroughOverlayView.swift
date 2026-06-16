@@ -161,8 +161,8 @@ struct WalkthroughOverlayView: View {
                             )
                             
                             return CGPoint(
-                                x: tooltipCenterX - 8,
-                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 24
+                                x: tooltipCenterX + 2,
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 194
                             )
                         }
                     ),
@@ -194,8 +194,8 @@ struct WalkthroughOverlayView: View {
                             )
                             
                             return CGPoint(
-                                x: tooltipCenterX - 8,
-                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 24
+                                x: tooltipCenterX + 2,
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 194
                             )
                         }
                     ),
@@ -207,10 +207,16 @@ struct WalkthroughOverlayView: View {
             )
 
         case .congratulation where context == .detail:
-            CongratulationView {
-                store.finishWalkthrough()
+            ZStack(alignment: .center) {
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea()
+
+                CongratulationView {
+                    store.finishWalkthrough()
+                }
             }
-            .position(x: screenW * 0.50, y: screenH * 0.50)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
 
         default:
             EmptyView()

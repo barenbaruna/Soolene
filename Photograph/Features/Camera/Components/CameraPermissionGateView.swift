@@ -105,7 +105,7 @@ struct CameraPermissionGateView: View {
     }
 
     private var primaryActionTint: Color {
-        cameraStatus.allowsCamera && photoStatus.allowsPhotoBrowse ? AppColors.secondary : AppColors.primary
+        cameraStatus.allowsCamera && photoStatus.allowsPhotoBrowse ? AppColors.primary : AppColors.secondary
     }
 
     private var isRequestingCurrentPermission: Bool {

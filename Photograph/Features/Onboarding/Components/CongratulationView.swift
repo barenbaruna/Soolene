@@ -14,6 +14,7 @@ import SwiftUI
 
 struct CongratulationView: View {
     let onStart: () -> Void
+    private let cardShape = RoundedRectangle(cornerRadius: AppRadius.capsule, style: .continuous)
 
     var body: some View {
         VStack(spacing: Spacing.medium) {
@@ -34,16 +35,28 @@ struct CongratulationView: View {
                     .foregroundStyle(AppColors.gridlineWhite)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(AppColors.primary, in: RoundedRectangle(cornerRadius: AppRadius.large, style: .continuous))
+                    .background(AppColors.primary, in: RoundedRectangle(cornerRadius: AppRadius.capsule, style: .continuous))
             }
             .padding(.horizontal, Spacing.large)
         }
         .padding(.vertical, Spacing.large)
-        .background(.black.opacity(0.58))
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.capsule, style: .continuous))
+        .background { cardBackground }
+        .clipShape(cardShape)
         .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
         .padding(.horizontal, Spacing.extraLarge)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if #available(iOS 26, *) {
+                    cardShape
+                        .fill(.black.opacity(0.58))
+                        .glassEffect(.regular, in: .rect(cornerRadius: AppRadius.capsule))
+                } else {
+                    cardShape
+                        .fill(.black.opacity(0.4))
+                        .background(.ultraThinMaterial, in: cardShape)
+                }
     }
 }
 
