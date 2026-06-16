@@ -36,6 +36,7 @@ final class OnboardingStore {
     }
 
     var currentStep: WalkthroughStep = .compositionSuggestion
+    var walkthroughPhotoIdentifier: String?
 
     var isWalkthroughActive: Bool {
         !hasCompletedWalkthrough
@@ -128,7 +129,7 @@ final class OnboardingStore {
         advanceStep()
     }
 
-    func advanceAfterGuideAcknowledgement() {
+    func advanceAfterGuideCompletion() {
         guard isWalkthroughActive, currentStep == .followGuide else { return }
         advanceStep()
     }
@@ -141,6 +142,11 @@ final class OnboardingStore {
     func advanceAfterOpeningGallery() {
         guard isWalkthroughActive, currentStep == .viewShots else { return }
         advanceStep()
+    }
+
+    func recordWalkthroughPhotoIdentifier(_ identifier: String) {
+        guard isWalkthroughActive else { return }
+        walkthroughPhotoIdentifier = identifier
     }
 
     func advanceAfterGridToggle(isShowingOverlay: Bool) {
@@ -169,6 +175,7 @@ final class OnboardingStore {
     func finishWalkthrough() {
         withAnimation(.easeInOut(duration: 0.25)) {
             hasCompletedWalkthrough = true
+            walkthroughPhotoIdentifier = nil
         }
     }
 }

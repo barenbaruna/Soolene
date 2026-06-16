@@ -256,9 +256,11 @@ struct PhotoDetailView: View {
 
     private func toggleGridOverlay() {
         HapticManager.selection()
+        let nextOverlayState = !isShowingOverlay
         withAnimation(.easeInOut(duration: 0.2)) {
-            isShowingOverlay.toggle()
+            isShowingOverlay = nextOverlayState
         }
+        onboarding.advanceAfterGridToggle(isShowingOverlay: nextOverlayState)
     }
 
     // MARK: - Helpers

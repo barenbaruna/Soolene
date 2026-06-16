@@ -23,6 +23,9 @@ struct CameraView: View {
     @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
     @State private var permissionAlert: PermissionAlertKind?
     @State private var hasCompletedPermissionFlow = false
+    @State private var hasLoadedInitialPermissions = false
+    @SceneStorage("cameraPermissionFlowNeedsManualCompletion")
+    private var permissionFlowNeedsManualCompletion = false
 
     var body: some View {
         Group {
@@ -42,7 +45,9 @@ struct CameraView: View {
         }
         .task {
             await viewModel.refreshPermissions()
-            if viewModel.hasRequiredPermissions {
+            guard !hasLoadedInitialPermissions else { return }
+            hasLoadedInitialPermissions = true
+            if viewModel.hasRequiredPermissions && !permissionFlowNeedsManualCompletion {
                 hasCompletedPermissionFlow = true
             }
         }
@@ -54,6 +59,7 @@ struct CameraView: View {
             set: { if !$0 { permissionAlert = nil } }
         )) {
             Button("Open Settings") {
+                permissionFlowNeedsManualCompletion = true
                 viewModel.openAppSettings()
                 permissionAlert = nil
             }
@@ -143,8 +149,12 @@ struct CameraView: View {
                 isShowingGallery = false
             }
         }
+        .onChange(of: onboarding.currentStep) { _, step in
+            guard step == .followGuide else { return }
+            advanceGuideWalkthroughIfReady()
+        }
         .fullScreenCover(isPresented: $isShowingGallery) {
-            GalleryView()
+            GalleryView(initialPhotoIdentifier: viewModel.lastSavedAssetIdentifier)
         }
         .onChange(of: viewModel.spatialEngine.capturedPhotoData) { _, newData in
             if newData != nil {
@@ -156,11 +166,16 @@ struct CameraView: View {
                 Task { await viewModel.savePhoto() }
             }
         }
+        .onChange(of: viewModel.lastSavedAssetIdentifier) { _, identifier in
+            guard let identifier else { return }
+            onboarding.recordWalkthroughPhotoIdentifier(identifier)
+        }
         .onChange(of: viewModel.trackingStabilityProgress) { _, _ in
             viewModel.syncHandoffRecovery()
         }
         .onChange(of: viewModel.captureReadiness) { wasReady, isReady in
             guard isReady.showsGreenCelebration, !wasReady.showsGreenCelebration else { return }
+            advanceGuideWalkthroughIfReady()
             UIAccessibility.post(
                 notification: .announcement,
                 argument: "Composition ready. Capture now."
@@ -223,6 +238,7 @@ struct CameraView: View {
     }
 
     private func requestCameraAccess() {
+        permissionFlowNeedsManualCompletion = true
         Task { @MainActor in
             await viewModel.requestCameraAccess()
             showSettingsAlertIfNeeded(for: .camera, status: viewModel.cameraPermission)
@@ -230,6 +246,7 @@ struct CameraView: View {
     }
 
     private func requestPhotoAccess() {
+        permissionFlowNeedsManualCompletion = true
         Task { @MainActor in
             await viewModel.requestPhotoReadAccess()
             showSettingsAlertIfNeeded(for: .gallery, status: viewModel.photoReadPermission)
@@ -244,9 +261,15 @@ struct CameraView: View {
 
     private func completePermissionFlow() {
         guard viewModel.hasRequiredPermissions else { return }
+        permissionFlowNeedsManualCompletion = false
         withAnimation(.easeInOut(duration: 0.25)) {
             hasCompletedPermissionFlow = true
         }
+    }
+
+    private func advanceGuideWalkthroughIfReady() {
+        guard viewModel.captureReadiness.showsGreenCelebration else { return }
+        onboarding.advanceAfterGuideCompletion()
     }
 
     // MARK: - Gestures

@@ -13,10 +13,18 @@ struct GalleryView: View {
     @Environment(\.presentationMode) private var presentationMode
     @State private var viewModel = AppDependencies.shared.makeGalleryViewModel()
     @State private var selectedTab: GalleryTab = .recent
+    @State private var navigationPath: [String] = []
+    @State private var hasAutoOpenedOnboardingPhoto = false
+
+    let initialPhotoIdentifier: String?
 
     enum GalleryTab {
         case recent
         case library
+    }
+
+    init(initialPhotoIdentifier: String? = nil) {
+        self.initialPhotoIdentifier = initialPhotoIdentifier
     }
 
     var body: some View {
@@ -101,7 +109,10 @@ struct GalleryView: View {
             .toolbar(.hidden, for: .bottomBar)
             .task { await viewModel.bootstrap() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                Task { await viewModel.refresh() }
+                Task { await refreshGallery() }
+            }
+            .onChange(of: onboarding.walkthroughPhotoIdentifier) { _, _ in
+                Task { await autoOpenOnboardingPhotoWhenReady() }
             }
             .navigationDestination(for: String.self) { identifier in
                 if let idx = viewModel.allAssets.firstIndex(where: { $0.localIdentifier == identifier }) {
@@ -181,19 +192,8 @@ struct GalleryView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             LazyHStack(spacing: 12) {
-                                ForEach(Array(assets.enumerated()), id: \.element.localIdentifier) { index, asset in
-                                    NavigationLink {
-                                        PhotoDetailView(
-                                            assets: assets,
-                                            currentIndex: index,
-                                            assetCompositionMap: viewModel.assetCompositionMap,
-                                            onDelete: {
-                                                Task {
-                                                    await viewModel.refresh()
-                                                }
-                                            }
-                                        )
-                                    } label: {
+                                ForEach(assets, id: \.localIdentifier) { asset in
+                                    NavigationLink(value: asset.localIdentifier) {
                                         PhotoThumbnailView(asset: asset)
                                             .frame(width: cardWidth, height: cardHeight)
                                             .clipShape(RoundedRectangle(cornerRadius: 35))
@@ -285,6 +285,98 @@ struct GalleryView: View {
                     .fill(Color.black.opacity(0.05))
             }
         }
+    }
+
+    @ViewBuilder
+    private func navigationDestination(for route: String) -> some View {
+        if let composition = compositionListType(from: route) {
+            CompositionPhotoListView(composition: composition)
+        } else {
+            let assets = photoDetailAssets(for: route)
+            if let idx = assets.firstIndex(where: { $0.localIdentifier == route }) {
+                PhotoDetailView(
+                    assets: assets,
+                    currentIndex: idx,
+                    assetCompositionMap: viewModel.assetCompositionMap,
+                    onDelete: {
+                        Task { await viewModel.refresh() }
+                    }
+                )
+            } else {
+                ContentUnavailableView(
+                    "Photo Unavailable",
+                    systemImage: "photo",
+                    description: Text("The guided photo could not be opened.")
+                )
+            }
+        }
+    }
+
+    @MainActor
+    private func bootstrapGallery() async {
+        await viewModel.bootstrap()
+        await autoOpenOnboardingPhotoWhenReady()
+    }
+
+    @MainActor
+    private func refreshGallery() async {
+        await viewModel.refresh()
+        await autoOpenOnboardingPhotoWhenReady()
+    }
+
+    @MainActor
+    private func autoOpenOnboardingPhotoWhenReady() async {
+        guard onboarding.shouldAutoOpenRecentPhoto, !hasAutoOpenedOnboardingPhoto else { return }
+
+        for attempt in 0..<10 {
+            if autoOpenOnboardingPhotoIfPossible(allowFallbackToRecent: attempt == 9) {
+                return
+            }
+
+            guard attempt < 9 else { return }
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            await viewModel.refresh()
+        }
+    }
+
+    @MainActor
+    private func autoOpenOnboardingPhotoIfPossible(allowFallbackToRecent: Bool) -> Bool {
+        guard navigationPath.isEmpty else { return false }
+        let identifier = onboarding.walkthroughPhotoIdentifier
+            ?? initialPhotoIdentifier
+            ?? (allowFallbackToRecent ? viewModel.recentAsset?.localIdentifier : nil)
+        guard let identifier,
+              viewModel.allAssets.contains(where: { $0.localIdentifier == identifier })
+        else {
+            return false
+        }
+
+        hasAutoOpenedOnboardingPhoto = true
+        navigationPath = [identifier]
+        return true
+    }
+
+    private func photoDetailAssets(for identifier: String) -> [PHAsset] {
+        guard selectedTab == .library,
+              let composition = viewModel.assetCompositionMap[identifier],
+              let compositionAssets = viewModel.assetsByComposition[composition],
+              compositionAssets.contains(where: { $0.localIdentifier == identifier })
+        else {
+            return viewModel.allAssets
+        }
+
+        return compositionAssets
+    }
+
+    private func compositionListRoute(for composition: CompositionType) -> String {
+        "photograph-composition-list://\(composition.rawValue)"
+    }
+
+    private func compositionListType(from route: String) -> CompositionType? {
+        let prefix = "photograph-composition-list://"
+        guard route.hasPrefix(prefix) else { return nil }
+        let rawValue = String(route.dropFirst(prefix.count))
+        return CompositionType(rawValue: rawValue)
     }
 
 

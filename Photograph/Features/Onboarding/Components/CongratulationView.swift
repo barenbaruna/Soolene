@@ -41,7 +41,7 @@ struct CongratulationView: View {
         .padding(.vertical, Spacing.large)
         .background(.black.opacity(0.58))
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.capsule, style: .continuous))
         .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
         .padding(.horizontal, Spacing.extraLarge)
     }

@@ -68,8 +68,8 @@ struct WalkthroughOverlayView: View {
             TooltipView(
                 title: "Hold and lock scene",
                 description: "Long-press scene you want to capture",
+                primaryLabel: nil,
                 anchor: .none,
-                onPrimary: { store.advanceStep() },
                 onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.82, 340))
@@ -82,8 +82,8 @@ struct WalkthroughOverlayView: View {
             TooltipView(
                 title: "Follow the Guide",
                 description: "Follow the on-screen directions and adjust your framing",
+                primaryLabel: nil,
                 anchor: .top,
-                onPrimary: { store.advanceAfterGuideAcknowledgement() },
                 onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.82, 340))
@@ -125,14 +125,14 @@ struct WalkthroughOverlayView: View {
                 description: "Tap here to view and review all the photos you have captured using the composition guides.",
                 primaryLabel: nil,
                 secondaryLabel: "Skip",
-                anchor: .bottomTrailing,
+                anchor: .bottomLeading,
                 onSecondary: { store.skipWalkthrough() }
             )
             .frame(width: min(screenW * 0.82, 340))
             .position(
                 tooltipPosition(
                     for: .gallery,
-                    style: .bottomTrailing,
+                    style: .bottomLeading,
                     screenW: screenW,
                     screenH: screenH,
                     safeAreaTop: geo.safeAreaInsets.top,
@@ -153,7 +153,19 @@ struct WalkthroughOverlayView: View {
             .position(
                 tooltipPosition(
                     for: .gridToggle,
-                    style: .topTrailing,
+                    style: .custom(
+                        position: { containerW, cardWidth, localAnchor, _, estimatedCardHeight in
+                            let tooltipCenterX = min(
+                                containerW - cardWidth / 2 - Spacing.small,
+                                max(localAnchor.midX, cardWidth / 2 + Spacing.small)
+                            )
+                            
+                            return CGPoint(
+                                x: tooltipCenterX - 8,
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 24
+                            )
+                        }
+                    ),
                     screenW: screenW,
                     screenH: screenH,
                     safeAreaTop: geo.safeAreaInsets.top,
@@ -174,7 +186,19 @@ struct WalkthroughOverlayView: View {
             .position(
                 tooltipPosition(
                     for: .gridToggle,
-                    style: .topTrailing,
+                    style: .custom(
+                        position: { containerW, cardWidth, localAnchor, _, estimatedCardHeight in
+                            let tooltipCenterX = min(
+                                containerW - cardWidth / 2 - Spacing.small,
+                                max(localAnchor.midX, cardWidth / 2 + Spacing.small)
+                            )
+                            
+                            return CGPoint(
+                                x: tooltipCenterX - 8,
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 24
+                            )
+                        }
+                    ),
                     screenW: screenW,
                     screenH: screenH,
                     safeAreaTop: geo.safeAreaInsets.top,
@@ -229,10 +253,14 @@ struct WalkthroughOverlayView: View {
         case .shutter:
             return CGPoint(x: screenW * 0.50, y: screenH * 0.76)
         case .gallery:
-            return CGPoint(x: screenW * 0.50, y: screenH * 0.76)
-        case .gridToggle:
             return CGPoint(
-                x: screenW - Spacing.standard - ControlMetrics.compactIconButton / 2,
+                x: min(screenW - Spacing.standard, WalkthroughTooltipLayout.estimatedCardWidth / 2 + Spacing.standard),
+                y: screenH * 0.76
+            )
+        case .gridToggle:
+            let cardWidth = min(screenW * 0.82, WalkthroughTooltipLayout.estimatedCardWidth)
+            return CGPoint(
+                x: screenW - cardWidth / 2 - Spacing.small,
                 y: safeAreaTop + 22
             )
         }

@@ -14,7 +14,7 @@ struct LiveGalleryRepository: GalleryRepository {
         self.manager = manager
     }
 
-    func savePhoto(_ photoData: Data, composition: CompositionType) async throws {
+    func savePhoto(_ photoData: Data, composition: CompositionType) async throws -> String {
         try await manager.savePhoto(photoData, composition: composition)
     }
 

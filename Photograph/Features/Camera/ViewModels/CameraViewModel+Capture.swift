@@ -24,6 +24,7 @@ extension CameraViewModel {
             showInlineToast("Capture in progress")
             return
         }
+        lastSavedAssetIdentifier = nil
         if timerLength > 0 {
             startCountdown()
         } else {
@@ -50,8 +51,10 @@ extension CameraViewModel {
             return
         }
 
+        lastSavedAssetIdentifier = nil
+
         do {
-            try await GalleryManager.shared.savePhoto(data, composition: resolvedComposition)
+            lastSavedAssetIdentifier = try await GalleryManager.shared.savePhoto(data, composition: resolvedComposition)
 
             Task.detached(priority: .userInitiated) {
                 if let source = CGImageSourceCreateWithData(data as CFData, nil) {
