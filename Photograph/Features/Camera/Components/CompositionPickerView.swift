@@ -220,7 +220,7 @@ private struct ClearSubjectButton: View {
             HStack(spacing: 6) {
                 Image(systemName: "lock.open.fill")
                     .font(.subheadline.weight(.medium))
-                Text("Clear subject")
+                Text("Clear object")
                     .font(.subheadline.weight(.medium))
             }
             .foregroundStyle(AppColors.controlActive)
@@ -241,8 +241,8 @@ private struct ClearSubjectButton: View {
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Clear subject")
-        .accessibilityHint("Unlocks the current subject so you can choose another")
+        .accessibilityLabel("Clear object")
+        .accessibilityHint("Unlocks the current object so you can choose another")
     }
 }
 

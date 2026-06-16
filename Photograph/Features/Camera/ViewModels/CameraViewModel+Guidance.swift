@@ -36,14 +36,14 @@ extension CameraViewModel {
             if cameraMode == .rearSpatial, spatialEngine.trackingState != .normal {
                 return "Move slowly while spatial tracking initializes"
             }
-            return "Long-press your subject"
+            return "Long-press your object"
         case .subjectLocked:
             if cameraMode == .rearSpatial,
                spatialEngine.lastLockQuality == .estimatedFallback {
-                return "Subject lock is approximate — point at a textured surface."
+                return "Object lock is approximate — point at a textured surface."
             }
             if analysis.sceneGeometry.trackedSubjectPoint == nil {
-                return "Locking subject…"
+                return "Locking object…"
             }
             return mlSuggestion.map { "Suggested: \($0.shortLabel) — tap to change" }
                 ?? "Selecting best composition…"

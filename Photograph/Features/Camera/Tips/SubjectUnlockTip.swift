@@ -12,11 +12,11 @@ struct SubjectUnlockTip: Tip {
     static var shouldShow: Bool = false
 
     var title: Text {
-        Text("Change subject")
+        Text("Change object")
     }
 
     var message: Text? {
-        Text("Tap Clear subject to pick a different focus. You can also double-tap the preview.")
+        Text("Tap Clear object to pick a different focus. You can also double-tap the preview.")
     }
 
     var rules: [Rule] {
