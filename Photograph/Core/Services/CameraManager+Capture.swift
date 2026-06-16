@@ -72,7 +72,7 @@ extension CameraManager {
                 }
             }
         }
-        try? await Task.sleep(nanoseconds: 250_000_000)
+        try? await Task.sleep(nanoseconds: 50_000_000)
     }
 
     /// Captures a photo and waits for delegate completion (call from MainActor).
@@ -97,7 +97,7 @@ extension CameraManager {
             settings = AVCapturePhotoSettings()
         }
 
-        settings.photoQualityPrioritization = .quality
+        settings.photoQualityPrioritization = .balanced
 
         if let dimensions = configuredMaxPhotoDimensions ?? Optional(photoOutput.maxPhotoDimensions),
            dimensions.width > 0, dimensions.height > 0 {

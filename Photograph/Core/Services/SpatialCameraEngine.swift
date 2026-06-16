@@ -747,7 +747,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         arStateLock.unlock()
 
         let settings = photoSettings
-        settings.photoQualityPrioritization = .quality
+        settings.photoQualityPrioritization = .balanced
         settings.flashMode = captureFlash
 
         session.captureHighResolutionFrame(using: settings) { [weak self] frame, error in
@@ -907,16 +907,61 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         aspectRatio: AspectRatioMode,
         previewScale: CGFloat = 1.0
     ) -> Data? {
-        guard var data = image.jpegData(compressionQuality: 0.95) else { return nil }
+        guard let cgImage = image.cgImage else {
+            return image.jpegData(compressionQuality: 0.95)
+        }
+        
+        let width = CGFloat(cgImage.width)
+        let height = CGFloat(cgImage.height)
+        var cropRect = CGRect(x: 0, y: 0, width: width, height: height)
 
         if previewScale > 1.01 {
-            data = ImageCropHelper.centerCropToVisibleFraction(
-                imageData: data,
-                visibleFraction: 1.0 / previewScale
-            ) ?? data
+            let fraction = max(1.0 / previewScale, 0.1)
+            let cropWidth = width * fraction
+            let cropHeight = height * fraction
+            cropRect = CGRect(
+                x: (width - cropWidth) / 2,
+                y: (height - cropHeight) / 2,
+                width: cropWidth,
+                height: cropHeight
+            )
         }
 
-        return ImageCropHelper.cropImageWithMetadata(imageData: data, ratio: aspectRatio) ?? data
+        if aspectRatio != .free {
+            let cw = cropRect.width
+            let ch = cropRect.height
+            switch aspectRatio {
+            case .oneOne:
+                let side = min(cw, ch)
+                cropRect = CGRect(x: cropRect.minX + (cw - side) / 2, y: cropRect.minY + (ch - side) / 2, width: side, height: side)
+            case .sixteenNine:
+                let targetHeight = cw * (16.0 / 9.0)
+                if targetHeight <= ch {
+                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
+                } else {
+                    let targetWidth = ch * (9.0 / 16.0)
+                    cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
+                }
+            case .fourThree:
+                let targetHeight = cw * (4.0 / 3.0)
+                if targetHeight <= ch {
+                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
+                } else {
+                    let targetWidth = ch * (3.0 / 4.0)
+                    cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
+                }
+            case .free: break
+            }
+        }
+        
+        if cropRect.width < width || cropRect.height < height {
+            if let croppedCGImage = cgImage.cropping(to: cropRect) {
+                let croppedUIImage = UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
+                return croppedUIImage.jpegData(compressionQuality: 0.95)
+            }
+        }
+
+        return image.jpegData(compressionQuality: 0.95)
     }
 
     /// Builds a packet synchronously while `frame` is valid. Copies the pixel buffer only when Vision is ready.

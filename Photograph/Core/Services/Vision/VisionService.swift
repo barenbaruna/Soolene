@@ -135,7 +135,7 @@ final class VisionService: @unchecked Sendable {
         isPausedForCapture = true
         analysisLock.unlock()
 
-        let deadline = Date().addingTimeInterval(0.5)
+        let deadline = Date().addingTimeInterval(0.15)
         while Date() < deadline {
             analysisLock.lock()
             let busy = isAnalyzing
