@@ -28,7 +28,7 @@ struct GalleryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
                     VStack(spacing: Spacing.small) {
@@ -107,37 +107,19 @@ struct GalleryView: View {
             }
             .toolbarBackground(.hidden, for: .bottomBar)
             .toolbar(.hidden, for: .bottomBar)
-            .task { await viewModel.bootstrap() }
+            .task { await bootstrapGallery() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 Task { await refreshGallery() }
             }
             .onChange(of: onboarding.walkthroughPhotoIdentifier) { _, _ in
                 Task { await autoOpenOnboardingPhotoWhenReady() }
             }
-            .navigationDestination(for: String.self) { identifier in
-                if let idx = viewModel.allAssets.firstIndex(where: { $0.localIdentifier == identifier }) {
-                    PhotoDetailView(
-                        assets: viewModel.allAssets,
-                        currentIndex: idx,
-                        assetCompositionMap: viewModel.assetCompositionMap,
-                        onDelete: {
-                            Task { await viewModel.refresh() }
-                        }
-                    )
-                } else {
-                    ContentUnavailableView(
-                        "Photo Unavailable",
-                        systemImage: "photo",
-                        description: Text("The guided photo could not be opened.")
-                    )
-                }
+            .navigationDestination(for: String.self) { route in
+                navigationDestination(for: route)
             }
         }
         .tint(AppColors.secondary)
         .preferredColorScheme(.light)
-        .task {
-            await viewModel.bootstrap()
-        }
         .onAppear {
             UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(AppColors.secondary)
             UISegmentedControl.appearance().setTitleTextAttributes(
@@ -149,11 +131,6 @@ struct GalleryView: View {
             
             UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor(AppColors.primary)]
             UINavigationBar.appearance().titleTextAttributes = [.foregroundColor: UIColor(AppColors.primary)]
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            Task {
-                await viewModel.refresh()
-            }
         }
     }
 
@@ -176,9 +153,7 @@ struct GalleryView: View {
 
                             Spacer()
 
-                            NavigationLink {
-                                CompositionPhotoListView(composition: type)
-                            } label: {
+                            NavigationLink(value: compositionListRoute(for: type)) {
                                 HStack(spacing: 2) {
                                     Text("show all")
                                     Image(systemName: "chevron.right")
@@ -229,19 +204,8 @@ struct GalleryView: View {
         
         return ScrollView(.horizontal, showsIndicators: false) {
             LazyHGrid(rows: recentRows, spacing: 12) {
-                ForEach(Array(viewModel.allAssets.enumerated()), id: \.element.localIdentifier) { index, asset in
-                    NavigationLink {
-                        PhotoDetailView(
-                            assets: viewModel.allAssets,
-                            currentIndex: index,
-                            assetCompositionMap: viewModel.assetCompositionMap,
-                            onDelete: {
-                                Task {
-                                    await viewModel.refresh()
-                                }
-                            }
-                        )
-                    } label: {
+                ForEach(viewModel.allAssets, id: \.localIdentifier) { asset in
+                    NavigationLink(value: asset.localIdentifier) {
                         PhotoThumbnailView(asset: asset)
                             .frame(width: cardWidth, height: cardHeight)
                             .clipShape(RoundedRectangle(cornerRadius: 35))
