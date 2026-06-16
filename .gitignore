@@ -13,4 +13,7 @@ specs/
 .agents
 docs/
 
+# Xcode Project File
+project.pbxproj
+
 .DS_Store
