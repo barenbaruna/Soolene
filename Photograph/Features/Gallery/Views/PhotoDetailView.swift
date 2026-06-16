@@ -82,38 +82,7 @@ struct PhotoDetailView: View {
         }
         .onPreferenceChange(WalkthroughAnchorPreferenceKey.self) { walkthroughAnchors = $0 }
         .navigationBarBackButtonHidden(true)
-        .navigationTitle(currentComposition.galleryLabel)
-        .toolbarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(AppColors.textOnCamera)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back")
-                .disabled(!onboarding.allowsPhotoDetailExit)
-            }
 
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: toggleGridOverlay) {
-                    Image(systemName: "square.grid.3x3")
-                        .fontWeight(.medium)
-                        .foregroundStyle(isShowingOverlay ? AppColors.surface : AppColors.controlActive)
-                        .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
-                        .background(
-                            isShowingOverlay ? AnyShapeStyle(AppColors.controlActive) : AnyShapeStyle(Color.white.opacity(0.12)),
-                            in: Circle()
-                        )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isShowingOverlay ? "Hide Overlay" : "Show Overlay")
-                .disabled(!onboarding.allowsPhotoGridToggle)
-            }
-        }
-        .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.light)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

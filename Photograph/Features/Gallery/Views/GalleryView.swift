@@ -20,7 +20,7 @@ struct GalleryView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
                     VStack(spacing: Spacing.small) {
@@ -38,15 +38,6 @@ struct GalleryView: View {
                     }
                     .padding(.top, Spacing.small)
                     .padding(.bottom, Spacing.medium)
-        NavigationStack {
-            VStack(spacing: 0) {
-                customHeader
-                
-                if viewModel.readPermission == .limited {
-                    limitedAccessBanner
-                        .padding(.horizontal, Spacing.standard)
-                        .padding(.bottom, Spacing.small)
-                }
 
                     if viewModel.isLoading {
                         ProgressView("Loading…")
