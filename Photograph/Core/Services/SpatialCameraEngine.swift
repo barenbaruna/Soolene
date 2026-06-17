@@ -743,7 +743,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         let captureOrientation = sessionInterfaceOrientation
         let captureRatio = pendingAspectRatio
         let captureFlash = flashMode
-        let capturePreviewScale = CaptureZoomRouting.effectivePreviewScale(for: displayMultiplier)
+        let capturePreviewScale = pendingDeviceVideoZoom
         arStateLock.unlock()
 
         let settings = photoSettings
@@ -930,25 +930,32 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         if aspectRatio != .free {
             let cw = cropRect.width
             let ch = cropRect.height
+            // Determine if the image pixels are in landscape but display orientation is portrait
+            let isRotated = image.imageOrientation == .left
+                || image.imageOrientation == .right
+                || image.imageOrientation == .leftMirrored
+                || image.imageOrientation == .rightMirrored
+            
+            let effectiveRatio = aspectRatio.pixelSpaceRatio(isRotated: isRotated)
+
             switch aspectRatio {
             case .oneOne:
                 let side = min(cw, ch)
                 cropRect = CGRect(x: cropRect.minX + (cw - side) / 2, y: cropRect.minY + (ch - side) / 2, width: side, height: side)
-            case .sixteenNine:
-                let targetHeight = cw * (16.0 / 9.0)
-                if targetHeight <= ch {
-                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
-                } else {
-                    let targetWidth = ch * (9.0 / 16.0)
-                    cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
-                }
-            case .fourThree:
-                let targetHeight = cw * (4.0 / 3.0)
-                if targetHeight <= ch {
-                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
-                } else {
-                    let targetWidth = ch * (3.0 / 4.0)
-                    cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
+            case .sixteenNine, .fourThree:
+                if let ratio = effectiveRatio {
+                    let targetRatio = ratio.w / ratio.h
+                    let currentRatio = cw / ch
+                    
+                    if targetRatio < currentRatio {
+                        // Pillarbox: width needs to shrink
+                        let targetWidth = ch * targetRatio
+                        cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
+                    } else {
+                        // Letterbox: height needs to shrink
+                        let targetHeight = cw / targetRatio
+                        cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
+                    }
                 }
             case .free: break
             }

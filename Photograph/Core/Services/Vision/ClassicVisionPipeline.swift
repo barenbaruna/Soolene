@@ -17,6 +17,7 @@ enum ClassicVisionPipeline {
         frameCounter: Int,
         compositionModel: VNCoreMLModel?,
         isMLEnabled: Bool,
+        forceInference: Bool,
         sequenceHandler: VNSequenceRequestHandler,
         trackingRequest: inout VNTrackObjectRequest?,
         analysis: inout CompositionAnalysis,
@@ -61,7 +62,7 @@ enum ClassicVisionPipeline {
             VisionRequestManager.runMediumRequests(handler: handler, geometry: &analysis.sceneGeometry, isFrontCamera: isFrontCamera)
         }
 
-        if frameCounter % 60 == 0, let model = compositionModel, isMLEnabled {
+        if (forceInference || frameCounter % 60 == 0), let model = compositionModel, isMLEnabled {
             VisionRequestManager.runSlowRequests(handler: handler, model: model, analysis: &analysis)
             onMLPredictions(analysis.mlPredictions)
         }
