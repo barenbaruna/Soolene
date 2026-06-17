@@ -26,27 +26,32 @@ enum ImageCropHelper {
 
         // Calculate crop rectangle
         var cropRect = CGRect.zero
+        
+        let isRotated = {
+            if let orientation = metadata[kCGImagePropertyOrientation as String] as? UInt {
+                return orientation >= 5 && orientation <= 8
+            }
+            return false
+        }()
+        
+        let effectiveRatio = ratio.pixelSpaceRatio(isRotated: isRotated)
+        
         switch ratio {
         case .oneOne:
             let side = min(width, height)
             cropRect = CGRect(x: (width - side) / 2, y: (height - side) / 2, width: side, height: side)
-        case .sixteenNine:
-            // Assuming portrait orientation by default for photos
-            let targetHeight = width * (16.0 / 9.0)
-            if targetHeight <= height {
-                cropRect = CGRect(x: 0, y: (height - targetHeight) / 2, width: width, height: targetHeight)
-            } else {
-                let targetWidth = height * (9.0 / 16.0)
-                cropRect = CGRect(x: (width - targetWidth) / 2, y: 0, width: targetWidth, height: height)
-            }
-        case .fourThree:
-            // Assuming portrait orientation by default for photos
-            let targetHeight = width * (4.0 / 3.0)
-            if targetHeight <= height {
-                cropRect = CGRect(x: 0, y: (height - targetHeight) / 2, width: width, height: targetHeight)
-            } else {
-                let targetWidth = height * (3.0 / 4.0)
-                cropRect = CGRect(x: (width - targetWidth) / 2, y: 0, width: targetWidth, height: height)
+        case .sixteenNine, .fourThree:
+            if let targetRatioStruct = effectiveRatio {
+                let targetRatio = targetRatioStruct.w / targetRatioStruct.h
+                let currentRatio = width / height
+                
+                if targetRatio < currentRatio {
+                    let targetWidth = height * targetRatio
+                    cropRect = CGRect(x: (width - targetWidth) / 2, y: 0, width: targetWidth, height: height)
+                } else {
+                    let targetHeight = width / targetRatio
+                    cropRect = CGRect(x: 0, y: (height - targetHeight) / 2, width: width, height: targetHeight)
+                }
             }
         case .free:
             return imageData

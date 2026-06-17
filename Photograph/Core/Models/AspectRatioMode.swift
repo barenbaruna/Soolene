@@ -62,4 +62,19 @@ enum AspectRatioMode: String, CaseIterable, Identifiable {
         let y = (size.height - cropHeight) / 2
         return CGRect(x: x, y: y, width: cropWidth, height: cropHeight)
     }
+
+    /// Returns the aspect ratio to apply in pixel-space CGImage coordinates,
+    /// accounting for EXIF rotation where pixel width = display height.
+    func pixelSpaceRatio(isRotated: Bool) -> (w: CGFloat, h: CGFloat)? {
+        switch self {
+        case .free: return nil
+        case .oneOne: return (1, 1)
+        case .sixteenNine:
+            // Portrait display = 9:16 (w:h). In rotated pixel space, swap to 16:9
+            return isRotated ? (16, 9) : (9, 16)
+        case .fourThree:
+            // Portrait display = 3:4 (w:h). In rotated pixel space, swap to 4:3
+            return isRotated ? (4, 3) : (3, 4)
+        }
+    }
 }

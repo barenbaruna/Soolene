@@ -62,6 +62,7 @@ struct CameraBottomControlsStack: View {
                     selectedComposition: viewModel.userSelectedComposition,
                     mlSuggestion: viewModel.mlSuggestion,
                     compositions: viewModel.sortedPickerCompositions,
+                    iconRotation: iconRotation,
                     onSelect: { viewModel.selectComposition($0) },
                     onClearSubject: { viewModel.clearPinnedSubject() }
                 )
