@@ -64,11 +64,20 @@ struct GalleryView: View {
                             onManageLimited: { PrivacyPermissionService.presentLimitedLibraryPicker() }
                         )
                     } else if viewModel.isLibraryEmpty {
-                        ContentUnavailableView(
-                            "No Photos Yet",
-                            systemImage: "camera.viewfinder",
-                            description: Text("Open the camera in \(AppIdentity.displayName) to start capturing guided compositions.")
-                        )
+                        VStack(spacing: 12) {
+                            Spacer().frame(height: 80)
+                            Image(systemName: "camera.viewfinder")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.tertiary)
+                            Text("No Photos Yet")
+                                .font(.title2.bold())
+                            Text("Open the camera in \(AppIdentity.displayName) to start capturing guided compositions.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                            Spacer().frame(height: 80)
+                        }
                     } else {
                         if selectedTab == .recent {
                             recentContent
@@ -77,18 +86,24 @@ struct GalleryView: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .top)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.white)
-            .gesture(
-                DragGesture()
-                    .onEnded { value in
-                        if value.startLocation.x < 30 && value.translation.width > 50 {
-                            dismiss()
-                            presentationMode.wrappedValue.dismiss()
-                        }
-                    }
-            )
+            .overlay(alignment: .leading) {
+                Color.clear
+                    .frame(width: 30)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture()
+                            .onEnded { value in
+                                if value.translation.width > 50 {
+                                    dismiss()
+                                    presentationMode.wrappedValue.dismiss()
+                                }
+                            }
+                    )
+            }
             .navigationTitle("Collections")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -98,7 +113,7 @@ struct GalleryView: View {
                         presentationMode.wrappedValue.dismiss()
                     }) {
                         HStack(spacing: 4) {
-                            Image(systemName: "chevron.backward")
+                            Image(systemName: AppIcon.iconChevronLeft)
                                 .font(.system(size: 17, weight: .semibold))
                         }
                         .foregroundStyle(AppColors.primary)
@@ -257,20 +272,14 @@ struct GalleryView: View {
             CompositionPhotoListView(composition: composition)
         } else {
             let assets = photoDetailAssets(for: route)
-            if let idx = assets.firstIndex(where: { $0.localIdentifier == route }) {
+            if !assets.isEmpty || true { // always true to prevent destruction during dismiss animation
                 PhotoDetailView(
                     assets: assets,
-                    currentIndex: idx,
+                    currentIndex: assets.firstIndex(where: { $0.localIdentifier == route }) ?? 0,
                     assetCompositionMap: viewModel.assetCompositionMap,
                     onDelete: {
                         Task { await viewModel.refresh() }
                     }
-                )
-            } else {
-                ContentUnavailableView(
-                    "Photo Unavailable",
-                    systemImage: "photo",
-                    description: Text("The guided photo could not be opened.")
                 )
             }
         }

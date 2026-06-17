@@ -26,6 +26,7 @@ struct PhotoDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isShowingOverlay = false
     @State private var isShowingDeleteConfirmation = false
+    @State private var isDeletingPhoto = false
     @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
 
     init(
@@ -64,6 +65,8 @@ struct PhotoDetailView: View {
                 // 1) Main Photo — takes remaining space but capped
                 mainPhotoCard
                     .padding(.horizontal, Spacing.standard)
+                    .scaleEffect(isDeletingPhoto ? 0.01 : 1.0)
+                    .opacity(isDeletingPhoto ? 0 : 1.0)
 
                 Spacer(minLength: Spacing.small)
 
@@ -97,7 +100,7 @@ struct PhotoDetailView: View {
                     dismiss()
                 }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "chevron.backward")
+                        Image(systemName: AppIcon.iconChevronLeft)
                             .font(.system(size: 17, weight: .semibold))
                     }
                     .foregroundStyle(AppColors.primary)
@@ -118,7 +121,7 @@ struct PhotoDetailView: View {
                 Button(action: {
                     toggleGridOverlay()
                 }) {
-                    Image(systemName: "scope")
+                    Image(systemName: AppIcon.iconPerspective)
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(isShowingOverlay ? AppColors.secondary : AppColors.primary)
                 }
@@ -153,7 +156,7 @@ struct PhotoDetailView: View {
             HapticManager.selection()
             isShowingDeleteConfirmation = true
         } label: {
-            Image(systemName: "trash")
+            Image(systemName: AppIcon.iconTrash)
                 .font(.system(size: 20))
                 .foregroundStyle(AppColors.secondary)
                 .frame(width: 48, height: 48)
@@ -222,39 +225,45 @@ struct PhotoDetailView: View {
 
     private var thumbnailCarousel: some View {
         GeometryReader { carouselGeo in
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(0..<assetsList.count, id: \.self) { index in
-                            let asset = assetsList[index]
-                            let isSelected = currentIndex == index
-                            Button {
-                                HapticManager.selection()
-                                withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
-                                    currentIndex = index
-                                }
-                            } label: {
-                                PhotoThumbnailView(asset: asset)
-                                    .frame(width: isSelected ? 44 : 28, height: 44)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(isSelected ? AppColors.secondary : Color.clear, lineWidth: 2)
-                                    )
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 8) {
+                    ForEach(0..<assetsList.count, id: \.self) { index in
+                        let asset = assetsList[index]
+                        let isSelected = currentIndex == index
+                        Button {
+                            HapticManager.selection()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
+                                currentIndex = index
                             }
-                            .buttonStyle(.plain)
-                            .id(index)
+                        } label: {
+                            PhotoThumbnailView(asset: asset)
+                                .frame(width: isSelected ? 44 : 28, height: 44)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(isSelected ? AppColors.secondary : Color.clear, lineWidth: 2)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .id(index)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .safeAreaPadding(.horizontal, carouselGeo.size.width / 2 - 22)
+            .scrollPosition(id: Binding(
+                get: { currentIndex },
+                set: { newIndex in
+                    if let newIndex, newIndex != currentIndex {
+                        HapticManager.selection()
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
+                            currentIndex = newIndex
                         }
                     }
-                    .padding(.horizontal, Spacing.medium)
-                    .frame(minWidth: carouselGeo.size.width, alignment: .center)
                 }
-                .onChange(of: currentIndex) { _, newIndex in
-                    withAnimation {
-                        proxy.scrollTo(newIndex, anchor: .center)
-                    }
-                }
-            }
+            ), anchor: .center)
+            .scrollTargetBehavior(.viewAligned)
+            .animation(.spring(response: 0.25, dampingFraction: 0.75), value: currentIndex)
         }
         .frame(height: 50)
     }
@@ -288,13 +297,25 @@ struct PhotoDetailView: View {
         } completionHandler: { success, _ in
             if success {
                 DispatchQueue.main.async {
-                    onDelete()
-                    assetsList.remove(at: currentIndex)
-                    if assetsList.isEmpty {
-                        dismiss()
-                    } else {
-                        if currentIndex >= assetsList.count {
-                            currentIndex = assetsList.count - 1
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                        isDeletingPhoto = true
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        onDelete()
+                        assetsList.remove(at: currentIndex)
+                        
+                        if assetsList.isEmpty {
+                            dismiss()
+                        } else {
+                            if currentIndex >= assetsList.count {
+                                currentIndex = assetsList.count - 1
+                            }
+                            
+                            // Restore scale with animation for the next photo
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                isDeletingPhoto = false
+                            }
                         }
                     }
                 }
@@ -309,6 +330,12 @@ struct PhotoPageView: View {
     let isShowingOverlay: Bool
 
     @State private var image: UIImage?
+    
+    // Zoom & Pan state
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
 
     var body: some View {
         GeometryReader { geo in
@@ -335,10 +362,70 @@ struct PhotoPageView: View {
                         .tint(AppColors.primary)
                 }
             }
+            .scaleEffect(scale)
+            .offset(offset)
+            .gesture(
+                MagnifyGesture()
+                    .onChanged { value in
+                        let delta = value.magnification / lastScale
+                        lastScale = value.magnification
+                        scale = max(1.0, min(scale * delta, 5.0))
+                        
+                        let maxOffsetX = max(0, (scale - 1) * geo.size.width / 2)
+                        let maxOffsetY = max(0, (scale - 1) * geo.size.height / 2)
+                        offset = CGSize(
+                            width: min(max(offset.width, -maxOffsetX), maxOffsetX),
+                            height: min(max(offset.height, -maxOffsetY), maxOffsetY)
+                        )
+                    }
+                    .onEnded { _ in
+                        lastScale = 1.0
+                        if scale <= 1.0 {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                scale = 1.0
+                                offset = .zero
+                                lastOffset = .zero
+                            }
+                        } else {
+                            lastOffset = offset
+                        }
+                    }
+            )
+            .highPriorityGesture(
+                DragGesture(minimumDistance: scale > 1.0 ? 0 : 10000)
+                    .onChanged { value in
+                        if scale > 1.0 {
+                            let proposedOffset = CGSize(
+                                width: lastOffset.width + value.translation.width,
+                                height: lastOffset.height + value.translation.height
+                            )
+                            
+                            let maxOffsetX = max(0, (scale - 1) * geo.size.width / 2)
+                            let maxOffsetY = max(0, (scale - 1) * geo.size.height / 2)
+                            
+                            offset = CGSize(
+                                width: min(max(proposedOffset.width, -maxOffsetX), maxOffsetX),
+                                height: min(max(proposedOffset.height, -maxOffsetY), maxOffsetY)
+                            )
+                        }
+                    }
+                    .onEnded { value in
+                        if scale > 1.0 {
+                            lastOffset = offset
+                        }
+                    }
+            )
             .clipShape(RoundedRectangle(cornerRadius: 40))
             .frame(width: geo.size.width, height: geo.size.height)
         }
-        .task {
+        .onChange(of: asset.localIdentifier) { _, _ in
+            image = nil
+            scale = 1.0
+            lastScale = 1.0
+            offset = .zero
+            lastOffset = .zero
+        }
+        .task(id: asset.localIdentifier) {
             await loadImage()
         }
     }

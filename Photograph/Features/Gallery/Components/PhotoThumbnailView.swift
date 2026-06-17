@@ -24,7 +24,10 @@ struct PhotoThumbnailView: View {
                     .fill(Color(.systemGray5))
             }
         }
-        .task {
+        .onChange(of: asset.localIdentifier) { _, _ in
+            image = nil
+        }
+        .task(id: asset.localIdentifier) {
             await loadThumbnail()
         }
     }
