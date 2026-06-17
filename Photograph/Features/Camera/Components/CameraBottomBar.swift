@@ -21,16 +21,17 @@ struct CameraBottomBar: View {
                         Image(uiImage: thumb)
                             .resizable()
                             .scaledToFill()
+                            .rotationEffect(.degrees(iconRotation)) // Rotate the thumbnail internally
                     } else {
                         Image(AppIcon.iconGallery)
                             .font(.title2)
                             .foregroundStyle(AppColors.textOnCamera)
+                            .rotationEffect(.degrees(iconRotation)) // Rotate the icon internally
                     }
                 }
                 .frame(width: ControlMetrics.galleryThumbnail, height: ControlMetrics.galleryThumbnail)
                 .clipShape(Circle())
                 .background(glassButtonBackground)
-                .rotationEffect(.degrees(iconRotation))
             }
             .accessibilityLabel("Gallery")
             .walkthroughAnchor(.gallery)
@@ -69,6 +70,7 @@ struct CameraBottomBar: View {
                     Image(systemName: AppIcon.iconFlipCamera)
                         .font(.title2)
                         .opacity(viewModel.isSwitchingCamera ? 0 : 1)
+                        .rotationEffect(.degrees(iconRotation)) // Rotate the icon internally
 
                     if viewModel.isSwitchingCamera {
                         ProgressView()
@@ -78,7 +80,6 @@ struct CameraBottomBar: View {
                 .foregroundStyle(AppColors.textOnCamera)
                 .frame(width: ControlMetrics.iconButton, height: ControlMetrics.iconButton)
                 .background(glassButtonBackground)
-                .rotationEffect(.degrees(iconRotation))
             }
             .disabled(viewModel.isSwitchingCamera || !onboarding.allowsCameraSwitch)
             .accessibilityLabel("Switch Camera")
