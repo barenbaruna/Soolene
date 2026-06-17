@@ -21,6 +21,7 @@ struct CompositionPickerView: View {
     let selectedComposition: CompositionType?
     let mlSuggestion: CompositionType?
     let compositions: [CompositionType]
+    let iconRotation: Double
     let onSelect: (CompositionType) -> Void
     var onClearSubject: (() -> Void)?
 
@@ -31,12 +32,14 @@ struct CompositionPickerView: View {
         selectedComposition: CompositionType?,
         mlSuggestion: CompositionType?,
         compositions: [CompositionType] = Array(CompositionType.allCases),
+        iconRotation: Double,
         onSelect: @escaping (CompositionType) -> Void,
         onClearSubject: (() -> Void)? = nil
     ) {
         self.selectedComposition = selectedComposition
         self.mlSuggestion = mlSuggestion
         self.compositions = compositions
+        self.iconRotation = iconRotation
         self.onSelect = onSelect
         self.onClearSubject = onClearSubject
     }
@@ -59,6 +62,7 @@ struct CompositionPickerView: View {
                                 composition: comp,
                                 isSelected: selectedComposition == comp,
                                 isRecommended: mlSuggestion == comp,
+                                iconRotation: iconRotation,
                                 onTap: { 
                                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                         onSelect(comp)
@@ -67,6 +71,11 @@ struct CompositionPickerView: View {
                                 }
                             )
                             .id(comp)
+                            .scrollTransition(.interactive, axis: .horizontal) { content, phase in
+                                content
+                                    .scaleEffect(phase.isIdentity ? 1.0 : 0.85)
+                                    .opacity(phase.isIdentity ? 1.0 : 0.6)
+                            }
                             .opacity(hasAppeared ? 1 : 0)
                             .offset(y: hasAppeared ? 0 : 20)
                             .animation(
@@ -119,6 +128,7 @@ private struct CompositionPill: View {
     let composition: CompositionType
     let isSelected: Bool
     let isRecommended: Bool
+    let iconRotation: Double
     let onTap: () -> Void
 
     @State private var isPressed = false
@@ -144,13 +154,14 @@ private struct CompositionPill: View {
         )
         .accessibilityLabel("\(composition.rawValue) composition")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(isRecommended ? "Best fit recommendation" : "")
+        .accessibilityHint(isRecommended && isSelected ? "Suggested recommendation" : "")
     }
 
     private var selectedPill: some View {
         VStack(spacing: 8) {
-            if isRecommended {
+            if isRecommended && isSelected {
                 RecommendationBadge()
+                    .rotationEffect(.degrees(iconRotation))
             } else {
                 Spacer().frame(height: 14)
             }
@@ -158,10 +169,12 @@ private struct CompositionPill: View {
             Image(systemName: composition.symbolName)
                 .font(.title2)
                 .foregroundStyle(.white)
+                .rotationEffect(.degrees(iconRotation))
 
             Text(composition.shortLabel)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.white)
+                .rotationEffect(.degrees(iconRotation))
         }
         .padding(.top, 8)
         .padding(.bottom, 12)
@@ -197,6 +210,7 @@ private struct CompositionPill: View {
                 Image(systemName: composition.symbolName)
                     .font(.title2)
                     .foregroundStyle(.white)
+                    .rotationEffect(.degrees(iconRotation))
             }
             .frame(width: 60, height: 60)
 
@@ -205,6 +219,7 @@ private struct CompositionPill: View {
                 .foregroundStyle(.white)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
+                .rotationEffect(.degrees(iconRotation))
         }
         .frame(width: 64)
     }
@@ -250,7 +265,7 @@ private struct ClearSubjectButton: View {
 
 private struct RecommendationBadge: View {
     var body: some View {
-        Text("Best fit")
+        Text("Suggested")
             .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(.white)
             .padding(.horizontal, 8)
@@ -260,7 +275,7 @@ private struct RecommendationBadge: View {
                     .fill(Color.green.opacity(0.3)) // Subtler green background matching design
                     .overlay(Capsule().strokeBorder(Color.green, lineWidth: 0.5))
             )
-            .accessibilityLabel("Best fit recommendation")
+            .accessibilityLabel("Suggested recommendation")
     }
 }
 

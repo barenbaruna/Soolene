@@ -51,13 +51,7 @@ struct CameraTopToolbar: View {
 
             timerButton
 
-            toolbarButton(
-                icon: viewModel.selectedAspectRatio.symbolName,
-                isActive: viewModel.selectedAspectRatio != .free,
-                label: "Aspect ratio"
-            ) {
-                onPanelTapped(.aspect)
-            }
+            aspectRatioButton
         }
         .padding(.horizontal, Spacing.standard)
     }
@@ -85,6 +79,27 @@ struct CameraTopToolbar: View {
         .buttonStyle(.plain)
         .accessibilityLabel(timerAccessibilityLabel)
         .accessibilityAddTraits(viewModel.timerLength > 0 ? .isSelected : [])
+        .rotationEffect(.degrees(iconRotation))
+    }
+
+    private var aspectRatioButton: some View {
+        Button {
+            HapticManager.selection()
+            onPanelTapped(.aspect)
+        } label: {
+            ZStack {
+                Text(viewModel.selectedAspectRatio.rawValue)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    // We use a slight tracking to make the ratio look like a tailored symbol
+                    .tracking(0.5)
+            }
+            .foregroundStyle(viewModel.selectedAspectRatio != .fourThree ? AppColors.controlActive : AppColors.textOnCamera)
+            .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Aspect ratio: \(viewModel.selectedAspectRatio.rawValue)")
+        .accessibilityAddTraits(viewModel.selectedAspectRatio != .fourThree ? .isSelected : [])
         .rotationEffect(.degrees(iconRotation))
     }
 

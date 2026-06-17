@@ -76,7 +76,8 @@ struct VisionAnalysisProcessor {
         let offsetResult = AlignmentAnalyzer.computeSubjectOffset(
             for: updated.detectedComposition,
             geometry: updated.sceneGeometry,
-            depthData: depthData
+            depthData: depthData,
+            wasPerfect: input.isCompositionPerfect
         )
         updated.subjectOffset = offsetResult.vector
         updated.isCompositionPerfect = offsetResult.isPerfect

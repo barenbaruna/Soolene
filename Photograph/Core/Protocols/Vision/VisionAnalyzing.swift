@@ -12,8 +12,9 @@ protocol VisionAnalyzing: AnyObject {
     var usesSpatialTracking: Bool { get set }
     var isMLEnabled: Bool { get set }
     var deviceRollDegrees: Double? { get set }
+    var guidanceGeneration: UInt64 { get }
     var onAnalysisUpdated: ((CompositionAnalysis) -> Void)? { get set }
-    var onMLSuggestionReady: (([CompositionPrediction]) -> Void)? { get set }
+    var onMLSuggestionReady: ((UInt64, [CompositionPrediction]) -> Void)? { get set }
 
     func processSpatialFramePacket(_ packet: SpatialFramePacket)
     func processFrame(_ sampleBuffer: CMSampleBuffer, depthData: AVDepthData?)

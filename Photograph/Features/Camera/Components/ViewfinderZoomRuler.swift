@@ -17,14 +17,32 @@ struct ViewfinderZoomRuler: View {
 
     private var zoomController: ZoomController { viewModel.zoomController }
 
+    private var zoomRange: ClosedRange<CGFloat> {
+        viewModel.cameraMode == .rearSpatial
+            ? 1.0...zoomController.arMaxDisplayZoom
+            : zoomController.displayRange
+    }
+
+    private var tickLayout: ZoomRulerTickLayout {
+        if viewModel.cameraMode == .rearSpatial {
+            let bounds = zoomController.capabilities.rulerMajorBoundaries.filter { $0 >= 1.0 }
+            return ZoomRulerTickLayout.make(
+                minZoom: 1.0,
+                maxZoom: zoomController.arMaxDisplayZoom,
+                majorBoundaries: bounds
+            )
+        }
+        return zoomController.tickLayout
+    }
+
     var body: some View {
         ViewfinderRulerPanel {
             LiquidGlassCenterRuler(
                 value: zoomController.displayMultiplier,
-                range: zoomController.displayRange,
+                range: zoomRange,
                 formattedValue: formattedZoom(zoomController.displayMultiplier),
                 activeColor: AppColors.controlActive,
-                tickLayout: zoomController.tickLayout,
+                tickLayout: tickLayout,
                 isDragging: isDragging,
                 onValueChanged: { viewModel.setZoomMultiplier($0, isFinal: false) },
                 onDragBegan: {

@@ -62,6 +62,7 @@ struct CameraBottomControlsStack: View {
                     selectedComposition: viewModel.userSelectedComposition,
                     mlSuggestion: viewModel.mlSuggestion,
                     compositions: viewModel.sortedPickerCompositions,
+                    iconRotation: iconRotation,
                     onSelect: { viewModel.selectComposition($0) },
                     onClearSubject: { viewModel.clearPinnedSubject() }
                 )
@@ -92,8 +93,20 @@ struct CameraBottomControlsStack: View {
                 .frame(height: ControlMetrics.rulerPanelContentHeight)
                 .transition(.blurReplace)
             } else {
-                Spacer()
+                if CaptureArchitectureFlags.zoomRulerEnabled && viewModel.cameraMode == .rearSpatial {
+                    ViewfinderZoomShortcuts(
+                        viewModel: viewModel,
+                        isEnabled: !viewModel.isSwitchingCamera && onboarding.allowsCompositionControls,
+                        glassID: "ruler",
+                        glassNamespace: glassNS
+                    )
+                    .allowsHitTesting(onboarding.allowsCompositionControls)
                     .frame(height: ControlMetrics.rulerPanelContentHeight)
+                    .transition(.blurReplace)
+                } else {
+                    Spacer()
+                        .frame(height: ControlMetrics.rulerPanelContentHeight)
+                }
             }
         }
         .padding(.bottom, Spacing.standard)

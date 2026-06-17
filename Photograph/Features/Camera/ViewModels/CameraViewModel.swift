@@ -14,7 +14,7 @@ final class CameraViewModel {
     // MARK: - Analysis State
 
     var analysis = CompositionAnalysis()
-    var selectedAspectRatio: AspectRatioMode = .free
+    var selectedAspectRatio: AspectRatioMode = .fourThree
 
     // MARK: - Capture State
 
@@ -144,8 +144,9 @@ final class CameraViewModel {
             self.compositionCoordinator.updatePhaseFromAnalysis(result)
         }
 
-        visionService.onMLSuggestionReady = { [weak self] predictions in
+        visionService.onMLSuggestionReady = { [weak self] generation, predictions in
             guard let self else { return }
+            guard generation == self.visionService.guidanceGeneration else { return }
             self.compositionCoordinator.handleMLSuggestion(predictions, analysis: &self.analysis)
         }
 

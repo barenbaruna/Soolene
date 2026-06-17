@@ -77,7 +77,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     private var sessionViewportSize: CGSize = .zero
     private var sessionInterfaceOrientation: UIInterfaceOrientation = .portrait
 
-    var pendingAspectRatio: AspectRatioMode = .free
+    var pendingAspectRatio: AspectRatioMode = .fourThree
 
     private(set) var isSessionConfigured = false
     private var isVisionPausedForCapture = false
@@ -611,7 +611,11 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
         var frozenImage: UIImage?
         if let frame = session.currentFrame {
-            let imageOrientation = Self.imageOrientation(for: orientation)
+            // Read physical device orientation on the main thread or directly
+            // Note: UIDevice.current.orientation is generally safe to read from background,
+            // but we can just use the physical device orientation directly for the frozen image.
+            let deviceOrientation = UIDevice.current.orientation
+            let imageOrientation = Self.imageOrientation(forDeviceOrientation: deviceOrientation)
             frozenImage = Self.makeUIImage(from: frame.capturedImage, orientation: imageOrientation)
         }
 
@@ -740,11 +744,14 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         let photoSettings = config.videoFormat.defaultPhotoSettings
 
         arStateLock.lock()
-        let captureOrientation = sessionInterfaceOrientation
         let captureRatio = pendingAspectRatio
         let captureFlash = flashMode
-        let capturePreviewScale = CaptureZoomRouting.effectivePreviewScale(for: displayMultiplier)
+        let capturePreviewScale = pendingDeviceVideoZoom
         arStateLock.unlock()
+
+        // Use the physical device orientation (accelerometer) instead of the
+        // interface orientation, because the app UI is locked to portrait.
+        let captureDeviceOrientation = UIDevice.current.orientation
 
         let settings = photoSettings
         settings.photoQualityPrioritization = .balanced
@@ -818,7 +825,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
                 return
             }
 
-            let orientation = Self.imageOrientation(for: captureOrientation)
+            let orientation = Self.imageOrientation(forDeviceOrientation: captureDeviceOrientation)
             let pixelBuffer = frame.capturedImage
 
             DispatchQueue.global(qos: .userInitiated).async {
@@ -872,13 +879,14 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         }
     }
 
-    private static func imageOrientation(for interfaceOrientation: UIInterfaceOrientation) -> UIImage.Orientation {
-        switch interfaceOrientation {
-        case .portrait: return .right
-        case .portraitUpsideDown: return .left
-        case .landscapeLeft: return .up
-        case .landscapeRight: return .down
-        default: return .right
+    private static func imageOrientation(forDeviceOrientation deviceOrientation: UIDeviceOrientation) -> UIImage.Orientation {
+        switch deviceOrientation {
+        case .portrait:            return .right
+        case .portraitUpsideDown:  return .left
+        case .landscapeLeft:       return .up      // Home button on right -> sensor is upright
+        case .landscapeRight:      return .down    // Home button on left -> sensor is upside down
+        case .faceUp, .faceDown, .unknown: return .right // Default to portrait
+        @unknown default:          return .right
         }
     }
 
@@ -927,30 +935,36 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
             )
         }
 
-        if aspectRatio != .free {
+        if aspectRatio != .fourThree {
             let cw = cropRect.width
             let ch = cropRect.height
+            // Determine if the image pixels are in landscape but display orientation is portrait
+            let isRotated = image.imageOrientation == .left
+                || image.imageOrientation == .right
+                || image.imageOrientation == .leftMirrored
+                || image.imageOrientation == .rightMirrored
+            
+            let effectiveRatio = aspectRatio.pixelSpaceRatio(isRotated: isRotated)
+
             switch aspectRatio {
             case .oneOne:
                 let side = min(cw, ch)
                 cropRect = CGRect(x: cropRect.minX + (cw - side) / 2, y: cropRect.minY + (ch - side) / 2, width: side, height: side)
             case .sixteenNine:
-                let targetHeight = cw * (16.0 / 9.0)
-                if targetHeight <= ch {
-                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
-                } else {
-                    let targetWidth = ch * (9.0 / 16.0)
+                let ratio = effectiveRatio
+                let targetRatio = ratio.w / ratio.h
+                let currentRatio = cw / ch
+                
+                if targetRatio < currentRatio {
+                    // Pillarbox: width needs to shrink
+                    let targetWidth = ch * targetRatio
                     cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
-                }
-            case .fourThree:
-                let targetHeight = cw * (4.0 / 3.0)
-                if targetHeight <= ch {
-                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
                 } else {
-                    let targetWidth = ch * (3.0 / 4.0)
-                    cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
+                    // Letterbox: height needs to shrink
+                    let targetHeight = cw / targetRatio
+                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
                 }
-            case .free: break
+            case .fourThree: break
             }
         }
         

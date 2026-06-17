@@ -18,6 +18,7 @@ final class CompositionCoordinator {
     var uiState = CompositionUIState()
 
     private var autoSelectFallbackTask: Task<Void, Never>?
+    private var sessionStartTime: Date?
     /// Invoked when ML predictions are delayed; ViewModel applies composition to analysis.
     var onAutoSelectComposition: (@MainActor (CompositionType) -> Void)?
 
@@ -57,6 +58,8 @@ final class CompositionCoordinator {
         cameraMode: CameraMode,
         analysis: inout CompositionAnalysis
     ) {
+        sessionStartTime = Date()
+
         if uiState.isSubjectPinned {
             visionService.clearPinnedSubject()
             uiState.userSelectedComposition = nil
@@ -148,6 +151,9 @@ final class CompositionCoordinator {
             return
         }
 
+        let duration = sessionStartTime.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
+        print("📸 [ML] Recommendation=\(recommendation.type) Confidence=\(recommendation.confidence) Duration=\(duration)ms")
+
         selectComposition(recommendation.type, analysis: &analysis)
         if recommendation.confidence >= GuidanceEngine.autoSelectConfidenceThreshold {
             uiState.recommendedLabel = "Recommended: \(recommendation.type.shortLabel)"
@@ -164,6 +170,10 @@ final class CompositionCoordinator {
             guard case .subjectLocked = uiState.phase else { return }
             guard uiState.userSelectedComposition == nil else { return }
 
+            let duration = sessionStartTime.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
+            print("📸 [Fallback] Recommendation=ruleOfThirds Duration=\(duration)ms")
+
+            uiState.mlSuggestion = .ruleOfThirds
             onAutoSelectComposition?(.ruleOfThirds)
             uiState.recommendedLabel = "Suggested: Rule of Thirds — tap to change"
         }

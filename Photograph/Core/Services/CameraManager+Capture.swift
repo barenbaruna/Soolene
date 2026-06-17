@@ -213,7 +213,7 @@ extension CameraManager {
 
     // MARK: - Capture Photo
 
-    func capturePhoto(aspectRatio: AspectRatioMode = .free) {
+    func capturePhoto(aspectRatio: AspectRatioMode = .fourThree) {
         sessionQueue.async { [weak self] in
             guard let self else { return }
 

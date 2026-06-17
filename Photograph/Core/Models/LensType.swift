@@ -80,23 +80,12 @@ enum LensType: String, CaseIterable, Identifiable {
         return lenses.isEmpty ? [.wide] : lenses
     }
 
-    /// Preset whose band contains the current display multiplier (telemetry).
     static func preset(containing multiplier: CGFloat, in available: [LensType]) -> LensType {
-        let boundaries = ZoomDeviceCapabilities.discover().majorBoundaries
-        let sortedBoundaries = boundaries.sorted()
-        var activeBoundary: CGFloat = sortedBoundaries.first ?? 1.0
-        for boundary in sortedBoundaries where multiplier >= boundary - 0.05 {
-            activeBoundary = boundary
+        let sorted = available.sorted(by: { $0.nominalMultiplier < $1.nominalMultiplier })
+        var active = sorted.first ?? .wide
+        for lens in sorted where multiplier >= lens.nominalMultiplier - 0.05 {
+            active = lens
         }
-
-        switch activeBoundary {
-        case ..<0.75: return available.contains(.ultraWide) ? .ultraWide : .wide
-        case ..<1.5: return .wide
-        case ..<3.0: return .twoX
-        case ..<4.5: return .fourX
-        default:
-            if available.contains(.tele) { return .tele }
-            return .tenX
-        }
+        return active
     }
 }

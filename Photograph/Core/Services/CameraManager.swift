@@ -48,7 +48,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
     var outputSynchronizer: AVCaptureDataOutputSynchronizer?
 
     /// Transient state for capture
-    var pendingAspectRatio: AspectRatioMode = .free
+    var pendingAspectRatio: AspectRatioMode = .fourThree
 
     /// Largest photo dimensions configured on `photoOutput` (mutated on `sessionQueue`).
     var configuredMaxPhotoDimensions: CMVideoDimensions?
