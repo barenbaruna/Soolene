@@ -13,7 +13,7 @@ import Vision
 final class VisionService: @unchecked Sendable {
 
     var onAnalysisUpdated: ((CompositionAnalysis) -> Void)?
-    var onMLSuggestionReady: (([CompositionPrediction]) -> Void)?
+    var onMLSuggestionReady: ((UInt64, [CompositionPrediction]) -> Void)?
 
     var isFrontCamera = false
     var usesSpatialTracking = true
@@ -48,7 +48,8 @@ final class VisionService: @unchecked Sendable {
 
     private var currentAnalysis = CompositionAnalysis()
     private var lastSpatialSubjectPoint: CGPoint?
-    private var guidanceGeneration: UInt64 = 0
+    private(set) var guidanceGeneration: UInt64 = 0
+    private var immediateInferencePending = false
     private var userGuidanceActive = false
 
     /// Initial Vision tracking box size (normalized). Smaller box reduces drift to bbox center mass.
@@ -63,6 +64,8 @@ final class VisionService: @unchecked Sendable {
 
         currentAnalysis.sceneGeometry.establishUserLock(at: normalisedPoint)
         currentAnalysis.sceneGeometry.lockedTargetPoint = nil
+        currentAnalysis.mlPredictions = []
+        immediateInferencePending = true
 
         if usesSpatialTracking {
             trackingRequest = nil
@@ -186,6 +189,8 @@ final class VisionService: @unchecked Sendable {
         let lockedTarget = snapshot.sceneGeometry.lockedTargetPoint
         analysisLock.lock()
         let processingGeneration = guidanceGeneration
+        let forceInference = immediateInferencePending
+        immediateInferencePending = false
         analysisLock.unlock()
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -208,10 +213,11 @@ final class VisionService: @unchecked Sendable {
                 usesSpatialTracking: self.usesSpatialTracking,
                 compositionModel: self.compositionModel,
                 isMLEnabled: self.isMLEnabled,
+                forceInference: forceInference,
                 analysis: &updated
             ) { predictions in
                 DispatchQueue.main.async {
-                    self.onMLSuggestionReady?(predictions)
+                    self.onMLSuggestionReady?(processingGeneration, predictions)
                 }
             }
 
@@ -264,6 +270,12 @@ final class VisionService: @unchecked Sendable {
         let snapshot = currentAnalysis
         let orientation = CoordinateMapper.visionOrientation(isFrontCamera: isFrontCamera)
 
+        analysisLock.lock()
+        let processingGeneration = guidanceGeneration
+        let forceInference = immediateInferencePending
+        immediateInferencePending = false
+        analysisLock.unlock()
+
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
 
@@ -277,12 +289,13 @@ final class VisionService: @unchecked Sendable {
                 frameCounter: counter,
                 compositionModel: self.compositionModel,
                 isMLEnabled: self.isMLEnabled,
+                forceInference: forceInference,
                 sequenceHandler: self.sequenceHandler,
                 trackingRequest: &self.trackingRequest,
                 analysis: &updated
             ) { predictions in
                 DispatchQueue.main.async {
-                    self.onMLSuggestionReady?(predictions)
+                    self.onMLSuggestionReady?(processingGeneration, predictions)
                 }
             }
 

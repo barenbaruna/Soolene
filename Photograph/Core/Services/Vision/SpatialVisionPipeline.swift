@@ -17,6 +17,7 @@ enum SpatialVisionPipeline {
         usesSpatialTracking: Bool,
         compositionModel: VNCoreMLModel?,
         isMLEnabled: Bool,
+        forceInference: Bool,
         analysis: inout CompositionAnalysis,
         onMLPredictions: @escaping ([CompositionPrediction]) -> Void
     ) {
@@ -29,7 +30,7 @@ enum SpatialVisionPipeline {
             VisionRequestManager.runMediumRequests(handler: handler, geometry: &analysis.sceneGeometry, isFrontCamera: isFrontCamera)
         }
 
-        if frameCounter % 60 == 0, let model = compositionModel, isMLEnabled {
+        if (forceInference || frameCounter % 60 == 0), let model = compositionModel, isMLEnabled {
             VisionRequestManager.runSlowRequests(handler: handler, model: model, analysis: &analysis)
             onMLPredictions(analysis.mlPredictions)
         }
@@ -51,7 +52,8 @@ enum SpatialVisionPipeline {
             }
             let offsetResult = AlignmentAnalyzer.computeSubjectOffset(
                 for: updated.detectedComposition,
-                geometry: updated.sceneGeometry
+                geometry: updated.sceneGeometry,
+                wasPerfect: current.isCompositionPerfect
             )
             updated.subjectOffset = offsetResult.vector
             updated.isCompositionPerfect = offsetResult.isPerfect

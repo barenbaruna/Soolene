@@ -251,7 +251,7 @@ extension CameraManager {
 
     // MARK: - Capture Photo
 
-    func capturePhoto(aspectRatio: AspectRatioMode = .free) {
+    func capturePhoto(aspectRatio: AspectRatioMode = .fourThree) {
         capturePhoto(aspectRatio: aspectRatio, telemetryPath: nil)
     }
 

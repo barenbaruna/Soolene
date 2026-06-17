@@ -51,16 +51,19 @@ struct ZoomMappingEngine: Sendable {
         arProfile: ARZoomProfile = .widePrimary
     ) -> ZoomApplication {
         let maxDisplay: CGFloat
+        let minDisplay: CGFloat
         switch path {
         case .arGuidance:
             maxDisplay = capabilities.arMaxDisplayZoom
+            minDisplay = 1.0
         case .avLive, .avHandoff:
             maxDisplay = capabilities.maxDisplayZoom
+            minDisplay = capabilities.minDisplayZoom
         }
 
         let display = clamp(
             displayMultiplier,
-            capabilities.minDisplayZoom,
+            minDisplay,
             maxDisplay
         )
 
@@ -115,9 +118,29 @@ struct ZoomMappingEngine: Sendable {
         display: CGFloat,
         capabilities: ZoomDeviceCapabilities
     ) -> ZoomApplication {
-        ZoomApplication(
+        // On Dual Wide Camera (UW + Wide), the virtual device starts at UW:
+        //   videoZoomFactor 1.0 = UW (display 0.5×)
+        //   videoZoomFactor 2.0 = Wide (display 1.0×)
+        // So we must scale display by the first switchOverFactor.
+        //
+        // On Triple Camera (UW + Wide + Tele), same mapping applies:
+        //   videoZoomFactor 1.0 = UW (display 0.5×)
+        //   videoZoomFactor 2.0 = Wide (display 1.0×)
+        //
+        // On single Wide-only devices (no switchOverFactors, no UW),
+        // display 1.0× = device 1.0×, so the multiplier stays 1.0.
+        let deviceZoom: CGFloat
+        if capabilities.hasUltraWide,
+           let wideFactor = capabilities.switchOverFactors.first {
+            // display 0.5 → device 1.0, display 1.0 → device 2.0, display 2.0 → device 4.0
+            deviceZoom = display * wideFactor
+        } else {
+            deviceZoom = display
+        }
+
+        return ZoomApplication(
             displayMultiplier: display,
-            deviceVideoZoomFactor: display,
+            deviceVideoZoomFactor: deviceZoom,
             isPreviewApproximate: false,
             activePhysicalLens: physicalLens(for: display, capabilities: capabilities)
         )

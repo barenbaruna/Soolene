@@ -67,7 +67,9 @@ struct ZoomDeviceCapabilities: Equatable, Sendable {
             hasUltraWide: hasUW,
             teleDisplay: teleDisplay
         )
-        let arCap = min(displayMax, telePresent ? 10.0 : 5.0)
+        
+        // Remove artificial AR caps: match native capability
+        let arCap = displayMax
 
         let caps = ZoomDeviceCapabilities(
             minDisplayZoom: hasUW ? 0.5 : 1.0,

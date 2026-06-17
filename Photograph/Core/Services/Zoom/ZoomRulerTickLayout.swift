@@ -17,19 +17,26 @@ struct ZoomRulerTickLayout: Equatable, Sendable {
     // MARK: - Factory
 
     static func make(from capabilities: ZoomDeviceCapabilities) -> ZoomRulerTickLayout {
-        let span = capabilities.maxDisplayZoom - capabilities.minDisplayZoom
+        make(
+            minZoom: capabilities.minDisplayZoom,
+            maxZoom: capabilities.maxDisplayZoom,
+            majorBoundaries: capabilities.rulerMajorBoundaries
+        )
+    }
+
+    static func make(minZoom: CGFloat, maxZoom: CGFloat, majorBoundaries: [CGFloat]) -> ZoomRulerTickLayout {
+        let span = maxZoom - minZoom
         let minorStep = adaptiveMinorStep(span: span)
-        let majors = capabilities.rulerMajorBoundaries
         let ticks = buildTickValues(
-            from: capabilities.minDisplayZoom,
-            through: capabilities.maxDisplayZoom,
+            from: minZoom,
+            through: maxZoom,
             step: minorStep
         )
 
         return ZoomRulerTickLayout(
             minorStep: minorStep,
             tickValues: ticks,
-            majorBoundaries: majors
+            majorBoundaries: majorBoundaries
         )
     }
 
