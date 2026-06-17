@@ -9,6 +9,7 @@ import Foundation
 struct CaptureHandoffResult: Equatable {
     var photoData: Data?
     var trackingRecovered: Bool
+    var recoveryDeferred: Bool = false
     var usedWorldMap: Bool
     var elapsedSeconds: TimeInterval
 

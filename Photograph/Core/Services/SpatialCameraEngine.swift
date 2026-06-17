@@ -544,10 +544,14 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     /// Resumes AR after AV capture; waits up to `trackingTimeout` for stable tracking.
     func resumeAfterHandoff(
         _ snapshot: CaptureHandoffSnapshot,
-        trackingTimeout: TimeInterval = 8
+        trackingTimeout: TimeInterval = 8,
+        waitsForTrackingRecovery: Bool = true,
+        telemetryPath: CaptureTelemetry.CapturePath? = nil
     ) async -> CaptureHandoffResumeResult {
         let anchorTransform = snapshot.subjectAnchorTransform
+        let usedWorldMap = snapshot.worldMap != nil
 
+        let runStart = CFAbsoluteTimeGetCurrent()
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             sessionQueue.async { [weak self] in
                 guard let self else {
@@ -573,20 +577,122 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
                 continuation.resume()
             }
         }
+        Self.recordHandoffStageIfNeeded(
+            path: telemetryPath,
+            stage: "arResumeRun",
+            elapsedMs: Self.elapsedMs(since: runStart)
+        )
 
+        guard waitsForTrackingRecovery else {
+            waitForTrackingRecoveryInBackground(
+                timeout: trackingTimeout,
+                telemetryPath: telemetryPath,
+                recoveryStart: CFAbsoluteTimeGetCurrent(),
+                usedWorldMap: usedWorldMap,
+                anchorTransform: anchorTransform
+            )
+            return .recoveryDeferred
+        }
+
+        let recoveryStart = CFAbsoluteTimeGetCurrent()
         if await waitForTrackingRecovery(timeout: trackingTimeout) {
+            Self.recordHandoffStageIfNeeded(
+                path: telemetryPath,
+                stage: "trackingRecovery",
+                elapsedMs: Self.elapsedMs(since: recoveryStart),
+                success: true
+            )
             return snapshot.worldMap != nil ? .recoveredWithWorldMap : .recoveredWithoutWorldMap
         }
+        Self.recordHandoffStageIfNeeded(
+            path: telemetryPath,
+            stage: "trackingRecovery",
+            elapsedMs: Self.elapsedMs(since: recoveryStart),
+            success: false
+        )
 
         if snapshot.worldMap != nil {
             Self.captureLog.warning("World map relocalization timed out — falling back without map")
+            let fallbackRunStart = CFAbsoluteTimeGetCurrent()
             await resumeWithoutWorldMap(anchorTransform: anchorTransform)
+            Self.recordHandoffStageIfNeeded(
+                path: telemetryPath,
+                stage: "arResumeFallbackRun",
+                elapsedMs: Self.elapsedMs(since: fallbackRunStart)
+            )
+
+            let fallbackRecoveryStart = CFAbsoluteTimeGetCurrent()
             if await waitForTrackingRecovery(timeout: trackingTimeout) {
+                Self.recordHandoffStageIfNeeded(
+                    path: telemetryPath,
+                    stage: "trackingRecoveryFallback",
+                    elapsedMs: Self.elapsedMs(since: fallbackRecoveryStart),
+                    success: true
+                )
                 return .recoveredWithoutWorldMap
             }
+            Self.recordHandoffStageIfNeeded(
+                path: telemetryPath,
+                stage: "trackingRecoveryFallback",
+                elapsedMs: Self.elapsedMs(since: fallbackRecoveryStart),
+                success: false
+            )
         }
 
         return .trackingDegraded
+    }
+
+    private func waitForTrackingRecoveryInBackground(
+        timeout: TimeInterval,
+        telemetryPath: CaptureTelemetry.CapturePath?,
+        recoveryStart: CFAbsoluteTime,
+        usedWorldMap: Bool,
+        anchorTransform: simd_float4x4?
+    ) {
+        Task { [weak self] in
+            guard let self else { return }
+
+            if await self.waitForTrackingRecovery(timeout: timeout) {
+                Self.recordHandoffStageIfNeeded(
+                    path: telemetryPath,
+                    stage: "trackingRecovery",
+                    elapsedMs: Self.elapsedMs(since: recoveryStart),
+                    success: true,
+                    detail: "deferred=true"
+                )
+                return
+            }
+
+            Self.recordHandoffStageIfNeeded(
+                path: telemetryPath,
+                stage: "trackingRecovery",
+                elapsedMs: Self.elapsedMs(since: recoveryStart),
+                success: false,
+                detail: "deferred=true"
+            )
+
+            guard usedWorldMap else { return }
+
+            Self.captureLog.warning("Deferred world map relocalization timed out — falling back without map")
+            let fallbackRunStart = CFAbsoluteTimeGetCurrent()
+            await self.resumeWithoutWorldMap(anchorTransform: anchorTransform)
+            Self.recordHandoffStageIfNeeded(
+                path: telemetryPath,
+                stage: "arResumeFallbackRun",
+                elapsedMs: Self.elapsedMs(since: fallbackRunStart),
+                detail: "deferred=true"
+            )
+
+            let fallbackRecoveryStart = CFAbsoluteTimeGetCurrent()
+            let recovered = await self.waitForTrackingRecovery(timeout: timeout)
+            Self.recordHandoffStageIfNeeded(
+                path: telemetryPath,
+                stage: "trackingRecoveryFallback",
+                elapsedMs: Self.elapsedMs(since: fallbackRecoveryStart),
+                success: recovered,
+                detail: "deferred=true"
+            )
+        }
     }
 
     func clearHandoffFrozenPreview() {
@@ -667,6 +773,27 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
             try? await Task.sleep(nanoseconds: 50_000_000)
         }
         return false
+    }
+
+    private static func recordHandoffStageIfNeeded(
+        path: CaptureTelemetry.CapturePath?,
+        stage: String,
+        elapsedMs: Int,
+        success: Bool? = nil,
+        detail: String? = nil
+    ) {
+        guard let path else { return }
+        CaptureTelemetry.recordHandoffStage(
+            path: path,
+            stage: stage,
+            elapsedMs: elapsedMs,
+            success: success,
+            detail: detail
+        )
+    }
+
+    private static func elapsedMs(since start: CFAbsoluteTime) -> Int {
+        Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
     }
 
     // MARK: - High-Resolution Capture

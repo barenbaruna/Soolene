@@ -36,7 +36,10 @@ extension CameraManager {
     }
 
     /// Configures and starts rear AV session for handoff capture (awaitable).
-    func prepareRearCaptureForHandoff(_ snapshot: CaptureHandoffSnapshot) async {
+    func prepareRearCaptureForHandoff(
+        _ snapshot: CaptureHandoffSnapshot,
+        telemetryPath: CaptureTelemetry.CapturePath? = nil
+    ) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             sessionQueue.async { [weak self] in
                 guard let self else {
@@ -45,10 +48,19 @@ extension CameraManager {
                 }
                 let controls = snapshot.cameraControls
                 DispatchQueue.main.async { self.flashMode = controls.flashMode }
+
+                let configureStart = CFAbsoluteTimeGetCurrent()
                 self.configureSession(
                     useFront: false,
                     displayMultiplier: controls.displayMultiplier
                 )
+                Self.recordHandoffStageIfNeeded(
+                    path: telemetryPath,
+                    stage: "avConfigure",
+                    elapsedMs: Self.elapsedMs(since: configureStart)
+                )
+
+                let controlsStart = CFAbsoluteTimeGetCurrent()
                 if let device = self.session.inputs.compactMap({ $0 as? AVCaptureDeviceInput }).first?.device {
                     do {
                         try device.lockForConfiguration()
@@ -62,9 +74,23 @@ extension CameraManager {
                         // Non-fatal — capture with defaults.
                     }
                 }
+                Self.recordHandoffStageIfNeeded(
+                    path: telemetryPath,
+                    stage: "avControls",
+                    elapsedMs: Self.elapsedMs(since: controlsStart)
+                )
+
+                let startRunningStart = CFAbsoluteTimeGetCurrent()
                 if !self.session.isRunning {
                     self.session.startRunning()
                 }
+                Self.recordHandoffStageIfNeeded(
+                    path: telemetryPath,
+                    stage: "avStartRunning",
+                    elapsedMs: Self.elapsedMs(since: startRunningStart),
+                    success: self.session.isRunning
+                )
+
                 DispatchQueue.main.async {
                     self.isSessionRunning = self.session.isRunning
                     self.exposureBias = controls.exposureBias
@@ -72,20 +98,32 @@ extension CameraManager {
                 }
             }
         }
+        let warmupStart = CFAbsoluteTimeGetCurrent()
         try? await Task.sleep(nanoseconds: 50_000_000)
+        Self.recordHandoffStageIfNeeded(
+            path: telemetryPath,
+            stage: "avWarmup",
+            elapsedMs: Self.elapsedMs(since: warmupStart)
+        )
     }
 
     /// Captures a photo and waits for delegate completion (call from MainActor).
     @discardableResult
-    func capturePhotoAndWait(aspectRatio: AspectRatioMode, timeout: TimeInterval = 15) async -> Bool {
-        capturePhoto(aspectRatio: aspectRatio)
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if !isCapturingPhoto, capturedPhotoData != nil { return true }
-            if !isCapturingPhoto, captureError != nil { return false }
-            try? await Task.sleep(nanoseconds: 50_000_000)
+    func capturePhotoAndWait(
+        aspectRatio: AspectRatioMode,
+        timeout: TimeInterval = 15,
+        telemetryPath: CaptureTelemetry.CapturePath? = nil
+    ) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            let waitID = installPhotoWaitContinuation(continuation)
+            capturePhoto(aspectRatio: aspectRatio, telemetryPath: telemetryPath)
+
+            Task { [weak self] in
+                let nanoseconds = UInt64(max(timeout, 0) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: nanoseconds)
+                self?.completePhotoWait(id: waitID, success: false)
+            }
         }
-        return false
     }
 
     /// Builds settings for maximum-quality ISP-processed capture (Deep Fusion when available).
@@ -214,6 +252,13 @@ extension CameraManager {
     // MARK: - Capture Photo
 
     func capturePhoto(aspectRatio: AspectRatioMode = .free) {
+        capturePhoto(aspectRatio: aspectRatio, telemetryPath: nil)
+    }
+
+    func capturePhoto(
+        aspectRatio: AspectRatioMode,
+        telemetryPath: CaptureTelemetry.CapturePath?
+    ) {
         sessionQueue.async { [weak self] in
             guard let self else { return }
 
@@ -225,6 +270,8 @@ extension CameraManager {
             }
 
             self.pendingAspectRatio = aspectRatio
+            self.pendingHandoffTelemetryPath = telemetryPath
+            self.pendingPhotoCaptureStart = CFAbsoluteTimeGetCurrent()
 
             if self.isUsingFrontCamera {
                 DispatchQueue.main.async {
@@ -242,5 +289,53 @@ extension CameraManager {
             let settings = self.makeMaximumQualityPhotoSettings(useFront: self.isUsingFrontCamera)
             self.photoOutput.capturePhoto(with: settings, delegate: self)
         }
+    }
+
+    private static func recordHandoffStageIfNeeded(
+        path: CaptureTelemetry.CapturePath?,
+        stage: String,
+        elapsedMs: Int,
+        success: Bool? = nil
+    ) {
+        guard let path else { return }
+        CaptureTelemetry.recordHandoffStage(
+            path: path,
+            stage: stage,
+            elapsedMs: elapsedMs,
+            success: success
+        )
+    }
+
+    private static func elapsedMs(since start: CFAbsoluteTime) -> Int {
+        Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
+    }
+
+    private func installPhotoWaitContinuation(
+        _ continuation: CheckedContinuation<Bool, Never>
+    ) -> UUID {
+        let waitID = UUID()
+        photoWaitLock.lock()
+        let previous = pendingPhotoWaitContinuation
+        pendingPhotoWaitContinuation = continuation
+        pendingPhotoWaitID = waitID
+        photoWaitLock.unlock()
+
+        previous?.resume(returning: false)
+        return waitID
+    }
+
+    func completePhotoWait(id: UUID? = nil, success: Bool) {
+        photoWaitLock.lock()
+        guard let continuation = pendingPhotoWaitContinuation,
+              id == nil || id == pendingPhotoWaitID
+        else {
+            photoWaitLock.unlock()
+            return
+        }
+        pendingPhotoWaitContinuation = nil
+        pendingPhotoWaitID = nil
+        photoWaitLock.unlock()
+
+        continuation.resume(returning: success)
     }
 }

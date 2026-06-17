@@ -7,7 +7,9 @@
 
 import AVFoundation
 import CoreGraphics
+import Foundation
 import ImageIO
+import Observation
 import UIKit
 import UniformTypeIdentifiers
 
@@ -49,6 +51,11 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     /// Transient state for capture
     var pendingAspectRatio: AspectRatioMode = .free
+    var pendingHandoffTelemetryPath: CaptureTelemetry.CapturePath?
+    var pendingPhotoCaptureStart: CFAbsoluteTime?
+    @ObservationIgnored var pendingPhotoWaitContinuation: CheckedContinuation<Bool, Never>?
+    @ObservationIgnored var pendingPhotoWaitID: UUID?
+    @ObservationIgnored let photoWaitLock = NSLock()
 
     /// Largest photo dimensions configured on `photoOutput` (mutated on `sessionQueue`).
     var configuredMaxPhotoDimensions: CMVideoDimensions?

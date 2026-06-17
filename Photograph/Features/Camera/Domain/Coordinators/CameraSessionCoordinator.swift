@@ -125,28 +125,78 @@ final class CameraSessionCoordinator {
             "Handoff start path=\(telemetryPath.rawValue) worldMap=\(usedWorldMap)"
         )
 
+        let pauseStart = CFAbsoluteTimeGetCurrent()
         await spatialEngine.pauseForHandoff()
+        CaptureTelemetry.recordHandoffStage(
+            path: telemetryPath,
+            stage: "arPause",
+            elapsedMs: Self.elapsedMs(since: pauseStart)
+        )
 
         cameraManager.captureError = nil
         cameraManager.capturedPhotoData = nil
         cameraManager.capturedImage = nil
 
-        await cameraManager.prepareRearCaptureForHandoff(snapshot)
+        let prepareStart = CFAbsoluteTimeGetCurrent()
+        await cameraManager.prepareRearCaptureForHandoff(
+            snapshot,
+            telemetryPath: telemetryPath
+        )
+        CaptureTelemetry.recordHandoffStage(
+            path: telemetryPath,
+            stage: "avPrepare",
+            elapsedMs: Self.elapsedMs(since: prepareStart),
+            detail: "displayMultiplier=\(String(format: "%.2f", snapshot.cameraControls.displayMultiplier))"
+        )
 
-        let captureOK = await cameraManager.capturePhotoAndWait(aspectRatio: snapshot.aspectRatio)
+        let captureStart = CFAbsoluteTimeGetCurrent()
+        let captureOK = await cameraManager.capturePhotoAndWait(
+            aspectRatio: snapshot.aspectRatio,
+            telemetryPath: telemetryPath
+        )
+        CaptureTelemetry.recordHandoffStage(
+            path: telemetryPath,
+            stage: "avCapture",
+            elapsedMs: Self.elapsedMs(since: captureStart),
+            success: captureOK,
+            detail: "bytes=\(cameraManager.capturedPhotoData?.count ?? 0)"
+        )
         let photoData = captureOK ? cameraManager.capturedPhotoData : nil
 
+        let stopStart = CFAbsoluteTimeGetCurrent()
         await cameraManager.stopSessionAndWait()
+        CaptureTelemetry.recordHandoffStage(
+            path: telemetryPath,
+            stage: "avStop",
+            elapsedMs: Self.elapsedMs(since: stopStart)
+        )
 
-        let resumeResult = await spatialEngine.resumeAfterHandoff(snapshot)
+        let resumeStart = CFAbsoluteTimeGetCurrent()
+        let resumeResult = await spatialEngine.resumeAfterHandoff(
+            snapshot,
+            waitsForTrackingRecovery: false,
+            telemetryPath: telemetryPath
+        )
+        CaptureTelemetry.recordHandoffStage(
+            path: telemetryPath,
+            stage: "arResumeTotal",
+            elapsedMs: Self.elapsedMs(since: resumeStart),
+            success: resumeResult != .trackingDegraded
+        )
         spatialEngine.clearHandoffFrozenPreview()
 
         let trackingRecovered: Bool
+        let recoveryDeferred: Bool
         switch resumeResult {
         case .recoveredWithWorldMap, .recoveredWithoutWorldMap:
             trackingRecovered = true
+            recoveryDeferred = false
+        case .recoveryDeferred:
+            trackingRecovered = false
+            recoveryDeferred = true
         case .trackingDegraded:
             trackingRecovered = false
+            recoveryDeferred = false
         }
 
         visionService.usesSpatialTracking = true
@@ -164,6 +214,7 @@ final class CameraSessionCoordinator {
             success: photoData != nil,
             usedWorldMap: usedWorldMap,
             trackingRecovered: trackingRecovered,
+            recoveryDeferred: recoveryDeferred,
             elapsedMs: elapsedMs,
             frozenPreviewMs: elapsedMs
         )
@@ -171,8 +222,13 @@ final class CameraSessionCoordinator {
         return CaptureHandoffResult(
             photoData: photoData,
             trackingRecovered: trackingRecovered,
+            recoveryDeferred: recoveryDeferred,
             usedWorldMap: usedWorldMap,
             elapsedSeconds: elapsed
         )
+    }
+
+    private static func elapsedMs(since start: CFAbsoluteTime) -> Int {
+        Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
     }
 }

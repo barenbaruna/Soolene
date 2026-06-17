@@ -12,12 +12,12 @@ import ARKit
 /// Structured capture metrics — filter Console with subsystem `com.barenbaruna.Photograph` category `CaptureTelemetry`.
 enum CaptureTelemetry {
 
-    enum CaptureMode: String {
+    enum CaptureMode: String, Sendable {
         case `default`
         case frontClassic
     }
 
-    enum CapturePath: String {
+    enum CapturePath: String, Sendable {
         case ar
         case av
         case avFallback
@@ -70,17 +70,39 @@ enum CaptureTelemetry {
         log.info("\(parts.joined(separator: " "))")
     }
 
+    static func recordCaptureStage(
+        mode: CaptureMode,
+        stage: String,
+        elapsedMs: Int,
+        success: Bool? = nil,
+        detail: String? = nil
+    ) {
+        guard CaptureArchitectureFlags.telemetryEnabled else { return }
+
+        var parts = [
+            "capture_stage mode=\(mode.rawValue)",
+            "stage=\(stage)",
+            "elapsedMs=\(elapsedMs)"
+        ]
+        if let success { parts.append("success=\(success)") }
+        if let detail { parts.append(detail) }
+        log.info("\(parts.joined(separator: " "))")
+    }
+
     static func recordHandoffComplete(
         path: CapturePath,
         success: Bool,
         usedWorldMap: Bool,
         trackingRecovered: Bool,
+        recoveryDeferred: Bool = false,
         elapsedMs: Int,
         frozenPreviewMs: Int? = nil
     ) {
         guard CaptureArchitectureFlags.telemetryEnabled else { return }
-        handoffCount += 1
-        if trackingRecovered { handoffTrackingRecovered += 1 }
+        if !recoveryDeferred {
+            handoffCount += 1
+            if trackingRecovered { handoffTrackingRecovered += 1 }
+        }
         if path == .avFallback { fallbackAttempts += 1 }
 
         var parts = [
@@ -88,6 +110,7 @@ enum CaptureTelemetry {
             "success=\(success)",
             "usedWorldMap=\(usedWorldMap)",
             "trackingRecovered=\(trackingRecovered)",
+            "recoveryDeferred=\(recoveryDeferred)",
             "elapsedMs=\(elapsedMs)",
             "relocalizationRate=\(relocalizationSuccessPercent)%"
         ]
@@ -95,6 +118,25 @@ enum CaptureTelemetry {
         if path == .avFallback {
             parts.append("fallbackRate=\(fallbackRatePercent)%")
         }
+        log.info("\(parts.joined(separator: " "))")
+    }
+
+    static func recordHandoffStage(
+        path: CapturePath,
+        stage: String,
+        elapsedMs: Int,
+        success: Bool? = nil,
+        detail: String? = nil
+    ) {
+        guard CaptureArchitectureFlags.telemetryEnabled else { return }
+
+        var parts = [
+            "handoff_stage path=\(path.rawValue)",
+            "stage=\(stage)",
+            "elapsedMs=\(elapsedMs)"
+        ]
+        if let success { parts.append("success=\(success)") }
+        if let detail { parts.append(detail) }
         log.info("\(parts.joined(separator: " "))")
     }
 

@@ -13,6 +13,7 @@ import UIKit
 enum CaptureHandoffResumeResult: Equatable {
     case recoveredWithWorldMap
     case recoveredWithoutWorldMap
+    case recoveryDeferred
     case trackingDegraded
 }
 

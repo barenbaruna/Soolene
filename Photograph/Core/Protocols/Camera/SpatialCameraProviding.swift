@@ -33,6 +33,11 @@ protocol SpatialCameraProviding: AnyObject {
 
     func makeHandoffSnapshot(aspectRatio: AspectRatioMode) async -> CaptureHandoffSnapshot
     func pauseForHandoff() async
-    func resumeAfterHandoff(_ snapshot: CaptureHandoffSnapshot, trackingTimeout: TimeInterval) async -> CaptureHandoffResumeResult
+    func resumeAfterHandoff(
+        _ snapshot: CaptureHandoffSnapshot,
+        trackingTimeout: TimeInterval,
+        waitsForTrackingRecovery: Bool,
+        telemetryPath: CaptureTelemetry.CapturePath?
+    ) async -> CaptureHandoffResumeResult
     func clearHandoffFrozenPreview()
 }

@@ -144,9 +144,15 @@ final class CaptureCoordinator {
         guard readiness.isShutterEnabled, !isCapturing(cameraMode: cameraMode) else { return }
 
         clearCaptureErrors()
-        await visionService.prepareForCapture()
-
         let captureMode = telemetryMode(for: cameraMode)
+        let visionPrepareStart = CFAbsoluteTimeGetCurrent()
+        await visionService.prepareForCapture()
+        CaptureTelemetry.recordCaptureStage(
+            mode: captureMode,
+            stage: "visionPrepare",
+            elapsedMs: Self.elapsedMs(since: visionPrepareStart)
+        )
+
         let shutterStart = CFAbsoluteTimeGetCurrent()
         CaptureTelemetry.recordShutterAttempt(mode: captureMode)
 
@@ -287,7 +293,15 @@ final class CaptureCoordinator {
         isCaptureHandoffInProgress = true
         defer { isCaptureHandoffInProgress = false }
 
+        let snapshotStart = CFAbsoluteTimeGetCurrent()
         let snapshot = await spatialEngine.makeHandoffSnapshot(aspectRatio: aspectRatio)
+        CaptureTelemetry.recordHandoffStage(
+            path: telemetryPath,
+            stage: "snapshot",
+            elapsedMs: Self.elapsedMs(since: snapshotStart),
+            detail: "usedWorldMap=\(snapshot.worldMap != nil) frozenPreview=\(snapshot.frozenPreviewImage != nil)"
+        )
+
         let result = await handoff(snapshot)
 
         if let data = result.photoData {
@@ -311,7 +325,11 @@ final class CaptureCoordinator {
             )
         }
 
-        isHandoffRecovering = !result.trackingRecovered
+        isHandoffRecovering = result.recoveryDeferred || !result.trackingRecovered
+        clearHandoffRecoveryIfTrackingStable(
+            trackingState: spatialEngine.trackingState,
+            stabilityProgress: spatialEngine.trackingStabilityProgress
+        )
     }
 
     private func applyHandoffPhotoData(_ data: Data) {
@@ -338,5 +356,9 @@ final class CaptureCoordinator {
 
     var activeCapturedPhotoData: Data? {
         spatialEngine.capturedPhotoData ?? cameraManager.capturedPhotoData
+    }
+
+    private static func elapsedMs(since start: CFAbsoluteTime) -> Int {
+        Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
     }
 }
