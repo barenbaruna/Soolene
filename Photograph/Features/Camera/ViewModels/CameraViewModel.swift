@@ -14,7 +14,7 @@ final class CameraViewModel {
     // MARK: - Analysis State
 
     var analysis = CompositionAnalysis()
-    var selectedAspectRatio: AspectRatioMode = .free
+    var selectedAspectRatio: AspectRatioMode = .fourThree
 
     // MARK: - Capture State
 

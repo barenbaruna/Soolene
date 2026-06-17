@@ -50,7 +50,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
     var outputSynchronizer: AVCaptureDataOutputSynchronizer?
 
     /// Transient state for capture
-    var pendingAspectRatio: AspectRatioMode = .free
+    var pendingAspectRatio: AspectRatioMode = .fourThree
     var pendingHandoffTelemetryPath: CaptureTelemetry.CapturePath?
     var pendingPhotoCaptureStart: CFAbsoluteTime?
     @ObservationIgnored var pendingPhotoWaitContinuation: CheckedContinuation<Bool, Never>?
