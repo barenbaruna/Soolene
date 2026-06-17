@@ -717,7 +717,11 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
         var frozenImage: UIImage?
         if let frame = session.currentFrame {
-            let imageOrientation = Self.imageOrientation(for: orientation)
+            // Read physical device orientation on the main thread or directly
+            // Note: UIDevice.current.orientation is generally safe to read from background,
+            // but we can just use the physical device orientation directly for the frozen image.
+            let deviceOrientation = UIDevice.current.orientation
+            let imageOrientation = Self.imageOrientation(forDeviceOrientation: deviceOrientation)
             frozenImage = Self.makeUIImage(from: frame.capturedImage, orientation: imageOrientation)
         }
 
@@ -867,11 +871,14 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         let photoSettings = config.videoFormat.defaultPhotoSettings
 
         arStateLock.lock()
-        let captureOrientation = sessionInterfaceOrientation
         let captureRatio = pendingAspectRatio
         let captureFlash = flashMode
         let capturePreviewScale = pendingDeviceVideoZoom
         arStateLock.unlock()
+
+        // Use the physical device orientation (accelerometer) instead of the
+        // interface orientation, because the app UI is locked to portrait.
+        let captureDeviceOrientation = UIDevice.current.orientation
 
         let settings = photoSettings
         settings.photoQualityPrioritization = .balanced
@@ -945,7 +952,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
                 return
             }
 
-            let orientation = Self.imageOrientation(for: captureOrientation)
+            let orientation = Self.imageOrientation(forDeviceOrientation: captureDeviceOrientation)
             let pixelBuffer = frame.capturedImage
 
             DispatchQueue.global(qos: .userInitiated).async {
@@ -999,13 +1006,14 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         }
     }
 
-    private static func imageOrientation(for interfaceOrientation: UIInterfaceOrientation) -> UIImage.Orientation {
-        switch interfaceOrientation {
-        case .portrait: return .right
-        case .portraitUpsideDown: return .left
-        case .landscapeLeft: return .up
-        case .landscapeRight: return .down
-        default: return .right
+    private static func imageOrientation(forDeviceOrientation deviceOrientation: UIDeviceOrientation) -> UIImage.Orientation {
+        switch deviceOrientation {
+        case .portrait:            return .right
+        case .portraitUpsideDown:  return .left
+        case .landscapeLeft:       return .up      // Home button on right -> sensor is upright
+        case .landscapeRight:      return .down    // Home button on left -> sensor is upside down
+        case .faceUp, .faceDown, .unknown: return .right // Default to portrait
+        @unknown default:          return .right
         }
     }
 
