@@ -350,7 +350,8 @@ struct PhotoPageView: View {
                                 GeometryReader { imgGeo in
                                     CompositionGridView(
                                         composition: composition,
-                                        rect: CGRect(origin: .zero, size: imgGeo.size),
+                                        fullRect: CGRect(origin: .zero, size: imgGeo.size),
+                                    aspectRect: CGRect(origin: .zero, size: imgGeo.size),
                                         color: AppColors.gridlineGreen,
                                         isPerfect: false,
                                         showSubjectBox: false
