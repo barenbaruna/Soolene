@@ -24,6 +24,14 @@ struct PreTutorialOnboardingView: View {
         currentSlideIndex == slides.count - 1
     }
 
+    private var primaryActionTitle: String {
+        if cameraStatus.allowsCamera, !photoStatus.allowsPhotoBrowse {
+            return "Continue"
+        }
+
+        return "Start Tutorial"
+    }
+
     private var slideSelection: Binding<Int> {
         Binding {
             currentSlideIndex
@@ -53,7 +61,7 @@ struct PreTutorialOnboardingView: View {
                 }
 
                 Button(action: startPermissionFlow) {
-                    Text("Start Tutorial")
+                    Text(primaryActionTitle)
                         .frame(maxWidth: .infinity)
                     .font(Typography.buttonCTA)
                     .foregroundStyle(.white)
