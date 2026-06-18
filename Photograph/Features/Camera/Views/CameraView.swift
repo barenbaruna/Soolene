@@ -22,34 +22,21 @@ struct CameraView: View {
     @State private var previewSize: CGSize = .zero
     @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
     @State private var permissionAlert: PermissionAlertKind?
-    @State private var hasCompletedPermissionFlow = false
     @State private var hasLoadedInitialPermissions = false
-    @SceneStorage("cameraPermissionFlowNeedsManualCompletion")
-    private var permissionFlowNeedsManualCompletion = false
 
     var body: some View {
         Group {
-            if viewModel.hasRequiredPermissions && hasCompletedPermissionFlow {
+            if !hasLoadedInitialPermissions {
+                Color.black.ignoresSafeArea()
+            } else if viewModel.hasRequiredPermissions {
                 cameraExperience
             } else {
-                CameraPermissionGateView(
-                    cameraStatus: viewModel.cameraPermission,
-                    photoStatus: viewModel.photoReadPermission,
-                    isRequestingCamera: viewModel.isRequestingCameraPermission,
-                    isRequestingPhoto: viewModel.isRequestingPhotoPermission,
-                    onRequestCameraAccess: { requestCameraAccess() },
-                    onRequestPhotoAccess: { requestPhotoAccess() },
-                    onComplete: { completePermissionFlow() }
-                )
+                permissionFallback
             }
         }
         .task {
             await viewModel.refreshPermissions()
-            guard !hasLoadedInitialPermissions else { return }
             hasLoadedInitialPermissions = true
-            if viewModel.hasRequiredPermissions && !permissionFlowNeedsManualCompletion {
-                hasCompletedPermissionFlow = true
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Task { await viewModel.refreshPermissions() }
@@ -65,7 +52,6 @@ struct CameraView: View {
             set: { if !$0 { permissionAlert = nil } }
         )) {
             Button("Open Settings") {
-                permissionFlowNeedsManualCompletion = true
                 viewModel.openAppSettings()
                 permissionAlert = nil
             }
@@ -75,6 +61,22 @@ struct CameraView: View {
         } message: {
             Text(permissionAlertMessage)
         }
+    }
+
+    private var permissionFallback: some View {
+        ContentUnavailableView {
+            Label(permissionFallbackTitle, systemImage: permissionFallbackIcon)
+        } description: {
+            Text(permissionFallbackMessage)
+        } actions: {
+            Button(permissionFallbackActionTitle) {
+                requestMissingPermission()
+            }
+            .disabled(viewModel.isRequestingCameraPermission || viewModel.isRequestingPhotoPermission)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .foregroundStyle(.white)
+        .background(Color.black)
     }
 
     private var cameraExperience: some View {
@@ -228,16 +230,59 @@ struct CameraView: View {
     private var permissionAlertMessage: String {
         switch permissionAlert {
         case .camera:
-            return PrivacyPermissionService.cameraGateMessage(for: viewModel.cameraPermission)
+            return PrivacyPermissionService.cameraSettingsMessage
         case .gallery:
-            return PrivacyPermissionService.photoBrowseMessage(for: viewModel.photoReadPermission)
+            return PrivacyPermissionService.photoLibrarySettingsMessage
         case nil:
             return ""
         }
     }
 
+    private var permissionFallbackTitle: String {
+        if !viewModel.cameraPermission.allowsCamera {
+            return "Camera Access Needed"
+        }
+        return "Photo Library Access Needed"
+    }
+
+    private var permissionFallbackIcon: String {
+        if !viewModel.cameraPermission.allowsCamera {
+            return "camera.viewfinder"
+        }
+        return "photo.stack"
+    }
+
+    private var permissionFallbackMessage: String {
+        if !viewModel.cameraPermission.allowsCamera {
+            return PrivacyPermissionService.cameraSettingsMessage
+        }
+        return PrivacyPermissionService.photoLibrarySettingsMessage
+    }
+
+    private var permissionFallbackActionTitle: String {
+        let status = !viewModel.cameraPermission.allowsCamera
+            ? viewModel.cameraPermission
+            : viewModel.photoReadPermission
+        return status.needsSettings ? "Open Settings" : "Continue"
+    }
+
+    private func requestMissingPermission() {
+        if !viewModel.cameraPermission.allowsCamera {
+            if viewModel.cameraPermission.needsSettings {
+                permissionAlert = .camera
+                return
+            }
+            requestCameraAccess()
+        } else if !viewModel.photoReadPermission.allowsPhotoBrowse {
+            if viewModel.photoReadPermission.needsSettings {
+                permissionAlert = .gallery
+                return
+            }
+            requestPhotoAccess()
+        }
+    }
+
     private func requestCameraAccess() {
-        permissionFlowNeedsManualCompletion = true
         Task { @MainActor in
             await viewModel.requestCameraAccess()
             showSettingsAlertIfNeeded(for: .camera, status: viewModel.cameraPermission)
@@ -245,7 +290,6 @@ struct CameraView: View {
     }
 
     private func requestPhotoAccess() {
-        permissionFlowNeedsManualCompletion = true
         Task { @MainActor in
             await viewModel.requestPhotoReadAccess()
             showSettingsAlertIfNeeded(for: .gallery, status: viewModel.photoReadPermission)
@@ -255,14 +299,6 @@ struct CameraView: View {
     private func showSettingsAlertIfNeeded(for kind: PermissionAlertKind, status: PermissionStatus) {
         if status.needsSettings {
             permissionAlert = kind
-        }
-    }
-
-    private func completePermissionFlow() {
-        guard viewModel.hasRequiredPermissions else { return }
-        permissionFlowNeedsManualCompletion = false
-        withAnimation(.easeInOut(duration: 0.25)) {
-            hasCompletedPermissionFlow = true
         }
     }
 
