@@ -327,15 +327,15 @@
 				DEVELOPMENT_TEAM = V36823696A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Visula;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Visula uses the camera to show a live preview and provide real-time composition guidance while you take photos.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Visula saves photos you capture to your Photo Library and a Visula album so you can review them in the app.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Visula accesses your Photo Library to display photos saved by Visula in your Library.";
+				INFOPLIST_KEY_CFBundleDisplayName = Soolene;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Soolene uses the camera to show a live preview and provide real-time composition guidance while you take photos.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Soolene saves photos you capture to your Photo Library and a Soolene album so you can review them in the app.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Soolene accesses your Photo Library to display photos saved by Soolene in your Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -362,15 +362,15 @@
 				DEVELOPMENT_TEAM = V36823696A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Visula;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Visula uses the camera to show a live preview and provide real-time composition guidance while you take photos.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Visula saves photos you capture to your Photo Library and a Visula album so you can review them in the app.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Visula accesses your Photo Library to display photos saved by Visula in your Library.";
+				INFOPLIST_KEY_CFBundleDisplayName = Soolene;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Soolene uses the camera to show a live preview and provide real-time composition guidance while you take photos.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Soolene saves photos you capture to your Photo Library and a Soolene album so you can review them in the app.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Soolene accesses your Photo Library to display photos saved by Soolene in your Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

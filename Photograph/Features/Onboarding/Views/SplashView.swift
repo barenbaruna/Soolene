@@ -33,11 +33,11 @@ struct SplashView: View {
                 VStack(spacing: 12) {
                     Text(AppIdentity.displayName)
                         .font(Typography.title)
-                        .foregroundStyle(AppColors.primary)
+                        .foregroundStyle(AppColors.brandPrimary)
 
-                    Text("Not every eye sees a composition")
+                    Text("seeing depth through a lens")
                         .font(Typography.body)
-                        .foregroundStyle(AppColors.primary)
+                        .foregroundStyle(AppColors.brandPrimary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Spacing.extraLarge)
                 }
