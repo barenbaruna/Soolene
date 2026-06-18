@@ -127,7 +127,9 @@ struct CameraView: View {
             if viewModel.isCaptureHandoffInProgress {
                 CameraHandoffOverlay(
                     frozenPreview: viewModel.handoffFrozenPreviewImage,
-                    message: handoffOverlayMessage
+                    message: handoffOverlayMessage,
+                    aspectRatio: viewModel.selectedAspectRatio,
+                    displayMultiplier: viewModel.zoomController.displayMultiplier
                 )
             }
 
@@ -162,16 +164,7 @@ struct CameraView: View {
         .fullScreenCover(isPresented: $isShowingGallery) {
             GalleryView(initialPhotoIdentifier: viewModel.lastSavedAssetIdentifier)
         }
-        .onChange(of: viewModel.spatialEngine.capturedPhotoData) { _, newData in
-            if newData != nil {
-                Task { await viewModel.savePhoto() }
-            }
-        }
-        .onChange(of: viewModel.cameraManager.capturedPhotoData) { _, newData in
-            if newData != nil {
-                Task { await viewModel.savePhoto() }
-            }
-        }
+
         .onChange(of: viewModel.lastSavedAssetIdentifier) { _, identifier in
             guard let identifier else { return }
             onboarding.recordWalkthroughPhotoIdentifier(identifier)
