@@ -73,7 +73,7 @@ struct CaptureButton: View {
         switch readiness {
         case .ready: return AppColors.gridlineGreen
         case .stabilizing: return AppColors.controlActive
-        case .idle: return AppColors.brandPrimary
+        case .idle: return AppColors.primary
         }
     }
 
