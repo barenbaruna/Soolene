@@ -110,7 +110,7 @@ struct CameraBottomControlsStack: View {
                 }
             }
         }
-        .padding(.bottom, Spacing.standard)
+        .padding(.bottom, Spacing.small)
         .animation(.snappy, value: viewModel.activePanel)
         .animation(.snappy, value: viewModel.guidancePhase.isLocked)
         .animation(.snappy, value: viewModel.showsZoomRuler)

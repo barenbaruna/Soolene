@@ -170,8 +170,16 @@ extension CameraViewModel {
 
             HapticManager.capture()
             showShutterFlash = true
-            try? await Task.sleep(nanoseconds: 100_000_000)
-            showShutterFlash = false
+            
+            Task {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                await MainActor.run { self.showShutterFlash = false }
+            }
+            
+            // Save photo immediately after capture completes
+            await savePhoto()
         }
     }
 }
+
+

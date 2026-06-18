@@ -54,6 +54,12 @@ struct CameraView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Task { await viewModel.refreshPermissions() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            // UIDevice.current.orientation reflects physical orientation from the accelerometer,
+            // independent of system Portrait Orientation Lock. This lets us match the native
+            // camera behaviour: the app responds to real device rotation even when the system lock is on.
+            viewModel.onDeviceOrientationChanged(UIDevice.current.orientation)
+        }
         .alert(permissionAlertTitle, isPresented: Binding(
             get: { permissionAlert != nil },
             set: { if !$0 { permissionAlert = nil } }
@@ -121,7 +127,9 @@ struct CameraView: View {
             if viewModel.isCaptureHandoffInProgress {
                 CameraHandoffOverlay(
                     frozenPreview: viewModel.handoffFrozenPreviewImage,
-                    message: handoffOverlayMessage
+                    message: handoffOverlayMessage,
+                    aspectRatio: viewModel.selectedAspectRatio,
+                    displayMultiplier: viewModel.zoomController.displayMultiplier
                 )
             }
 
@@ -156,16 +164,7 @@ struct CameraView: View {
         .fullScreenCover(isPresented: $isShowingGallery) {
             GalleryView(initialPhotoIdentifier: viewModel.lastSavedAssetIdentifier)
         }
-        .onChange(of: viewModel.spatialEngine.capturedPhotoData) { _, newData in
-            if newData != nil {
-                Task { await viewModel.savePhoto() }
-            }
-        }
-        .onChange(of: viewModel.cameraManager.capturedPhotoData) { _, newData in
-            if newData != nil {
-                Task { await viewModel.savePhoto() }
-            }
-        }
+
         .onChange(of: viewModel.lastSavedAssetIdentifier) { _, identifier in
             guard let identifier else { return }
             onboarding.recordWalkthroughPhotoIdentifier(identifier)

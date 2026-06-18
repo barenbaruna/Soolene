@@ -14,7 +14,20 @@ final class CameraViewModel {
     // MARK: - Analysis State
 
     var analysis = CompositionAnalysis()
-    var selectedAspectRatio: AspectRatioMode = .fourThree
+    var selectedAspectRatio: AspectRatioMode = .fourThree {
+        didSet {
+            visionService.activeAspectRatio = selectedAspectRatio
+            compositionCoordinator.recalculateTargetForAspectRatio(
+                selectedAspectRatio,
+                orientation: deviceOrientation,
+                analysis: &analysis
+            )
+        }
+    }
+
+    /// Physical device orientation, updated via accelerometer — independent of system orientation lock.
+    /// Used to keep Horizontal/Vertical target sockets in sync with the visually rotated grid overlay.
+    var deviceOrientation: UIDeviceOrientation = UIDevice.current.orientation
 
     // MARK: - Capture State
 
@@ -253,7 +266,25 @@ final class CameraViewModel {
     }
 
     func selectComposition(_ composition: CompositionType) {
-        compositionCoordinator.selectComposition(composition, analysis: &analysis)
+        compositionCoordinator.selectComposition(
+            composition,
+            analysis: &analysis,
+            aspectRatio: selectedAspectRatio,
+            orientation: deviceOrientation
+        )
+    }
+
+    /// Called when the physical device orientation changes (from NotificationCenter).
+    /// Updates vision pipeline and recalculates locked target if guidance is active.
+    func onDeviceOrientationChanged(_ newOrientation: UIDeviceOrientation) {
+        guard newOrientation.isValidInterfaceOrientation || newOrientation.isLandscape else { return }
+        deviceOrientation = newOrientation
+        visionService.activeDeviceOrientation = newOrientation
+        compositionCoordinator.recalculateTargetForAspectRatio(
+            selectedAspectRatio,
+            orientation: newOrientation,
+            analysis: &analysis
+        )
     }
 
     func clearPinnedSubject() {

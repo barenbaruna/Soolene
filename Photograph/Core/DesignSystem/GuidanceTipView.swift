@@ -114,9 +114,9 @@ struct GuidanceTipView: View {
         }
         switch phase {
         case .guiding:
-            return AppColors.textOnCamera
+            return .primary
         default:
-            return AppColors.textGuide
+            return .secondary
         }
     }
 
@@ -129,7 +129,7 @@ struct GuidanceTipView: View {
         if #available(iOS 26, *) {
             Capsule()
                 .fill(Color.black.opacity(0.35))
-                .glassEffect(.regular, in: .capsule)
+                .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .capsule)
         } else {
             Capsule()
                 .fill(.ultraThinMaterial)

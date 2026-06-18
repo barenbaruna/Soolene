@@ -8,6 +8,7 @@
 import AVFoundation
 import CoreGraphics
 import CoreML
+import UIKit
 import Vision
 
 final class VisionService: @unchecked Sendable {
@@ -19,6 +20,10 @@ final class VisionService: @unchecked Sendable {
     var usesSpatialTracking = true
     var isMLEnabled = true
     var deviceRollDegrees: Double?
+    var activeAspectRatio: AspectRatioMode = .fourThree
+    /// Physical device orientation — set from the main thread via MotionService/NotificationCenter.
+    /// Passed to AlignmentAnalyzer so Horizontal/Vertical targets match the visual grid rotation.
+    var activeDeviceOrientation: UIDeviceOrientation = UIDevice.current.orientation
 
     private let sequenceHandler = VNSequenceRequestHandler()
     private var trackingRequest: VNTrackObjectRequest?
@@ -33,7 +38,8 @@ final class VisionService: @unchecked Sendable {
         usesSpatialTracking: true,
         isMLEnabled: true,
         userGuidanceActive: false,
-        deviceRollDegrees: nil
+        deviceRollDegrees: nil,
+        activeAspectRatio: .fourThree
     )
 
     private var compositionModel: VNCoreMLModel? = {
@@ -317,6 +323,8 @@ final class VisionService: @unchecked Sendable {
         analysisProcessor.isMLEnabled = isMLEnabled
         analysisProcessor.userGuidanceActive = userGuidanceActive
         analysisProcessor.deviceRollDegrees = deviceRollDegrees
+        analysisProcessor.activeAspectRatio = activeAspectRatio
+        analysisProcessor.activeDeviceOrientation = activeDeviceOrientation
     }
 
     private func copyLockState(from source: SceneGeometry, to destination: inout SceneGeometry) {

@@ -24,7 +24,7 @@ struct ViewfinderExposureScale: View {
                 value: CGFloat(exposureBias),
                 range: ExposureRulerLayout.range,
                 formattedValue: formattedEV,
-                activeColor: AppColors.accent,
+                activeColor: AppColors.controlActive,
                 isDragging: isDragging,
                 onValueChanged: { newValue in
                     let previous = lastDragValue
