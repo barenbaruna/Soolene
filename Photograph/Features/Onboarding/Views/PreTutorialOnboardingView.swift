@@ -8,7 +8,8 @@ import SwiftUI
 struct PreTutorialOnboardingView: View {
     @Environment(OnboardingStore.self) private var onboarding
 
-    @State private var selection = OnboardingSlide.slides.first?.id ?? UUID()
+    @SceneStorage("preTutorialOnboardingSelectedSlideIndex")
+    private var selectedSlideIndex = 0
     @State private var cameraStatus: PermissionStatus = .notDetermined
     @State private var photoStatus: PermissionStatus = .notDetermined
     @State private var isRequestingPermissions = false
@@ -16,11 +17,19 @@ struct PreTutorialOnboardingView: View {
 
     private let slides = OnboardingSlide.slides
     private var currentSlideIndex: Int {
-        slides.firstIndex(where: { $0.id == selection }) ?? 0
+        clampedSlideIndex(selectedSlideIndex)
     }
 
     private var isLastSlide: Bool {
         currentSlideIndex == slides.count - 1
+    }
+
+    private var slideSelection: Binding<Int> {
+        Binding {
+            currentSlideIndex
+        } set: { newValue in
+            selectedSlideIndex = clampedSlideIndex(newValue)
+        }
     }
 
     var body: some View {
@@ -28,10 +37,10 @@ struct PreTutorialOnboardingView: View {
             Color.white.ignoresSafeArea()
 
             VStack(spacing: Spacing.small) {
-                TabView(selection: $selection) {
-                    ForEach(slides) { slide in
-                        slidePage(slide)
-                            .tag(slide.id)
+                TabView(selection: slideSelection) {
+                    ForEach(slides.indices, id: \.self) { index in
+                        slidePage(slides[index])
+                            .tag(index)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
@@ -44,15 +53,8 @@ struct PreTutorialOnboardingView: View {
                 }
 
                 Button(action: startPermissionFlow) {
-                    HStack(spacing: Spacing.small) {
-                        if isRequestingPermissions {
-                            ProgressView()
-                                .tint(.white)
-                        }
-
-                        Text("Start Tutorial")
-                            .frame(maxWidth: .infinity)
-                    }
+                    Text("Start Tutorial")
+                        .frame(maxWidth: .infinity)
                     .font(Typography.buttonCTA)
                     .foregroundStyle(.white)
                     .frame(height: 50)
@@ -85,6 +87,11 @@ struct PreTutorialOnboardingView: View {
         } message: {
             Text(permissionAlertMessage)
         }
+    }
+
+    private func clampedSlideIndex(_ index: Int) -> Int {
+        guard !slides.isEmpty else { return 0 }
+        return min(max(index, 0), slides.count - 1)
     }
 
     private func slidePage(_ slide: OnboardingSlide) -> some View {
@@ -191,8 +198,7 @@ struct PreTutorialOnboardingView: View {
     }
 }
 
-private struct OnboardingSlide: Identifiable {
-    let id = UUID()
+private struct OnboardingSlide {
     let title: String
     let subtitle: String?
     let imageName: String
