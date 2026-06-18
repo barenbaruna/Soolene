@@ -431,27 +431,21 @@ private struct DirectionArrow: View {
 
     /// Position along connector (0 = subject, 1 = target).
     private let biasTowardTarget: CGFloat = 0.28
-    
-    @State private var isPulsing = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let anchorX = from.x + (to.x - from.x) * biasTowardTarget
         let anchorY = from.y + (to.y - from.y) * biasTowardTarget
         let angle = atan2(to.y - from.y, to.x - from.x)
 
-        Image(systemName: "arrowtriangle.forward.fill")
-            .font(.system(size: 16, weight: .bold))
-            .foregroundStyle(color.opacity(0.95))
-            .rotationEffect(.radians(angle))
-            .position(x: anchorX, y: anchorY)
-            .shadow(color: .black.opacity(0.5), radius: 2)
-            .scaleEffect(reduceMotion ? 1.0 : (isPulsing ? 1.15 : 0.85))
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
-                    isPulsing = true
-                }
-            }
+        ZStack {
+            Image(systemName: "arrowtriangle.forward.fill")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(color.opacity(0.95))
+                .rotationEffect(.radians(angle))
+        }
+        .frame(width: 32, height: 32)
+        // .glassEffect(.regular, in: .circle)
+        .position(x: anchorX, y: anchorY)
+        .shadow(color: .black.opacity(0.25), radius: 3)
     }
 }

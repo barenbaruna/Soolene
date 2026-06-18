@@ -138,10 +138,14 @@ enum GuidanceEngine {
             return "Move the square to the center."
 
         case .horizontal:
-            let angle = abs(AlignmentAnalyzer.effectiveHorizonAngle(geometry: geometry))
-            if angle < 2.0 { return "Perfect. Hold steady." }
-            if angle < 6.0 { return "Almost there." }
-            return "Level the camera."
+            guard let subject = bestSubjectPoint(from: geometry) else {
+                return "Tap your subject, then align the square with the horizontal line."
+            }
+            let target = AlignmentAnalyzer.targetPoint(for: .horizontal, subject: subject, geometry: geometry) ?? CGPoint(x: subject.x, y: 0.5)
+            let dist = hypot(subject.x - target.x, subject.y - target.y)
+            if dist < 0.06 { return "Perfect. Hold steady." }
+            if dist < 0.16 { return "Almost there." }
+            return "Align the square with the horizontal line."
 
         case .vertical:
             guard let subject = bestSubjectPoint(from: geometry) else {

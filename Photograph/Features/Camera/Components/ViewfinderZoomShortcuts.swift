@@ -34,8 +34,8 @@ struct ViewfinderZoomShortcuts: View {
                     viewModel.setZoomMultiplier(lens.nominalMultiplier, isFinal: true)
                 } label: {
                     Text(buttonLabel(for: lens, isSelected: isSelected))
-                        .font(.subheadline.monospacedDigit().weight(isSelected ? .bold : .medium))
-                        .foregroundStyle(isSelected ? AppColors.controlActive : .white)
+                        .font(.headline.monospacedDigit().weight(isSelected ? .bold : .semibold))
+                        .foregroundStyle(isSelected ? AppColors.controlActive : .primary)
                         .rotationEffect(.degrees(iconRotation))
                         .frame(width: 44, height: 44)
                         .contentShape(Circle())
@@ -43,7 +43,7 @@ struct ViewfinderZoomShortcuts: View {
                 .buttonStyle(.plain)
                 .background {
                     if #available(iOS 26, *) {
-                        let glass: Glass = .clear.interactive()
+                        let glass: Glass = .clear.tint(Color.black.opacity(0.15)).interactive()
                         let base = Color.clear
                             .glassEffect(glass, in: .circle)
                             .allowsHitTesting(false)

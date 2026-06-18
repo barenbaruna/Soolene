@@ -25,7 +25,7 @@ struct CameraBottomBar: View {
                     } else {
                         Image(AppIcon.iconGallery)
                             .font(.title2)
-                            .foregroundStyle(AppColors.textOnCamera)
+                            .foregroundStyle(.primary)
                             .rotationEffect(.degrees(iconRotation)) // Rotate the icon internally
                     }
                 }
@@ -74,13 +74,14 @@ struct CameraBottomBar: View {
 
                     if viewModel.isSwitchingCamera {
                         ProgressView()
-                            .tint(AppColors.textOnCamera)
+                            .tint(.primary)
                     }
                 }
-                .foregroundStyle(AppColors.textOnCamera)
+                .foregroundStyle(.primary)
                 .frame(width: ControlMetrics.iconButton, height: ControlMetrics.iconButton)
                 .background(glassButtonBackground)
             }
+            .buttonStyle(.plain)
             .disabled(viewModel.isSwitchingCamera || !onboarding.allowsCameraSwitch)
             .accessibilityLabel("Switch Camera")
         }
@@ -93,12 +94,12 @@ struct CameraBottomBar: View {
     private var glassButtonBackground: some View {
         if #available(iOS 26, *) {
             Color.clear
-                .glassEffect(.regular, in: .circle)
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .circle)
+                .overlay(Circle().strokeBorder(Color.primary.opacity(0.35), lineWidth: 1))
         } else {
             Circle()
                 .fill(.ultraThinMaterial)
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                .overlay(Circle().strokeBorder(Color.primary.opacity(0.35), lineWidth: 1))
         }
     }
 

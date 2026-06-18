@@ -6,43 +6,43 @@
 import SwiftUI
 
 struct VerticalGrid: View {
-    let rect: CGRect
+    let size: CGSize
     let color: Color
     let isPerfect: Bool
 
     var body: some View {
-        let leftThirdX = rect.minX + rect.width * 0.33
-        let rightThirdX = rect.minX + rect.width * 0.67
-        let centerX = rect.midX
+        let leftThirdX = size.width * 0.33
+        let rightThirdX = size.width * 0.67
+        let centerX = size.width / 2
         let tickWidth: CGFloat = 16
 
         ZStack {
             GridLine(
-                start: CGPoint(x: leftThirdX, y: rect.minY),
-                end: CGPoint(x: leftThirdX, y: rect.maxY),
+                start: CGPoint(x: leftThirdX, y: 0),
+                end: CGPoint(x: leftThirdX, y: size.height),
                 color: GridMetrics.guideMuted,
                 lineWidth: GridMetrics.secondary,
                 isDashed: true
             )
             GridLine(
-                start: CGPoint(x: rightThirdX, y: rect.minY),
-                end: CGPoint(x: rightThirdX, y: rect.maxY),
+                start: CGPoint(x: rightThirdX, y: 0),
+                end: CGPoint(x: rightThirdX, y: size.height),
                 color: GridMetrics.guideMuted,
                 lineWidth: GridMetrics.secondary,
                 isDashed: true
             )
 
             GridLine(
-                start: CGPoint(x: centerX, y: rect.minY),
-                end: CGPoint(x: centerX, y: rect.maxY),
+                start: CGPoint(x: centerX, y: 0),
+                end: CGPoint(x: centerX, y: size.height),
                 color: color,
                 lineWidth: GridMetrics.primary,
                 isDashed: false
             )
 
             GridLine(
-                start: CGPoint(x: centerX - tickWidth, y: rect.midY),
-                end: CGPoint(x: centerX + tickWidth, y: rect.midY),
+                start: CGPoint(x: centerX - tickWidth, y: size.height / 2),
+                end: CGPoint(x: centerX + tickWidth, y: size.height / 2),
                 color: color,
                 lineWidth: GridMetrics.tick,
                 isDashed: false
@@ -50,8 +50,8 @@ struct VerticalGrid: View {
 
             if isPerfect {
                 GridLine(
-                    start: CGPoint(x: centerX, y: rect.minY),
-                    end: CGPoint(x: centerX, y: rect.maxY),
+                    start: CGPoint(x: centerX, y: 0),
+                    end: CGPoint(x: centerX, y: size.height),
                     color: color,
                     lineWidth: GridMetrics.emphasis,
                     isDashed: false

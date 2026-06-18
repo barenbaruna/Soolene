@@ -89,6 +89,8 @@ struct CameraGuidanceOverlayStack: View {
         }
     }
 
+    /// Computes the aspect-ratio-masked drawing rect within the full preview frame.
+    /// UI is portrait-locked, so the ratio is always portrait-proportioned.
     private func aspectMaskedRect(in rect: CGRect, aspectRatio: AspectRatioMode) -> CGRect {
         let ratio: CGFloat
         switch aspectRatio {
