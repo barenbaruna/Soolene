@@ -58,13 +58,13 @@ struct PhotoDetailView: View {
             VStack(spacing: 0) {
                 Text(currentComposition.galleryLabel.uppercased())
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(AppColors.secondary)
+                    .foregroundStyle(AppColors.primary)
                     .opacity(isShowingOverlay ? 1 : 0)
                     .padding(.vertical, 8)
 
                 // 1) Main Photo — takes remaining space but capped
                 mainPhotoCard
-                    .padding(.horizontal, Spacing.standard)
+                    .padding(.horizontal, Spacing.small)
                     .scaleEffect(isDeletingPhoto ? 0.01 : 1.0)
                     .opacity(isDeletingPhoto ? 0 : 1.0)
 
@@ -158,7 +158,7 @@ struct PhotoDetailView: View {
         } label: {
             Image(systemName: AppIcon.iconTrash)
                 .font(.system(size: 20))
-                .foregroundStyle(AppColors.secondary)
+                .foregroundStyle(AppColors.primary)
                 .frame(width: 48, height: 48)
                 .background(Color.white)
                 .clipShape(Circle())
@@ -238,10 +238,10 @@ struct PhotoDetailView: View {
                         } label: {
                             PhotoThumbnailView(asset: asset)
                                 .frame(width: isSelected ? 44 : 28, height: 44)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(isSelected ? AppColors.secondary : Color.clear, lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -343,21 +343,22 @@ struct PhotoPageView: View {
                 if let image {
                     Image(uiImage: image)
                         .resizable()
-                        .scaledToFill()
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-
-                    if isShowingOverlay {
-                        CompositionGridView(
-                            composition: composition,
-                            fullRect: CGRect(origin: .zero, size: geo.size),
-                            aspectRect: CGRect(origin: .zero, size: geo.size),
-                            color: AppColors.gridlineGreen,
-                            isPerfect: false,
-                            showSubjectBox: false
-                        )
-                        .frame(width: geo.size.width, height: geo.size.height)
-                    }
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                        .overlay {
+                            if isShowingOverlay {
+                                GeometryReader { imgGeo in
+                                    CompositionGridView(
+                                        composition: composition,
+                                        rect: CGRect(origin: .zero, size: imgGeo.size),
+                                        color: AppColors.gridlineGreen,
+                                        isPerfect: false,
+                                        showSubjectBox: false
+                                    )
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                            }
+                        }
                 } else {
                     ProgressView()
                         .tint(AppColors.primary)
@@ -416,7 +417,6 @@ struct PhotoPageView: View {
                         }
                     }
             )
-            .clipShape(RoundedRectangle(cornerRadius: 40))
             .frame(width: geo.size.width, height: geo.size.height)
         }
         .onChange(of: asset.localIdentifier) { _, _ in

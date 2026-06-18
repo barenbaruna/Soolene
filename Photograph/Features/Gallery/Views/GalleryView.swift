@@ -37,7 +37,9 @@ struct GalleryView: View {
                             Text("Library").tag(GalleryTab.library)
                         }
                         .pickerStyle(.segmented)
-                        .frame(width: 240)
+                        .frame(width: 200)
+                        .scaleEffect(1.2)
+                        .padding(.vertical, 4)
 
                         if viewModel.readPermission == .limited {
                             limitedAccessBanner
@@ -133,10 +135,10 @@ struct GalleryView: View {
                 navigationDestination(for: route)
             }
         }
-        .tint(AppColors.secondary)
+        .tint(AppColors.primary)
         .preferredColorScheme(.light)
         .onAppear {
-            UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(AppColors.secondary)
+            UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(AppColors.primary)
             UISegmentedControl.appearance().setTitleTextAttributes(
                 [.foregroundColor: UIColor.white], for: .selected
             )
@@ -174,22 +176,22 @@ struct GalleryView: View {
                                     Image(systemName: "chevron.right")
                                 }
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(AppColors.secondary)
+                                .foregroundStyle(AppColors.primary)
                             }
                             .buttonStyle(.plain)
                         }
                         .padding(.horizontal, Spacing.standard)
 
                         ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(spacing: 12) {
+                            LazyHStack(spacing: 8) {
                                 ForEach(assets, id: \.localIdentifier) { asset in
                                     NavigationLink(value: asset.localIdentifier) {
                                         PhotoThumbnailView(asset: asset)
                                             .frame(width: cardWidth, height: cardHeight)
-                                            .clipShape(RoundedRectangle(cornerRadius: 35))
+                                            .clipShape(RoundedRectangle(cornerRadius: 5))
                                             .overlay(
-                                                RoundedRectangle(cornerRadius: 35)
-                                                    .stroke(AppColors.secondary, lineWidth: 3)
+                                                RoundedRectangle(cornerRadius: 5)
+                                                    .stroke(AppColors.primary, lineWidth: 1)
                                             )
                                     }
                                     .buttonStyle(.plain)
@@ -208,34 +210,31 @@ struct GalleryView: View {
 
 
     private var recentContent: some View {
-        let screenWidth = UIScreen.main.bounds.width
-        let cardWidth = (screenWidth - 48) / 2
-        let cardHeight = cardWidth * 1.05
-        let recentRows = [
-            GridItem(.fixed(cardHeight), spacing: Spacing.standard),
-            GridItem(.fixed(cardHeight), spacing: Spacing.standard),
-            GridItem(.fixed(cardHeight), spacing: Spacing.standard)
+        let columns = [
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8)
         ]
         
-        return ScrollView(.horizontal, showsIndicators: false) {
-            LazyHGrid(rows: recentRows, spacing: 12) {
-                ForEach(viewModel.allAssets, id: \.localIdentifier) { asset in
-                    NavigationLink(value: asset.localIdentifier) {
+        return LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(viewModel.allAssets, id: \.localIdentifier) { asset in
+                NavigationLink(value: asset.localIdentifier) {
+                    GeometryReader { cellGeo in
                         PhotoThumbnailView(asset: asset)
-                            .frame(width: cardWidth, height: cardHeight)
-                            .clipShape(RoundedRectangle(cornerRadius: 35))
+                            .frame(width: cellGeo.size.width, height: cellGeo.size.width * 1.05)
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 35)
-                                    .stroke(AppColors.secondary, lineWidth: 3)
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(AppColors.primary, lineWidth: 1)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .aspectRatio(1/1.05, contentMode: .fit)
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, Spacing.standard)
-            .padding(.vertical, Spacing.small)
         }
-        .frame(height: cardHeight * 3 + 40)
+        .padding(.horizontal, Spacing.standard)
+        .padding(.vertical, Spacing.small)
     }
 
 

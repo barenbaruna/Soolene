@@ -10,13 +10,9 @@ enum AppColors {
 
     // MARK: - Brand
 
-    /// Color/Brand/Primary — #9F4444 (Updated Design System)
-    /// Used specifically for the Capture Button (shutter) idle state.
-    static let brandPrimary = Color(hex: 0x9F4444)
-
-    /// Legacy Primary — #506139 (Olive Green)
-    /// Kept for backward compatibility on other UI elements.
-    static let primary = Color(hex: 0x506139)
+    /// Color/Brand/Primary — #506139
+    /// Shutter fill, primary brand (olive green).
+    static let primary = Color(hex: 0x9F4444)
 
     /// Color/Brand/Secondary — #B6A71A
     /// Active control highlight, zoom ticks, selected states (gold).
