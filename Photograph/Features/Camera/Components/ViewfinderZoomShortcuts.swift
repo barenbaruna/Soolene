@@ -12,6 +12,7 @@ struct ViewfinderZoomShortcuts: View {
     let isEnabled: Bool
     var glassID: String? = nil
     var glassNamespace: Namespace.ID? = nil
+    var iconRotation: Double = 0
 
     private var availableLenses: [LensType] {
         let lenses = LensType.availableOnDevice
@@ -35,6 +36,7 @@ struct ViewfinderZoomShortcuts: View {
                     Text(buttonLabel(for: lens, isSelected: isSelected))
                         .font(.subheadline.monospacedDigit().weight(isSelected ? .bold : .medium))
                         .foregroundStyle(isSelected ? AppColors.controlActive : .white)
+                        .rotationEffect(.degrees(iconRotation))
                         .frame(width: 44, height: 44)
                         .contentShape(Circle())
                 }

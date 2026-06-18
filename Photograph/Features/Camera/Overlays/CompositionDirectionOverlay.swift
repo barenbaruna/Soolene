@@ -128,14 +128,14 @@ struct CompositionDirectionOverlay: View {
                         // --- Layer 1: Connector Line ---
                         if proximity == .far {
                             DashedConnectorLine(
-                                from: subjectPx,
-                                to: targetPx,
+                                from: targetPx, // circle
+                                to: subjectPx, // bracket
                                 color: anchorColor
                             )
                             .transition(.opacity)
 
                             // Directional arrow at midpoint
-                            DirectionArrow(from: subjectPx, to: targetPx, color: anchorColor)
+                            DirectionArrow(from: targetPx, to: subjectPx, color: anchorColor)
                         }
 
                         // --- Layer 2: Glow Halo (close + perfect) ---
@@ -397,16 +397,16 @@ private struct DashedConnectorLine: View {
 
                 context.stroke(
                     path,
-                    with: .color(.black.opacity(0.25)),
-                    style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                    with: .color(.black.opacity(0.35)),
+                    style: StrokeStyle(lineWidth: 4.0, lineCap: .round)
                 )
                 context.stroke(
                     path,
-                    with: .color(color.opacity(0.4)),
+                    with: .color(color.opacity(0.85)),
                     style: StrokeStyle(
-                        lineWidth: 1.5,
+                        lineWidth: 2.0,
                         lineCap: .round,
-                        dash: [6, 4],
+                        dash: [8, 6],
                         dashPhase: reduceMotion ? 0 : dashPhase
                     )
                 )
@@ -414,8 +414,8 @@ private struct DashedConnectorLine: View {
         }
         .onAppear {
             guard !reduceMotion else { return }
-            withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
-                dashPhase = 20
+            withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) {
+                dashPhase = -20 // Negative phase moves dashes forward along the path (from target to subject)
             }
         }
     }
@@ -431,6 +431,9 @@ private struct DirectionArrow: View {
 
     /// Position along connector (0 = subject, 1 = target).
     private let biasTowardTarget: CGFloat = 0.28
+    
+    @State private var isPulsing = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let anchorX = from.x + (to.x - from.x) * biasTowardTarget
@@ -438,10 +441,17 @@ private struct DirectionArrow: View {
         let angle = atan2(to.y - from.y, to.x - from.x)
 
         Image(systemName: "arrowtriangle.forward.fill")
-            .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(color.opacity(0.75))
+            .font(.system(size: 16, weight: .bold))
+            .foregroundStyle(color.opacity(0.95))
             .rotationEffect(.radians(angle))
             .position(x: anchorX, y: anchorY)
-            .shadow(color: .black.opacity(0.35), radius: 1)
+            .shadow(color: .black.opacity(0.5), radius: 2)
+            .scaleEffect(reduceMotion ? 1.0 : (isPulsing ? 1.15 : 0.85))
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
+                    isPulsing = true
+                }
+            }
     }
 }

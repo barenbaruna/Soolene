@@ -28,6 +28,10 @@ struct CompositionPickerView: View {
     @State private var hasAppeared = false
     @State private var scrolledID: CompositionType?
 
+    private var isPortrait: Bool {
+        return abs(iconRotation.truncatingRemainder(dividingBy: 180)) < 45
+    }
+
     init(
         selectedComposition: CompositionType?,
         mlSuggestion: CompositionType?,
@@ -73,7 +77,7 @@ struct CompositionPickerView: View {
                             .id(comp)
                             .scrollTransition(.interactive, axis: .horizontal) { content, phase in
                                 content
-                                    .scaleEffect(phase.isIdentity ? 1.0 : 0.85)
+                                    .scaleEffect(phase.isIdentity ? 1.0 : 0.75)
                                     .opacity(phase.isIdentity ? 1.0 : 0.6)
                             }
                             .opacity(hasAppeared ? 1 : 0)
@@ -109,7 +113,7 @@ struct CompositionPickerView: View {
                     scrolledID = selectedComposition
                 }
             }
-            .frame(height: 120) // fixed height for GeometryReader
+            .frame(height: 180) // fixed height to prevent layout jumps during device rotation
         }
         .onAppear {
             withAnimation {
@@ -122,6 +126,16 @@ struct CompositionPickerView: View {
     }
 }
 
+// MARK: - PillButtonStyle
+
+private struct PillButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .animation(.spring(response: 0.15, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
 // MARK: - CompositionPill
 
 private struct CompositionPill: View {
@@ -131,97 +145,67 @@ private struct CompositionPill: View {
     let iconRotation: Double
     let onTap: () -> Void
 
-    @State private var isPressed = false
-
     var body: some View {
         Button(action: onTap) {
-            ZStack(alignment: .bottom) {
-                if isSelected {
-                    selectedPill
-                } else {
-                    unselectedPill
+            VStack(spacing: 8) {
+                // Glass Box containing Icon and Badge
+                ZStack {
+                    if #available(iOS 26, *) {
+                        RoundedRectangle(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium)
+                            .fill(Color.black.opacity(isSelected ? 0.35 : 0.2))
+                            .glassEffect(.regular, in: .rect(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium))
+                    } else {
+                        RoundedRectangle(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium)
+                            .fill(.ultraThinMaterial.opacity(isSelected ? 1.0 : 0.5))
+                    }
+                    
+                    RotatedLayout(angle: .degrees(iconRotation)) {
+                        Image(systemName: composition.symbolName)
+                            .font(.title)
+                            .foregroundStyle(.white)
+                            .rotationEffect(.degrees(iconRotation))
+                    }
+                    
+                    // Recommended Sparkle Badge (Top Right)
+                    if isRecommended {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: isSelected ? 11 : 9, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(4)
+                            .background(Circle().fill(Color.green))
+                            .offset(x: 8, y: -8) // Fixed offset since frame is constant
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                            .zIndex(1)
+                    }
                 }
+                .frame(width: 80, height: 80) // Constant size, scaled smoothly by scrollTransition
+                .overlay(
+                    RoundedRectangle(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium)
+                        .strokeBorder(
+                            isRecommended ? Color.green : (isSelected ? Color.yellow : AppColors.controlActive),
+                            lineWidth: isSelected ? (isRecommended ? 2.5 : 1.5) : (isRecommended ? 1.5 : 0)
+                        )
+                )
+
+                // Text Outside (Bottom)
+                RotatedLayout(angle: .degrees(iconRotation)) {
+                    Text(composition.shortLabel)
+                        .font(.system(size: 12, weight: .medium)) // Constant size
+                        .foregroundStyle(isRecommended ? .green : (isSelected ? .yellow : .white))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .rotationEffect(.degrees(iconRotation))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(minHeight: 32, alignment: .top) // Consistent height for 1 vs 2 lines
             }
+            .frame(width: 90) // Constant overall pill width
         }
-        .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.92 : 1.0)
+        .buttonStyle(PillButtonStyle())
         .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isSelected)
-        .animation(.spring(response: 0.15, dampingFraction: 0.7), value: isPressed)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in isPressed = true }
-                .onEnded { _ in isPressed = false }
-        )
         .accessibilityLabel("\(composition.rawValue) composition")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(isRecommended && isSelected ? "Suggested recommendation" : "")
-    }
-
-    private var selectedPill: some View {
-        VStack(spacing: 8) {
-            if isRecommended && isSelected {
-                RecommendationBadge()
-                    .rotationEffect(.degrees(iconRotation))
-            } else {
-                Spacer().frame(height: 14)
-            }
-
-            Image(systemName: composition.symbolName)
-                .font(.title2)
-                .foregroundStyle(.white)
-                .rotationEffect(.degrees(iconRotation))
-
-            Text(composition.shortLabel)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white)
-                .rotationEffect(.degrees(iconRotation))
-        }
-        .padding(.top, 8)
-        .padding(.bottom, 12)
-        .frame(width: 90)
-        .background {
-            if #available(iOS 26, *) {
-                RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge)
-                    .fill(Color.black.opacity(0.35))
-                    .glassEffect(.regular, in: .rect(cornerRadius: Spacing.cornerRadiusLarge))
-            } else {
-                RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge)
-                    .fill(.ultraThinMaterial)
-            }
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: Spacing.cornerRadiusLarge)
-                .strokeBorder(AppColors.controlActive, lineWidth: 1.5)
-        )
-    }
-
-    private var unselectedPill: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                if #available(iOS 26, *) {
-                    RoundedRectangle(cornerRadius: Spacing.cornerRadiusMedium)
-                        .fill(Color.black.opacity(0.35))
-                        .glassEffect(.regular, in: .rect(cornerRadius: Spacing.cornerRadiusMedium))
-                } else {
-                    RoundedRectangle(cornerRadius: Spacing.cornerRadiusMedium)
-                        .fill(.ultraThinMaterial.opacity(0.5))
-                }
-                
-                Image(systemName: composition.symbolName)
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .rotationEffect(.degrees(iconRotation))
-            }
-            .frame(width: 60, height: 60)
-
-            Text(composition.shortLabel)
-                .font(.system(size: 12, weight: .regular))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .rotationEffect(.degrees(iconRotation))
-        }
-        .frame(width: 64)
+        .accessibilityHint(isRecommended ? "Suggested recommendation" : "")
     }
 }
 
@@ -260,22 +244,3 @@ private struct ClearSubjectButton: View {
         .accessibilityHint("Unlocks the current object so you can choose another")
     }
 }
-
-// MARK: - RecommendationBadge
-
-private struct RecommendationBadge: View {
-    var body: some View {
-        Text("Suggested")
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(
-                Capsule()
-                    .fill(Color.green.opacity(0.3)) // Subtler green background matching design
-                    .overlay(Capsule().strokeBorder(Color.green, lineWidth: 0.5))
-            )
-            .accessibilityLabel("Suggested recommendation")
-    }
-}
-

@@ -98,7 +98,8 @@ struct CameraBottomControlsStack: View {
                         viewModel: viewModel,
                         isEnabled: !viewModel.isSwitchingCamera && onboarding.allowsCompositionControls,
                         glassID: "ruler",
-                        glassNamespace: glassNS
+                        glassNamespace: glassNS,
+                        iconRotation: iconRotation
                     )
                     .allowsHitTesting(onboarding.allowsCompositionControls)
                     .frame(height: ControlMetrics.rulerPanelContentHeight)
