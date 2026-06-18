@@ -17,8 +17,9 @@ struct CompositionPhotoListView: View {
     }
 
     private let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
     ]
 
     var body: some View {
@@ -63,7 +64,7 @@ struct CompositionPhotoListView: View {
 
     private var photoGrid: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 16) {
+            LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(Array(viewModel.assets.enumerated()), id: \.element.localIdentifier) { index, asset in
                     NavigationLink {
                         PhotoDetailView(
@@ -80,10 +81,10 @@ struct CompositionPhotoListView: View {
                         GeometryReader { cellGeo in
                             PhotoThumbnailView(asset: asset)
                                 .frame(width: cellGeo.size.width, height: cellGeo.size.width * 1.05)
-                                .clipShape(RoundedRectangle(cornerRadius: 35))
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 35)
-                                        .stroke(AppColors.secondary, lineWidth: 3)
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .stroke(AppColors.primary, lineWidth: 1)
                                 )
                         }
                         .aspectRatio(1/1.05, contentMode: .fit)

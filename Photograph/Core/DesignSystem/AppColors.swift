@@ -12,7 +12,7 @@ enum AppColors {
 
     /// Color/Brand/Primary — #506139
     /// Shutter fill, primary brand (olive green).
-    static let primary = Color(hex: 0x506139)
+    static let primary = Color(hex: 0x9F4444)
 
     /// Color/Brand/Secondary — #B6A71A
     /// Active control highlight, zoom ticks, selected states (gold).
