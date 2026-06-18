@@ -61,7 +61,7 @@ extension CameraViewModel {
     var showsDualAnchorGuidance: Bool {
         guard guidancePhase.isActive else { return false }
         guard userSelectedComposition != nil else { return false }
-        return resolvedComposition != .horizontal
+        return true
     }
 
     var showsTrackingStabilityMeter: Bool {

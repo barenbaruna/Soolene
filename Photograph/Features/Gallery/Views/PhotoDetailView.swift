@@ -350,7 +350,8 @@ struct PhotoPageView: View {
                     if isShowingOverlay {
                         CompositionGridView(
                             composition: composition,
-                            rect: CGRect(origin: .zero, size: geo.size),
+                            fullRect: CGRect(origin: .zero, size: geo.size),
+                            aspectRect: CGRect(origin: .zero, size: geo.size),
                             color: AppColors.gridlineGreen,
                             isPerfect: false,
                             showSubjectBox: false

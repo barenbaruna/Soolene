@@ -41,7 +41,7 @@ enum CompositionType: String, CaseIterable, Identifiable, Codable {
         case .center:
             return "Place the subject inside the center guide"
         case .horizontal:
-            return "Level the horizon"
+            return "Align subject on the horizontal line"
         case .vertical:
             return "Align subject on the center axis"
         case .diagonal:
@@ -79,7 +79,7 @@ enum CompositionType: String, CaseIterable, Identifiable, Codable {
         case .center:
             return "Position the subject directly in the center of the frame."
         case .horizontal:
-            return "Align elements along horizontal lines for stability."
+            return "Align key elements along the horizontal line."
         case .vertical:
             return "Use vertical lines to create height and structure."
         case .diagonal:

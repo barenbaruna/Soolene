@@ -44,8 +44,8 @@ struct RulerTrackGlassBackground: ViewModifier {
         content.background {
             if #available(iOS 26, *) {
                 let glass: Glass = isDragging
-                    ? .clear.interactive()
-                    : .clear
+                    ? .clear.tint(Color.black.opacity(0.15)).interactive()
+                    : .clear.tint(Color.black.opacity(0.15))
                 
                 let base = Color.clear
                     .glassEffect(glass, in: .rect(cornerRadius: 30))
@@ -143,7 +143,7 @@ struct LiquidGlassRuler: View {
             .frame(width: 22, height: 36)
             .overlay {
                 Capsule()
-                    .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
+                    .strokeBorder(Color.primary.opacity(0.35), lineWidth: 1)
             }
             .shadow(color: activeColor.opacity(0.45), radius: 8, y: 2)
     }
@@ -157,7 +157,7 @@ struct LiquidGlassRuler: View {
                 let isActive = x <= fillWidth + 1
 
                 Rectangle()
-                    .fill(isActive ? activeColor : Color.white.opacity(0.22))
+                    .fill(isActive ? activeColor : Color.primary.opacity(0.22))
                     .frame(width: isMajor ? 1.5 : 1, height: height)
                     .frame(maxHeight: .infinity, alignment: .center)
 
@@ -271,7 +271,7 @@ struct LiquidGlassCenterRuler: View {
             .frame(width: 2.5, height: 22)
             .overlay {
                 Capsule()
-                    .strokeBorder(Color.white.opacity(0.45), lineWidth: 0.5)
+                    .strokeBorder(Color.primary.opacity(0.45), lineWidth: 0.5)
             }
             .shadow(color: activeColor.opacity(0.65), radius: 5, y: 0)
             .position(x: centerX, y: trackMidY)
@@ -290,7 +290,7 @@ struct LiquidGlassCenterRuler: View {
                     let height: CGFloat = isCenter ? 22 : (isMajor ? 16 : 9)
 
                     Rectangle()
-                        .fill(isMajor || isCenter ? activeColor : Color.white.opacity(0.25))
+                        .fill(isMajor || isCenter ? activeColor : Color.primary.opacity(0.25))
                         .frame(width: isMajor ? 1.5 : 1, height: height)
                         .shadow(
                             color: isMajor ? activeColor.opacity(0.45) : .clear,

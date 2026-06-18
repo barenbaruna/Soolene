@@ -8,7 +8,8 @@ import SwiftUI
 /// Shared composition guide drawing for live camera and gallery replay.
 struct CompositionGridView: View {
     let composition: CompositionType
-    let rect: CGRect
+    let fullRect: CGRect
+    let aspectRect: CGRect
     let color: Color
     var geometry: SceneGeometry = SceneGeometry()
     var lockedTarget: CGPoint?
@@ -27,45 +28,50 @@ struct CompositionGridView: View {
         }
     }
 
-    private var drawRect: CGRect {
-        if orientation.isLandscape {
-            // Swap width and height, preserving origin
-            return CGRect(x: rect.minX, y: rect.minY, width: rect.height, height: rect.width)
-        }
-        return rect
-    }
-
     var body: some View {
         ZStack {
-            switch composition {
-            case .ruleOfThirds:
-                RuleOfThirdsGrid(
-                    rect: rect,
-                    color: color,
-                    geometry: geometry,
-                    lockedTarget: lockedTarget,
-                    isPerfect: isPerfect,
-                    showsIntersectionMarkers: showsIntersectionMarkers
-                )
-            case .center:
-                CenterGrid(rect: rect, color: color, isPerfect: isPerfect)
-            case .horizontal:
-                HorizontalGrid(rect: drawRect, color: color, isPerfect: isPerfect)
-                    .frame(width: drawRect.width, height: drawRect.height)
-                    .rotationEffect(.degrees(rotationAngle))
-            case .vertical:
-                VerticalGrid(rect: drawRect, color: color, isPerfect: isPerfect)
-                    .frame(width: drawRect.width, height: drawRect.height)
-                    .rotationEffect(.degrees(rotationAngle))
-            case .diagonal:
-                DiagonalGrid(rect: rect, color: color, isPerfect: isPerfect)
+            // Draw grids centered inside aspectRect
+            ZStack {
+                switch composition {
+                case .ruleOfThirds:
+                    RuleOfThirdsGrid(
+                        size: aspectRect.size,
+                        color: color,
+                        fullRect: fullRect,
+                        aspectRect: aspectRect,
+                        geometry: geometry,
+                        lockedTarget: lockedTarget,
+                        isPerfect: isPerfect,
+                        showsIntersectionMarkers: showsIntersectionMarkers
+                    )
+                case .center:
+                    CenterGrid(size: aspectRect.size, color: color, isPerfect: isPerfect)
+                case .horizontal:
+                    let isLandscape = orientation.isLandscape
+                    let gridW = isLandscape ? aspectRect.height : aspectRect.width
+                    let gridH = isLandscape ? aspectRect.width : aspectRect.height
+                    HorizontalGrid(size: CGSize(width: gridW, height: gridH), color: color, isPerfect: isPerfect)
+                        .frame(width: gridW, height: gridH)
+                        .rotationEffect(.degrees(rotationAngle))
+                case .vertical:
+                    let isLandscape = orientation.isLandscape
+                    let gridW = isLandscape ? aspectRect.height : aspectRect.width
+                    let gridH = isLandscape ? aspectRect.width : aspectRect.height
+                    VerticalGrid(size: CGSize(width: gridW, height: gridH), color: color, isPerfect: isPerfect)
+                        .frame(width: gridW, height: gridH)
+                        .rotationEffect(.degrees(rotationAngle))
+                case .diagonal:
+                    DiagonalGrid(size: aspectRect.size, color: color, isPerfect: isPerfect)
+                }
             }
+            .frame(width: aspectRect.width, height: aspectRect.height)
+            .position(x: aspectRect.midX, y: aspectRect.midY)
 
             if showSubjectBox {
-                SubjectBox(faceRect: geometry.faceRects.first, frameRect: rect, color: color)
+                SubjectBox(faceRect: geometry.faceRects.first, frameRect: fullRect, color: color)
             }
         }
-        .frame(width: rect.width, height: rect.height)
+        .frame(width: fullRect.width, height: fullRect.height)
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             withAnimation(.spring(response: 0.3)) {
                 orientation = UIDevice.current.orientation

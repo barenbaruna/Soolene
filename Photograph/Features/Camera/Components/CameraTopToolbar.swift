@@ -24,7 +24,7 @@ struct CameraTopToolbar: View {
     private var pillContent: some View {
         if #available(iOS 26, *) {
             toolbarStack
-                .glassEffect(.regular, in: .rect(cornerRadius: Spacing.cornerRadiusCapsule))
+                .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .rect(cornerRadius: Spacing.cornerRadiusCapsule))
         } else {
             toolbarStack
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Spacing.cornerRadiusCapsule))
@@ -64,7 +64,7 @@ struct CameraTopToolbar: View {
             ZStack(alignment: .topTrailing) {
                 Image(systemName: "timer")
                     .font(.body.weight(.medium))
-                    .foregroundStyle(viewModel.timerLength > 0 ? AppColors.controlActive : AppColors.textOnCamera)
+                    .foregroundStyle(viewModel.timerLength > 0 ? AppColors.controlActive : .primary)
 
                 if viewModel.timerLength > 0 {
                     Text("\(viewModel.timerLength)")
@@ -93,7 +93,7 @@ struct CameraTopToolbar: View {
                     // We use a slight tracking to make the ratio look like a tailored symbol
                     .tracking(0.5)
             }
-            .foregroundStyle(viewModel.selectedAspectRatio != .fourThree ? AppColors.controlActive : AppColors.textOnCamera)
+            .foregroundStyle(viewModel.selectedAspectRatio != .fourThree ? AppColors.controlActive : .primary)
             .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
             .contentShape(Rectangle())
         }
@@ -115,7 +115,7 @@ struct CameraTopToolbar: View {
         } label: {
             Image(systemName: icon)
                 .font(.body.weight(.medium))
-                .foregroundStyle(isActive ? AppColors.controlActive : AppColors.textOnCamera)
+                .foregroundStyle(isActive ? AppColors.controlActive : .primary)
                 .frame(width: ControlMetrics.compactIconButton, height: ControlMetrics.compactIconButton)
                 .contentShape(Rectangle())
         }

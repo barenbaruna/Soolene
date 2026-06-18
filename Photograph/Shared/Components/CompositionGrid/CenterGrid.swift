@@ -6,13 +6,13 @@
 import SwiftUI
 
 struct CenterGrid: View {
-    let rect: CGRect
+    let size: CGSize
     let color: Color
     let isPerfect: Bool
 
     var body: some View {
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        let targetRadius = min(rect.width, rect.height) * 0.15
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        let targetRadius = min(size.width, size.height) * 0.15
 
         ZStack {
             TargetCircle(

@@ -3,13 +3,10 @@
 //  Photograph
 //
 //  Horizontal composition picker that appears when the user locks a subject.
-//  Each composition is a Liquid Glass pill with SF Symbol icon and label.
+//  Each composition is displayed as a pill with an SF Symbol icon and label.
 //  The ML-suggested composition gets a "Best fit" badge.
 //
-//  Design: iOS 26 HIG — .glassEffect(.regular.interactive()),
-//  GlassEffectContainer for morphing, staggered entrance animation.
-//
-//  Created by Baren Baruna Harahap on 10/06/26.
+//  Created by Baren Baruna Harahap.
 //
 
 import SwiftUI
@@ -27,10 +24,6 @@ struct CompositionPickerView: View {
 
     @State private var hasAppeared = false
     @State private var scrolledID: CompositionType?
-
-    private var isPortrait: Bool {
-        return abs(iconRotation.truncatingRemainder(dividingBy: 180)) < 45
-    }
 
     init(
         selectedComposition: CompositionType?,
@@ -89,6 +82,7 @@ struct CompositionPickerView: View {
                             )
                         }
                     }
+                    .padding(.top, 12)
                     .padding(.bottom, 12)
                     .scrollTargetLayout()
                 }
@@ -113,7 +107,7 @@ struct CompositionPickerView: View {
                     scrolledID = selectedComposition
                 }
             }
-            .frame(height: 180) // fixed height to prevent layout jumps during device rotation
+            .frame(height: 144) // Exact height to fit pill (120) + top/bottom padding (24) and prevent badge overlap
         }
         .onAppear {
             withAnimation {
@@ -153,7 +147,7 @@ private struct CompositionPill: View {
                     if #available(iOS 26, *) {
                         RoundedRectangle(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium)
                             .fill(Color.black.opacity(isSelected ? 0.35 : 0.2))
-                            .glassEffect(.regular, in: .rect(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium))
+                            .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .rect(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium))
                     } else {
                         RoundedRectangle(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium)
                             .fill(.ultraThinMaterial.opacity(isSelected ? 1.0 : 0.5))
@@ -162,7 +156,7 @@ private struct CompositionPill: View {
                     RotatedLayout(angle: .degrees(iconRotation)) {
                         Image(systemName: composition.symbolName)
                             .font(.title)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                             .rotationEffect(.degrees(iconRotation))
                     }
                     
@@ -170,7 +164,7 @@ private struct CompositionPill: View {
                     if isRecommended {
                         Image(systemName: "sparkles")
                             .font(.system(size: isSelected ? 11 : 9, weight: .bold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                             .padding(4)
                             .background(Circle().fill(Color.green))
                             .offset(x: 8, y: -8) // Fixed offset since frame is constant
@@ -191,7 +185,7 @@ private struct CompositionPill: View {
                 RotatedLayout(angle: .degrees(iconRotation)) {
                     Text(composition.shortLabel)
                         .font(.system(size: 12, weight: .medium)) // Constant size
-                        .foregroundStyle(isRecommended ? .green : (isSelected ? .yellow : .white))
+                        .foregroundStyle(isRecommended ? .green : (isSelected ? .yellow : .primary))
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
                         .rotationEffect(.degrees(iconRotation))
@@ -229,7 +223,7 @@ private struct ClearSubjectButton: View {
                 if #available(iOS 26, *) {
                     Capsule()
                         .fill(Color.black.opacity(0.35))
-                        .glassEffect(.regular, in: .capsule)
+                        .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .capsule)
                 } else {
                     Capsule()
                         .fill(.ultraThinMaterial)
