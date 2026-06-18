@@ -22,6 +22,7 @@ enum WalkthroughStep: Int, CaseIterable {
 final class OnboardingStore {
     private enum StorageKey {
         static let completedSplash = "visula_hasCompletedSplash"
+        static let completedPreTutorialOnboarding = "visula_hasCompletedPreTutorialOnboarding"
         static let completedWalkthrough = "visula_hasCompletedWalkthrough"
         static let scanCoachSessions = "coach.scanSessionsShown"
         static let hasLockedSubjectOnce = "coach.hasLockedSubjectOnce"
@@ -29,6 +30,15 @@ final class OnboardingStore {
 
     var hasCompletedSplash: Bool {
         didSet { UserDefaults.standard.set(hasCompletedSplash, forKey: StorageKey.completedSplash) }
+    }
+
+    var hasCompletedPreTutorialOnboarding: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                hasCompletedPreTutorialOnboarding,
+                forKey: StorageKey.completedPreTutorialOnboarding
+            )
+        }
     }
 
     var hasCompletedWalkthrough: Bool {
@@ -102,11 +112,18 @@ final class OnboardingStore {
     private(set) var hasLockedSubjectOnce: Bool
 
     init() {
-        hasCompletedSplash = UserDefaults.standard.bool(forKey: StorageKey.completedSplash)
-        hasCompletedWalkthrough = UserDefaults.standard.bool(forKey: StorageKey.completedWalkthrough)
+        let completedSplash = UserDefaults.standard.bool(forKey: StorageKey.completedSplash)
+        let completedWalkthrough = UserDefaults.standard.bool(forKey: StorageKey.completedWalkthrough)
+        let completedPreTutorialOnboarding = UserDefaults.standard.bool(
+            forKey: StorageKey.completedPreTutorialOnboarding
+        ) || completedWalkthrough
+
+        hasCompletedSplash = completedSplash
+        hasCompletedWalkthrough = completedWalkthrough
+        hasCompletedPreTutorialOnboarding = completedPreTutorialOnboarding
         scanCoachSessionsShown = UserDefaults.standard.integer(forKey: StorageKey.scanCoachSessions)
         hasLockedSubjectOnce = UserDefaults.standard.bool(forKey: StorageKey.hasLockedSubjectOnce)
-        if hasCompletedWalkthrough {
+        if completedWalkthrough {
             currentStep = .congratulation
         }
     }
@@ -165,6 +182,12 @@ final class OnboardingStore {
         }
         withAnimation(.easeInOut(duration: 0.25)) {
             currentStep = next
+        }
+    }
+
+    func completePreTutorialOnboarding() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            hasCompletedPreTutorialOnboarding = true
         }
     }
 

@@ -3,7 +3,7 @@
 //  Photograph
 //
 //  Reusable walkthrough tooltip using native `.ultraThinMaterial`.
-//  Matches Hi-Fi: dark glass card with title, description, "Got it" + "Skip" actions.
+//  Matches Hi-Fi: dark glass card with title, description, and optional action.
 //
 //  Uses Design System tokens: Typography, Spacing, AppColors.
 //
@@ -43,7 +43,7 @@ struct TooltipView: View {
         title: String,
         description: String,
         primaryLabel: String? = "Got it",
-        secondaryLabel: String? = "Skip",
+        secondaryLabel: String? = nil,
         anchor: TooltipAnchor = .bottom,
         onPrimary: (() -> Void)? = nil,
         onSecondary: (() -> Void)? = nil

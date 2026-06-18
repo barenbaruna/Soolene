@@ -13,17 +13,15 @@ enum AppIdentity {
 
     enum Privacy {
         static let camera = """
-        Visula uses the camera to show a live preview and provide real-time composition \
-        guidance while you take photos.
+        Soolene uses the camera to show a live viewfinder and guide your composition while you shoot.
         """
 
         static let photoLibraryAdd = """
-        Visula saves photos you capture to your Photo Library and a Visula album so you \
-        can review them in the app.
+        Soolene saves your captures to your Photo Library so you can review guided shots in the app.
         """
 
         static let photoLibraryRead = """
-        Visula accesses your Photo Library to display photos saved by Visula in your Library.
+        Soolene accesses your Photo Library to show the guided shots you save in the app.
         """
     }
 }

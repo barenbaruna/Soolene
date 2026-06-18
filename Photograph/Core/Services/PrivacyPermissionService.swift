@@ -36,6 +36,13 @@ enum PermissionStatus: Equatable {
 
 @MainActor
 enum PrivacyPermissionService {
+    static let cameraSettingsMessage = """
+    \(AppIdentity.displayName) needs the camera to show the live viewfinder and guide your composition while you shoot. The camera is only used for this shooting experience.
+    """
+
+    static let photoLibrarySettingsMessage = """
+    \(AppIdentity.displayName) needs Photo Library access to save your captures and show your guided shots in Gallery. Your photos are used only for saving and displaying them in the app.
+    """
 
     static func cameraStatus() -> PermissionStatus {
         map(AVCaptureDevice.authorizationStatus(for: .video))
@@ -83,9 +90,9 @@ enum PrivacyPermissionService {
     static func cameraGateMessage(for status: PermissionStatus) -> String {
         switch status {
         case .notDetermined:
-            return "Allow \(AppIdentity.displayName) to use your camera for live composition guidance."
+            return "Allow \(AppIdentity.displayName) to use your camera for the live viewfinder and composition guidance."
         case .denied:
-            return "\(AppIdentity.displayName) needs camera access. Enable Camera in Settings to continue."
+            return cameraSettingsMessage
         case .restricted:
             return "Camera access is restricted on this device. Check Screen Time or device management settings."
         case .authorized, .limited:
@@ -96,9 +103,9 @@ enum PrivacyPermissionService {
     static func photoSaveMessage(for status: PermissionStatus) -> String {
         switch status {
         case .notDetermined:
-            return "Allow \(AppIdentity.displayName) to save photos to your library."
+            return "Allow \(AppIdentity.displayName) to save guided captures to your Photo Library."
         case .denied:
-            return "Photo access denied. Enable Photos for \(AppIdentity.displayName) in Settings to save captures."
+            return photoLibrarySettingsMessage
         case .restricted:
             return "Photo Library access is restricted on this device."
         case .limited:
@@ -111,9 +118,9 @@ enum PrivacyPermissionService {
     static func photoBrowseMessage(for status: PermissionStatus) -> String {
         switch status {
         case .notDetermined:
-            return "Allow \(AppIdentity.displayName) to show your saved photos in Gallery."
+            return "Allow \(AppIdentity.displayName) to show your guided shots in Gallery."
         case .denied:
-            return "\(AppIdentity.displayName) needs Gallery access. Enable Photos in Settings to continue."
+            return photoLibrarySettingsMessage
         case .restricted:
             return "Gallery access is restricted on this device. Check Screen Time or device management settings."
         case .limited:

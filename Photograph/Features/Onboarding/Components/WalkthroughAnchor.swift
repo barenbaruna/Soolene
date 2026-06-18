@@ -70,7 +70,7 @@ enum WalkthroughTooltipLayout {
         case .bottom:
             return CGPoint(
                 x: localAnchor.midX,
-                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2 + Spacing.standard
+                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2 + Spacing.standard + 20
             )
         case .bottomLeading:
             // Gallery button is at the far left — position tooltip shifted right
@@ -82,7 +82,7 @@ enum WalkthroughTooltipLayout {
             )
             return CGPoint(
                 x: tooltipCenterX,
-                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2 + Spacing.standard
+                y: localAnchor.minY - Spacing.small - estimatedCardHeight / 2 + Spacing.standard + 16
             )
         case .bottomTrailing:
             // Gallery button is at the far left — position tooltip so the

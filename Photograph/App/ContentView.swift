@@ -12,6 +12,8 @@ struct ContentView: View {
         Group {
             if !onboarding.hasCompletedSplash {
                 SplashView()
+            } else if !onboarding.hasCompletedPreTutorialOnboarding {
+                PreTutorialOnboardingView()
             } else {
                 CameraView()
             }

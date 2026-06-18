@@ -69,8 +69,7 @@ struct WalkthroughOverlayView: View {
                 title: "Hold and lock scene",
                 description: "Long-press scene you want to capture",
                 primaryLabel: nil,
-                anchor: .none,
-                onSecondary: { store.skipWalkthrough() }
+                anchor: .none
             )
             .frame(width: min(screenW * 0.82, 340))
             .position(
@@ -83,8 +82,7 @@ struct WalkthroughOverlayView: View {
                 title: "Follow the Guide",
                 description: "Follow the on-screen directions and adjust your framing",
                 primaryLabel: nil,
-                anchor: .top,
-                onSecondary: { store.skipWalkthrough() }
+                anchor: .top
             )
             .frame(width: min(screenW * 0.82, 340))
             .position(
@@ -103,9 +101,7 @@ struct WalkthroughOverlayView: View {
                 title: "Ready to Shoot",
                 description: "Tap this button to capture your photo once you've lined up the perfect composition guidelines.",
                 primaryLabel: nil,
-                secondaryLabel: "Skip",
-                anchor: .bottom,
-                onSecondary: { store.skipWalkthrough() }
+                anchor: .bottom
             )
             .frame(width: min(screenW * 0.80, 320))
             .position(
@@ -124,9 +120,7 @@ struct WalkthroughOverlayView: View {
                 title: "View Your Shots",
                 description: "Tap here to view and review all the photos you have captured using the composition guides.",
                 primaryLabel: nil,
-                secondaryLabel: "Skip",
-                anchor: .bottomLeading,
-                onSecondary: { store.skipWalkthrough() }
+                anchor: .bottomLeading
             )
             .frame(width: min(screenW * 0.82, 340))
             .position(
@@ -145,9 +139,7 @@ struct WalkthroughOverlayView: View {
                 title: "Grid Guide",
                 description: "Tap to overlay the composition grid on your photo.",
                 primaryLabel: nil,
-                secondaryLabel: "Skip",
-                anchor: .topTrailing,
-                onSecondary: { store.skipWalkthrough() }
+                anchor: .topTrailing
             )
             .frame(width: min(screenW * 0.82, 340))
             .position(
@@ -162,7 +154,7 @@ struct WalkthroughOverlayView: View {
                             
                             return CGPoint(
                                 x: tooltipCenterX + 2,
-                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 194
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 210
                             )
                         }
                     ),
@@ -178,9 +170,7 @@ struct WalkthroughOverlayView: View {
                 title: "Hide Grid",
                 description: "Tap here to turn off the grid and see the full image.",
                 primaryLabel: nil,
-                secondaryLabel: "Skip",
-                anchor: .topTrailing,
-                onSecondary: { store.skipWalkthrough() }
+                anchor: .topTrailing
             )
             .frame(width: min(screenW * 0.82, 340))
             .position(
@@ -195,7 +185,7 @@ struct WalkthroughOverlayView: View {
                             
                             return CGPoint(
                                 x: tooltipCenterX + 2,
-                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 194
+                                y: localAnchor.maxY + Spacing.small + estimatedCardHeight / 2 - 210
                             )
                         }
                     ),
