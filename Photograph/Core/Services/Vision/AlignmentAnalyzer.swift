@@ -103,35 +103,53 @@ struct AlignmentAnalyzer {
     static func computeFixedTarget(
         for composition: CompositionType,
         subjectAtLockTime subject: CGPoint,
+        aspectRatio: AspectRatioMode = .fourThree,
         orientation: UIDeviceOrientation = UIDevice.current.orientation
     ) -> CGPoint {
+        let normRect = aspectMaskedNormalizedRect(aspectRatio: aspectRatio)
+
         switch composition {
         case .center:
-            // Always dead center — regardless of where the subject is
-            return CGPoint(x: 0.5, y: 0.5)
+            return CGPoint(x: normRect.midX, y: normRect.midY)
 
         case .ruleOfThirds:
-            // Pick the NEAREST intersection at lock time, then freeze it
+            let nx1 = normRect.minX + normRect.width / 3.0
+            let nx2 = normRect.minX + normRect.width * 2.0 / 3.0
+            let ny1 = normRect.minY + normRect.height / 3.0
+            let ny2 = normRect.minY + normRect.height * 2.0 / 3.0
+
             let intersections: [CGPoint] = [
-                CGPoint(x: 1.0/3.0, y: 1.0/3.0),
-                CGPoint(x: 2.0/3.0, y: 1.0/3.0),
-                CGPoint(x: 1.0/3.0, y: 2.0/3.0),
-                CGPoint(x: 2.0/3.0, y: 2.0/3.0)
+                CGPoint(x: nx1, y: ny1),
+                CGPoint(x: nx2, y: ny1),
+                CGPoint(x: nx1, y: ny2),
+                CGPoint(x: nx2, y: ny2)
             ]
             return intersections.min(by: {
                 distanceSquared($0, subject) < distanceSquared($1, subject)
-            }) ?? CGPoint(x: 1.0/3.0, y: 1.0/3.0)
+            }) ?? CGPoint(x: nx1, y: ny1)
 
         case .horizontal:
-            return orientation.isLandscape ? CGPoint(x: 0.5, y: subject.y) : CGPoint(x: subject.x, y: 0.5)
+            // When landscape, the horizontal grid is visually rotated 90°, so the
+            // alignment axis swaps: the subject must reach the vertical centre (X = midX).
+            return orientation.isLandscape
+                ? CGPoint(x: normRect.midX, y: subject.y)
+                : CGPoint(x: subject.x, y: normRect.midY)
 
         case .vertical:
-            return orientation.isLandscape ? CGPoint(x: subject.x, y: 0.5) : CGPoint(x: 0.5, y: subject.y)
+            // Mirror of horizontal: landscape rotates the visual grid, so alignment
+            // axis swaps to the horizontal centre (Y = midY).
+            return orientation.isLandscape
+                ? CGPoint(x: subject.x, y: normRect.midY)
+                : CGPoint(x: normRect.midX, y: subject.y)
 
         case .diagonal:
-            // Nearest point on the nearest diagonal at lock time
-            let onDiag1 = nearestPointOnSegment(from: CGPoint(x: 0, y: 0), to: CGPoint(x: 1, y: 1), point: subject)
-            let onDiag2 = nearestPointOnSegment(from: CGPoint(x: 1, y: 0), to: CGPoint(x: 0, y: 1), point: subject)
+            let p1 = CGPoint(x: normRect.minX, y: normRect.minY)
+            let p2 = CGPoint(x: normRect.maxX, y: normRect.maxY)
+            let p3 = CGPoint(x: normRect.maxX, y: normRect.minY)
+            let p4 = CGPoint(x: normRect.minX, y: normRect.maxY)
+
+            let onDiag1 = nearestPointOnSegment(from: p1, to: p2, point: subject)
+            let onDiag2 = nearestPointOnSegment(from: p3, to: p4, point: subject)
             let d1 = distance(onDiag1, subject)
             let d2 = distance(onDiag2, subject)
             return d1 <= d2 ? onDiag1 : onDiag2
@@ -145,43 +163,57 @@ struct AlignmentAnalyzer {
     /// NOTE: When `lockedTargetPoint` is set (after user picks composition),
     /// this method returns the locked value immediately — no recalculation.
     static func targetPoint(
-        for composition: CompositionType, 
-        subject: CGPoint, 
+        for composition: CompositionType,
+        subject: CGPoint,
         geometry: SceneGeometry,
+        aspectRatio: AspectRatioMode = .fourThree,
         orientation: UIDeviceOrientation = UIDevice.current.orientation
     ) -> CGPoint? {
         if let locked = geometry.lockedTargetPoint {
             return locked
         }
 
+        let normRect = aspectMaskedNormalizedRect(aspectRatio: aspectRatio)
+
         switch composition {
 
         case .ruleOfThirds:
-            // Four intersection points of the rule-of-thirds grid
+            let nx1 = normRect.minX + normRect.width / 3.0
+            let nx2 = normRect.minX + normRect.width * 2.0 / 3.0
+            let ny1 = normRect.minY + normRect.height / 3.0
+            let ny2 = normRect.minY + normRect.height * 2.0 / 3.0
+
             let intersections: [CGPoint] = [
-                CGPoint(x: 1.0/3.0, y: 1.0/3.0),
-                CGPoint(x: 2.0/3.0, y: 1.0/3.0),
-                CGPoint(x: 1.0/3.0, y: 2.0/3.0),
-                CGPoint(x: 2.0/3.0, y: 2.0/3.0)
+                CGPoint(x: nx1, y: ny1),
+                CGPoint(x: nx2, y: ny1),
+                CGPoint(x: nx1, y: ny2),
+                CGPoint(x: nx2, y: ny2)
             ]
-            // Guide to the nearest intersection
             return intersections.min(by: {
                 distanceSquared($0, subject) < distanceSquared($1, subject)
             })
 
         case .center:
-            return CGPoint(x: 0.5, y: 0.5)
+            return CGPoint(x: normRect.midX, y: normRect.midY)
 
         case .horizontal:
-            return orientation.isLandscape ? CGPoint(x: 0.5, y: subject.y) : CGPoint(x: subject.x, y: 0.5)
+            return orientation.isLandscape
+                ? CGPoint(x: normRect.midX, y: subject.y)
+                : CGPoint(x: subject.x, y: normRect.midY)
 
         case .vertical:
-            return orientation.isLandscape ? CGPoint(x: subject.x, y: 0.5) : CGPoint(x: 0.5, y: subject.y)
+            return orientation.isLandscape
+                ? CGPoint(x: subject.x, y: normRect.midY)
+                : CGPoint(x: normRect.midX, y: subject.y)
 
         case .diagonal:
-            // Two diagonals: y=x (top-left→bottom-right) and y=1−x (top-right→bottom-left)
-            let onDiag1 = nearestPointOnSegment(from: CGPoint(x: 0, y: 0), to: CGPoint(x: 1, y: 1), point: subject)
-            let onDiag2 = nearestPointOnSegment(from: CGPoint(x: 1, y: 0), to: CGPoint(x: 0, y: 1), point: subject)
+            let p1 = CGPoint(x: normRect.minX, y: normRect.minY)
+            let p2 = CGPoint(x: normRect.maxX, y: normRect.maxY)
+            let p3 = CGPoint(x: normRect.maxX, y: normRect.minY)
+            let p4 = CGPoint(x: normRect.minX, y: normRect.maxY)
+
+            let onDiag1 = nearestPointOnSegment(from: p1, to: p2, point: subject)
+            let onDiag2 = nearestPointOnSegment(from: p3, to: p4, point: subject)
             let d1 = distance(onDiag1, subject)
             let d2 = distance(onDiag2, subject)
             return d1 <= d2 ? onDiag1 : onDiag2
@@ -196,26 +228,20 @@ struct AlignmentAnalyzer {
         for composition: CompositionType,
         geometry: SceneGeometry,
         depthData: AVDepthData? = nil,
+        aspectRatio: AspectRatioMode = .fourThree,
         orientation: UIDeviceOrientation = UIDevice.current.orientation,
         wasPerfect: Bool = false
     ) -> (vector: CGVector, isPerfect: Bool, guidanceDistance: CGFloat) {
         switch composition {
-        case .horizontal:
-            let angleDeg = effectiveHorizonAngle(geometry: geometry)
-            let threshold = wasPerfect ? horizontalExitAngleThreshold : horizontalPerfectAngleThreshold
-            let isPerfect = abs(angleDeg) < threshold
-            let offset = CGFloat(angleDeg / 15.0) * 0.25
-            let guidanceDistance = CGFloat(min(abs(angleDeg) / 15.0, 1.0))
-            
-            if orientation.isLandscape {
-                return (CGVector(dx: offset, dy: 0), isPerfect, guidanceDistance)
-            } else {
-                return (CGVector(dx: 0, dy: offset), isPerfect, guidanceDistance)
-            }
-
-        case .ruleOfThirds, .center, .diagonal, .vertical:
+        case .ruleOfThirds, .center, .diagonal, .vertical, .horizontal:
             guard let subject = geometry.smoothedSubjectPoint ?? resolveSubjectPoint(from: geometry, depthData: depthData),
-                  let target = targetPoint(for: composition, subject: subject, geometry: geometry, orientation: orientation)
+                  let target = targetPoint(
+                    for: composition,
+                    subject: subject,
+                    geometry: geometry,
+                    aspectRatio: aspectRatio,
+                    orientation: orientation
+                  )
             else {
                 return (.zero, false, 1.0)
             }
@@ -237,20 +263,20 @@ struct AlignmentAnalyzer {
         geometry: SceneGeometry,
         isPerfect: Bool,
         depthData: AVDepthData? = nil,
+        aspectRatio: AspectRatioMode = .fourThree,
         orientation: UIDeviceOrientation = UIDevice.current.orientation
     ) -> Float {
         switch composition {
 
-        case .horizontal:
-            guard geometry.horizonDetected || geometry.deviceRollDegrees != nil || geometry.isSubjectLocked else {
-                return 0.0
-            }
-            let angleDeg = abs(effectiveHorizonAngle(geometry: geometry))
-            return Float(max(0.0, 1.0 - (angleDeg / 15.0)))
-
-        case .ruleOfThirds, .center, .diagonal, .vertical:
+        case .ruleOfThirds, .center, .diagonal, .vertical, .horizontal:
             guard let subject = geometry.smoothedSubjectPoint ?? resolveSubjectPoint(from: geometry, depthData: depthData),
-                  let target  = targetPoint(for: composition, subject: subject, geometry: geometry, orientation: orientation)
+                  let target = targetPoint(
+                    for: composition,
+                    subject: subject,
+                    geometry: geometry,
+                    aspectRatio: aspectRatio,
+                    orientation: orientation
+                  )
             else { return 0.0 }
 
             let dist = distance(subject, target)
@@ -275,6 +301,38 @@ struct AlignmentAnalyzer {
     }
 
     // MARK: - Geometry Helpers
+    
+    private static func aspectMaskedNormalizedRect(aspectRatio: AspectRatioMode) -> CGRect {
+        // Physical ratio of the base normalized frame [0,1] is the screen size since UI uses scaleAspectFill.
+        // The UI is locked in portrait, so we always use the portrait bounds.
+        let screenSize = UIScreen.main.bounds.size
+        let physicalWidth = min(screenSize.width, screenSize.height)
+        let physicalHeight = max(screenSize.width, screenSize.height)
+        
+        let ratio: CGFloat
+        switch aspectRatio {
+        case .oneOne: ratio = 1.0
+        case .sixteenNine: ratio = 9.0 / 16.0
+        case .fourThree: ratio = 3.0 / 4.0
+        }
+        
+        var w = physicalWidth
+        var h = w / ratio
+        if h > physicalHeight { 
+            h = physicalHeight
+            w = h * ratio 
+        }
+        
+        let normW = w / physicalWidth
+        let normH = h / physicalHeight
+        
+        return CGRect(
+            x: 0.5 - normW / 2,
+            y: 0.5 - normH / 2,
+            width: normW,
+            height: normH
+        )
+    }
 
     private static func distanceSquared(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
         let dx = a.x - b.x

@@ -101,7 +101,12 @@ final class CompositionCoordinator {
         tryAutoSelect(predictions: predictions, analysis: &analysis)
     }
 
-    func selectComposition(_ composition: CompositionType, analysis: inout CompositionAnalysis) {
+    func selectComposition(
+        _ composition: CompositionType,
+        analysis: inout CompositionAnalysis,
+        aspectRatio: AspectRatioMode = .fourThree,
+        orientation: UIDeviceOrientation = UIDevice.current.orientation
+    ) {
         cancelAutoSelectFallback()
         HapticManager.selection()
         uiState.userSelectedComposition = composition
@@ -114,7 +119,9 @@ final class CompositionCoordinator {
                       ?? analysis.sceneGeometry.trackedSubjectPoint {
             let frozenTarget = AlignmentAnalyzer.computeFixedTarget(
                 for: composition,
-                subjectAtLockTime: subject
+                subjectAtLockTime: subject,
+                aspectRatio: aspectRatio,
+                orientation: orientation
             )
             analysis.sceneGeometry.lockedTargetPoint = frozenTarget
             visionService.syncGuidanceState(
@@ -122,6 +129,38 @@ final class CompositionCoordinator {
                 detectedComposition: composition
             )
         }
+    }
+
+    /// Recalculates the locked target point for the current composition
+    /// when the user changes aspect ratio or device orientation while guidance is active.
+    func recalculateTargetForAspectRatio(
+        _ aspectRatio: AspectRatioMode,
+        orientation: UIDeviceOrientation = UIDevice.current.orientation,
+        analysis: inout CompositionAnalysis
+    ) {
+        guard let composition = uiState.userSelectedComposition else { return }
+
+        let isGuidingOrPerfect: Bool
+        switch uiState.phase {
+        case .guiding, .perfect: isGuidingOrPerfect = true
+        default: isGuidingOrPerfect = false
+        }
+        guard isGuidingOrPerfect else { return }
+
+        guard let subject = analysis.sceneGeometry.userLockOrigin
+                          ?? analysis.sceneGeometry.trackedSubjectPoint else { return }
+
+        let newTarget = AlignmentAnalyzer.computeFixedTarget(
+            for: composition,
+            subjectAtLockTime: subject,
+            aspectRatio: aspectRatio,
+            orientation: orientation
+        )
+        analysis.sceneGeometry.lockedTargetPoint = newTarget
+        visionService.syncGuidanceState(
+            lockedTarget: newTarget,
+            detectedComposition: composition
+        )
     }
 
     func sortedPickerCompositions(predictions: [CompositionPrediction]) -> [CompositionType] {
@@ -154,7 +193,12 @@ final class CompositionCoordinator {
         let duration = sessionStartTime.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
         print("📸 [ML] Recommendation=\(recommendation.type) Confidence=\(recommendation.confidence) Duration=\(duration)ms")
 
-        selectComposition(recommendation.type, analysis: &analysis)
+        selectComposition(
+            recommendation.type,
+            analysis: &analysis,
+            aspectRatio: visionService.activeAspectRatio,
+            orientation: visionService.activeDeviceOrientation
+        )
         if recommendation.confidence >= GuidanceEngine.autoSelectConfidenceThreshold {
             uiState.recommendedLabel = "Recommended: \(recommendation.type.shortLabel)"
         } else {

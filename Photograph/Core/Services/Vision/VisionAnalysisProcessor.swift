@@ -5,6 +5,7 @@
 
 import AVFoundation
 import Foundation
+import UIKit
 
 /// Shared analysis finalization and ML hysteresis for spatial and classic pipelines.
 struct VisionAnalysisProcessor {
@@ -13,6 +14,9 @@ struct VisionAnalysisProcessor {
     var isMLEnabled: Bool
     var userGuidanceActive: Bool
     var deviceRollDegrees: Double?
+    var activeAspectRatio: AspectRatioMode
+    /// Physical device orientation read from UIDevice — independent of system orientation lock.
+    var activeDeviceOrientation: UIDeviceOrientation = UIDevice.current.orientation
 
     var hysteresisComposition: CompositionType?
     var hysteresisConfidence: Float = 0
@@ -42,7 +46,8 @@ struct VisionAnalysisProcessor {
                 if let newTarget = AlignmentAnalyzer.targetPoint(
                     for: updated.detectedComposition,
                     subject: smoothedSubject,
-                    geometry: updated.sceneGeometry
+                    geometry: updated.sceneGeometry,
+                    aspectRatio: activeAspectRatio
                 ) {
                     updated.sceneGeometry.lockedTargetPoint = newTarget
                 }
@@ -77,6 +82,8 @@ struct VisionAnalysisProcessor {
             for: updated.detectedComposition,
             geometry: updated.sceneGeometry,
             depthData: depthData,
+            aspectRatio: activeAspectRatio,
+            orientation: activeDeviceOrientation,
             wasPerfect: input.isCompositionPerfect
         )
         updated.subjectOffset = offsetResult.vector
@@ -87,7 +94,9 @@ struct VisionAnalysisProcessor {
             for: updated.detectedComposition,
             geometry: updated.sceneGeometry,
             isPerfect: offsetResult.isPerfect,
-            depthData: depthData
+            depthData: depthData,
+            aspectRatio: activeAspectRatio,
+            orientation: activeDeviceOrientation
         )
 
         return updated
