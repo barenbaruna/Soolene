@@ -23,6 +23,11 @@ enum ClassicVisionPipeline {
         analysis: inout CompositionAnalysis,
         onMLPredictions: @escaping ([CompositionPrediction]) -> Void
     ) {
+        // Front camera uses static composition overlays only — no Vision analysis needed.
+        if isFrontCamera { return }
+
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation, options: [:])
+
         if let tracker = trackingRequest {
             do {
                 try sequenceHandler.perform([tracker], on: pixelBuffer, orientation: orientation)
@@ -55,7 +60,6 @@ enum ClassicVisionPipeline {
             }
         }
 
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation, options: [:])
         VisionRequestManager.runFastRequests(handler: handler, geometry: &analysis.sceneGeometry, isFrontCamera: isFrontCamera)
 
         if frameCounter % 8 == 0 {
