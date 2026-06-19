@@ -33,7 +33,10 @@ extension CameraViewModel {
 
         switch guidancePhase {
         case .scanning:
-            if cameraMode == .rearSpatial, spatialEngine.trackingState != .normal {
+            if cameraMode == .frontClassic {
+                return "Choose a composition below"
+            }
+            if spatialEngine.trackingState != .normal {
                 return "Move slowly while spatial tracking initializes"
             }
             return "Long-press your object"
@@ -48,6 +51,13 @@ extension CameraViewModel {
             return mlSuggestion.map { "Suggested: \($0.shortLabel) — tap to change" }
                 ?? "Selecting best composition…"
         case .guiding(let comp):
+            if cameraMode == .frontClassic {
+                switch comp {
+                case .center: return "Center yourself in the frame"
+                case .ruleOfThirds: return "Align yourself along the grid lines"
+                default: return "Align yourself with the grid"
+                }
+            }
             let technique = GuidanceEngine.techniqueForUserSelection(
                 composition: comp,
                 geometry: analysis.sceneGeometry
@@ -59,6 +69,7 @@ extension CameraViewModel {
     }
 
     var showsDualAnchorGuidance: Bool {
+        guard cameraMode == .rearSpatial else { return false }
         guard guidancePhase.isActive else { return false }
         guard userSelectedComposition != nil else { return false }
         return true

@@ -136,12 +136,21 @@ final class CaptureCoordinator {
         guidancePhase: GuidancePhase,
         analysis: CompositionAnalysis
     ) async {
-        let readiness = captureReadiness(
-            cameraMode: cameraMode,
-            guidancePhase: guidancePhase,
-            analysis: analysis
-        )
-        guard readiness.isShutterEnabled, !isCapturing(cameraMode: cameraMode) else { return }
+        guard !isCapturing(cameraMode: cameraMode), !isCaptureHandoffInProgress else { return }
+
+        // Front camera: gate only on session running — composition alignment is not required.
+        // Rear camera: use full readiness check (tracking + composition alignment).
+        switch cameraMode {
+        case .frontClassic:
+            guard cameraManager.isSessionRunning else { return }
+        case .rearSpatial:
+            let readiness = captureReadiness(
+                cameraMode: cameraMode,
+                guidancePhase: guidancePhase,
+                analysis: analysis
+            )
+            guard readiness.isShutterEnabled else { return }
+        }
 
         clearCaptureErrors()
         let captureMode = telemetryMode(for: cameraMode)
