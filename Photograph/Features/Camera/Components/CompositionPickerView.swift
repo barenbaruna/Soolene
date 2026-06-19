@@ -60,7 +60,7 @@ struct CompositionPickerView: View {
                                 isSelected: selectedComposition == comp,
                                 isRecommended: mlSuggestion == comp,
                                 iconRotation: iconRotation,
-                                onTap: { 
+                                onTap: {
                                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                         onSelect(comp)
                                         scrolledID = comp
@@ -145,21 +145,21 @@ private struct CompositionPill: View {
                 // Glass Box containing Icon and Badge
                 ZStack {
                     if #available(iOS 26, *) {
-                        RoundedRectangle(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium)
-                            .fill(Color.black.opacity(isSelected ? 0.35 : 0.2))
-                            .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .rect(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium))
+                        // Light-mode tint: more opaque when selected for clear visual distinction.
+                        Color.clear
+                            .glassEffect(.regular.tint(Color.black.opacity(isSelected ? 0.2 : 0.05)), in: .rect(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium))
                     } else {
                         RoundedRectangle(cornerRadius: isSelected ? Spacing.cornerRadiusLarge : Spacing.cornerRadiusMedium)
                             .fill(.ultraThinMaterial.opacity(isSelected ? 1.0 : 0.5))
                     }
-                    
+
                     RotatedLayout(angle: .degrees(iconRotation)) {
                         Image(systemName: composition.symbolName)
                             .font(.title)
                             .foregroundStyle(.primary)
                             .rotationEffect(.degrees(iconRotation))
                     }
-                    
+
                     // Recommended Sparkle Badge (Top Right)
                     if isRecommended {
                         Image(systemName: "sparkles")
@@ -194,6 +194,7 @@ private struct CompositionPill: View {
                 .frame(minHeight: 32, alignment: .top) // Consistent height for 1 vs 2 lines
             }
             .frame(width: 90) // Constant overall pill width
+            .contentShape(Rectangle())
         }
         .buttonStyle(PillButtonStyle())
         .animation(.spring(response: 0.25, dampingFraction: 0.65), value: isSelected)
@@ -221,8 +222,7 @@ private struct ClearSubjectButton: View {
             .padding(.vertical, 8)
             .background {
                 if #available(iOS 26, *) {
-                    Capsule()
-                        .fill(Color.black.opacity(0.35))
+                    Color.clear
                         .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .capsule)
                 } else {
                     Capsule()
@@ -232,6 +232,7 @@ private struct ClearSubjectButton: View {
             .overlay(
                 Capsule().strokeBorder(AppColors.controlActive.opacity(0.5), lineWidth: 0.5)
             )
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Clear object")

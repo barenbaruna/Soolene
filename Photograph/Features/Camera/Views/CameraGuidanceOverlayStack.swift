@@ -43,11 +43,17 @@ struct CameraGuidanceOverlayStack: View {
             }
 
             if case .perfect = viewModel.guidancePhase, viewModel.captureReadiness.showsGreenCelebration {
-                Rectangle()
-                    .strokeBorder(AppColors.gridlineGreen.opacity(0.5), lineWidth: 2)
+                ContainerRelativeShape()
+                    .strokeBorder(AppColors.gridlineGreen, lineWidth: 4)
+                    .shadow(color: AppColors.gridlineGreen, radius: 10)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
-                    .transition(.opacity)
+                    .phaseAnimator([0.5, 0.9]) { view, opacity in
+                        view.opacity(opacity)
+                    } animation: { _ in
+                        .easeInOut(duration: 0.8).repeatForever(autoreverses: true)
+                    }
+                    .transition(.opacity.animation(.easeInOut(duration: 0.3)))
             }
 
             if case .scanning = viewModel.guidancePhase {

@@ -40,6 +40,8 @@ final class CameraViewModel {
     var timerLength: Int = 0
     var isCountingDown = false
     var countdownValue = 0
+
+    var isFrontCameraZoomedOut = false
     var isSwitchingCamera = false
     var lastZoomApplyTime: CFAbsoluteTime = 0
     var pinchStartMultiplier: CGFloat?
@@ -72,7 +74,7 @@ final class CameraViewModel {
         exposureHideTask = Task {
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
-            await MainActor.run { 
+            await MainActor.run {
                 if self.activePanel == .exposure {
                     self.activePanel = nil
                 }
@@ -154,7 +156,11 @@ final class CameraViewModel {
         visionService.onAnalysisUpdated = { [weak self] result in
             guard let self else { return }
             self.analysis = result
-            self.compositionCoordinator.updatePhaseFromAnalysis(result)
+            // Phase transitions driven by vision are rear-camera only.
+            // Front camera stays in .guiding with its chosen static grid.
+            if self.cameraMode == .rearSpatial {
+                self.compositionCoordinator.updatePhaseFromAnalysis(result)
+            }
         }
 
         visionService.onMLSuggestionReady = { [weak self] generation, predictions in
@@ -223,7 +229,10 @@ final class CameraViewModel {
     var recommendedCompositionLabel: String? { compositionCoordinator.uiState.recommendedLabel }
 
     var sortedPickerCompositions: [CompositionType] {
-        compositionCoordinator.sortedPickerCompositions(predictions: analysis.mlPredictions)
+        if cameraMode == .frontClassic {
+            return [.center, .ruleOfThirds]
+        }
+        return compositionCoordinator.sortedPickerCompositions(predictions: analysis.mlPredictions)
     }
 
     var resolvedComposition: CompositionType {

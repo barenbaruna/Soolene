@@ -168,6 +168,20 @@ final class VisionService: @unchecked Sendable {
         analysisLock.unlock()
     }
 
+    /// Clears all scene-detection data (saliency, faces, body) and resets the saliency smoother.
+    /// Call when switching cameras so stale rear-camera geometry does not bleed into front camera overlays.
+    func clearSceneData() {
+        analysisLock.lock()
+        currentAnalysis.sceneGeometry.saliencyCentroid = nil
+        currentAnalysis.sceneGeometry.objectnessCentroid = nil
+        currentAnalysis.sceneGeometry.saliencyBounds = nil
+        currentAnalysis.sceneGeometry.saliencyAreaRatio = 0
+        currentAnalysis.sceneGeometry.faceRects = []
+        currentAnalysis.sceneGeometry.bodyCenter = nil
+        analysisLock.unlock()
+        saliencySmoother.reset()
+    }
+
     // MARK: - Spatial Pipeline
 
     func processSpatialFramePacket(_ packet: SpatialFramePacket) {
@@ -351,6 +365,16 @@ final class VisionService: @unchecked Sendable {
                 merged.sceneGeometry.lockedTargetPoint = self.currentAnalysis.sceneGeometry.lockedTargetPoint
                 merged.detectedComposition = self.currentAnalysis.detectedComposition
                 self.copyLockState(from: self.currentAnalysis.sceneGeometry, to: &merged.sceneGeometry)
+            }
+            // Front camera uses static grid overlays — always clear scene-detection data.
+            // This is the authoritative guard: any in-flight rear-camera Vision blocks
+            // that publish after the camera switch are neutralised here on the main thread.
+            if self.isFrontCamera {
+                merged.sceneGeometry.saliencyCentroid = nil
+                merged.sceneGeometry.objectnessCentroid = nil
+                merged.sceneGeometry.saliencyBounds = nil
+                merged.sceneGeometry.faceRects = []
+                merged.sceneGeometry.bodyCenter = nil
             }
             self.currentAnalysis = merged
             self.onAnalysisUpdated?(merged)

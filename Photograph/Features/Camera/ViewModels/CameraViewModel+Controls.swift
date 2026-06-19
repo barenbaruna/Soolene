@@ -14,13 +14,19 @@ extension CameraViewModel {
         isSwitchingCamera = true
 
         Task {
+            clearPinnedSubject()
+
             if cameraMode == .rearSpatial {
                 await sessionCoordinator.switchToFrontClassic(
                     hasCameraPermission: hasCameraPermission,
                     checkPermissions: { await self.checkPermissions() }
                 )
                 cameraMode = .frontClassic
-                trackingQualityWarning = "Front camera uses 2D tracking — world lock unavailable."
+                selectComposition(.center)
+                
+                // Sync the physical camera zoom with the ViewModel state
+                let targetZoom: CGFloat = isFrontCameraZoomedOut ? 1.0 : 1.2
+                cameraManager.setFrontCameraZoom(targetZoom)
             } else {
                 await sessionCoordinator.switchToRearSpatial()
                 cameraMode = .rearSpatial
@@ -58,6 +64,16 @@ extension CameraViewModel {
             )
             applyZoomApplication(snapped)
         }
+    }
+
+    func toggleFrontCameraZoom() {
+        guard !isSwitchingCamera, cameraMode == .frontClassic else { return }
+        HapticManager.selection()
+        isFrontCameraZoomedOut.toggle()
+
+        // 1.0 is full ultra-wide FOV. 1.2 is cropped.
+        let targetZoom: CGFloat = isFrontCameraZoomedOut ? 1.0 : 1.2
+        cameraManager.setFrontCameraZoom(targetZoom)
     }
 
     func onZoomRulerDragBegan() {

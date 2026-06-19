@@ -61,6 +61,7 @@ struct CameraView: View {
         } message: {
             Text(permissionAlertMessage)
         }
+        .preferredColorScheme(.dark)
     }
 
     private var permissionFallback: some View {
@@ -84,9 +85,9 @@ struct CameraView: View {
             CameraPreviewLayer(
                 viewModel: viewModel,
                 onFocusTap: onboarding.allowsCameraFocusControls ? handleFocusTap : nil,
-                onSubjectPin: onboarding.allowsSceneLock ? handleSubjectPin : nil,
-                onClearPin: onboarding.allowsCameraFocusControls ? clearPinnedSubject : nil,
-                allowsZoomGestures: onboarding.allowsCameraFocusControls
+                onSubjectPin: (onboarding.allowsSceneLock && viewModel.cameraMode == .rearSpatial) ? handleSubjectPin : nil,
+                onClearPin: (onboarding.allowsCameraFocusControls && viewModel.cameraMode == .rearSpatial) ? clearPinnedSubject : nil,
+                allowsZoomGestures: (onboarding.allowsCameraFocusControls && viewModel.cameraMode == .rearSpatial)
             )
             .background {
                 GeometryReader { geo in

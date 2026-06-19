@@ -40,7 +40,10 @@ final class CameraSessionCoordinator {
 
         visionService.usesSpatialTracking = false
         visionService.isFrontCamera = true
-        visionService.isMLEnabled = true
+        visionService.isMLEnabled = false
+        // Clear stale rear-camera scene data (saliency, faces) so front camera
+        // grid overlays don't inherit a "nearest intersection" from the previous session.
+        visionService.clearSceneData()
 
         if !hasCameraPermission {
             await checkPermissions()

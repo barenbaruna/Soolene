@@ -92,7 +92,8 @@ extension CameraViewModel {
 
     /// Hardware + tracking gate (legacy name — prefer `captureReadiness.isShutterEnabled`).
     var isCaptureReady: Bool {
-        captureReadiness.isShutterEnabled
+        if cameraMode == .frontClassic { return true }
+        return captureReadiness.isShutterEnabled
     }
 
     var shutterIsPerfect: Bool {
@@ -104,7 +105,8 @@ extension CameraViewModel {
     }
 
     var shutterReadiness: ShutterReadiness {
-        captureReadiness.shutterVisual
+        if cameraMode == .frontClassic { return .idle }
+        return captureReadiness.shutterVisual
     }
 
     var activeCapturedPhotoData: Data? {
@@ -134,7 +136,7 @@ extension CameraViewModel {
 
     func startCountdown() {
         guard !isCountingDown else { return }
-        guard captureReadiness.isShutterEnabled else { return }
+        guard isCaptureReady else { return }
         isCountingDown = true
         countdownValue = timerLength
 
@@ -145,7 +147,7 @@ extension CameraViewModel {
                 countdownValue -= 1
             }
             if isCountingDown {
-                if captureReadiness.isShutterEnabled {
+                if isCaptureReady {
                     executeCapture()
                 }
                 isCountingDown = false
@@ -158,7 +160,7 @@ extension CameraViewModel {
             showInlineToast("Capture in progress")
             return
         }
-        guard captureReadiness.isShutterEnabled else { return }
+        guard isCaptureReady else { return }
 
         Task {
             await captureCoordinator.executeCapture(

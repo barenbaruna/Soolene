@@ -220,15 +220,9 @@ final class CameraManager: NSObject, @unchecked Sendable {
                 guard let self, let angle = change.newValue else { return }
                 
                 self.sessionQueue.async {
-                    // Update video output
-                    if let connection = self.videoDataOutput.connection(with: .video), connection.isVideoRotationAngleSupported(angle) {
-                        connection.videoRotationAngle = angle
-                    }
-                    // Update LiDAR depth output to perfectly align with RGB!
-                    if let connection = self.depthDataOutput.connection(with: .depthData), connection.isVideoRotationAngleSupported(angle) {
-                        connection.videoRotationAngle = angle
-                    }
-                    // Update photo output
+                    // Only update photo output rotation.
+                    // DO NOT update videoDataOutput or depthDataOutput as it causes pipeline stalls (restart effect)
+                    // and double-rotation in VisionService which already handles orientation.
                     if let connection = self.photoOutput.connection(with: .video), connection.isVideoRotationAngleSupported(angle) {
                         connection.videoRotationAngle = angle
                     }

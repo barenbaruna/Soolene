@@ -198,6 +198,23 @@ extension CameraManager {
         }
     }
 
+    func setFrontCameraZoom(_ factor: CGFloat) {
+        sessionQueue.async { [weak self] in
+            guard let self, let device = self.activeVideoDevice, self.isUsingFrontCamera else { return }
+            do {
+                try device.lockForConfiguration()
+                let clamped = min(
+                    max(factor, device.minAvailableVideoZoomFactor),
+                    device.maxAvailableVideoZoomFactor
+                )
+                device.videoZoomFactor = clamped
+                device.unlockForConfiguration()
+            } catch {
+                // Ignore transient configuration failures.
+            }
+        }
+    }
+
     func focusAndExpose(at devicePoint: CGPoint) {
         sessionQueue.async { [weak self] in
             guard let self, let device = self.activeVideoDevice else { return }
