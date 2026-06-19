@@ -30,6 +30,7 @@ struct CameraBottomBar: View {
                     }
                 }
                 .frame(width: ControlMetrics.galleryThumbnail, height: ControlMetrics.galleryThumbnail)
+                .contentShape(Circle())
                 .clipShape(Circle())
                 .background(glassButtonBackground)
             }
@@ -55,9 +56,9 @@ struct CameraBottomBar: View {
             } else {
                 CaptureButton(
                     action: capturePhoto,
-                    readiness: viewModel.captureReadiness.shutterVisual,
+                    readiness: viewModel.shutterReadiness,
                     isDisabled: viewModel.isCapturing
-                        || !viewModel.captureReadiness.isShutterEnabled
+                        || !viewModel.isCaptureReady
                         || !onboarding.allowsShutter
                 )
                 .walkthroughAnchor(.shutter)
@@ -79,6 +80,7 @@ struct CameraBottomBar: View {
                 }
                 .foregroundStyle(.primary)
                 .frame(width: ControlMetrics.iconButton, height: ControlMetrics.iconButton)
+                .contentShape(Circle())
                 .background(glassButtonBackground)
             }
             .buttonStyle(.plain)
@@ -95,6 +97,8 @@ struct CameraBottomBar: View {
         if #available(iOS 26, *) {
             Color.clear
                 .glassEffect(.regular.tint(Color.black.opacity(0.15)), in: .circle)
+                // Explicit white border: stroke lives in the background layer where
+                // .colorScheme(.light) is active, so Color.primary would resolve to dark.
                 .overlay(Circle().strokeBorder(Color.primary.opacity(0.35), lineWidth: 1))
         } else {
             Circle()
