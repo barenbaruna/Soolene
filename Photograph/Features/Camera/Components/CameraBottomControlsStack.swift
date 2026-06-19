@@ -57,15 +57,26 @@ struct CameraBottomControlsStack: View {
                 )
                 .frame(height: ControlMetrics.rulerPanelContentHeight)
                 .transition(.blurReplace)
-            } else if !viewModel.isCountingDown, viewModel.guidancePhase.showPicker {
-                CompositionPickerView(
-                    selectedComposition: viewModel.userSelectedComposition,
-                    mlSuggestion: viewModel.mlSuggestion,
-                    compositions: viewModel.sortedPickerCompositions,
-                    iconRotation: iconRotation,
-                    onSelect: { viewModel.selectComposition($0) },
-                    onClearSubject: { viewModel.clearPinnedSubject() }
-                )
+            } else if !viewModel.isCountingDown,
+                      (viewModel.cameraMode == .frontClassic || viewModel.guidancePhase.showPicker) {
+                VStack(spacing: 8) {
+                    if viewModel.cameraMode == .frontClassic {
+                        FrontCameraZoomToggle(
+                            isZoomedOut: viewModel.isFrontCameraZoomedOut,
+                            iconRotation: iconRotation,
+                            action: { viewModel.toggleFrontCameraZoom() }
+                        )
+                    }
+
+                    CompositionPickerView(
+                        selectedComposition: viewModel.userSelectedComposition,
+                        mlSuggestion: viewModel.mlSuggestion,
+                        compositions: viewModel.sortedPickerCompositions,
+                        iconRotation: iconRotation,
+                        onSelect: { viewModel.selectComposition($0) },
+                        onClearSubject: viewModel.cameraMode == .frontClassic ? nil : { viewModel.clearPinnedSubject() }
+                    )
+                }
                 .allowsHitTesting(onboarding.allowsCompositionControls)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .onAppear {
