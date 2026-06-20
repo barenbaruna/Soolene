@@ -121,10 +121,21 @@ struct PhotoDetailView: View {
                 Button(action: {
                     toggleGridOverlay()
                 }) {
-                    Image(systemName: AppIcon.iconPerspective)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(isShowingOverlay ? AppColors.secondary : AppColors.primary)
+                    ZStack {
+                        if isShowingOverlay {
+                            Circle()
+                                .fill(AppColors.primary)
+                                .frame(width: 36, height: 36)
+                        }
+                        Image(systemName: AppIcon.iconPerspective)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(isShowingOverlay ? Color.white : AppColors.primary)
+                    }
+                    .frame(width: 36, height: 36)
+                    .contentShape(Circle())
                 }
+                .buttonStyle(.plain)
+                .clipShape(Circle())
                 .walkthroughAnchor(.gridToggle)
                 .disabled(!onboarding.allowsPhotoGridToggle)
             }
@@ -437,7 +448,7 @@ struct PhotoPageView: View {
         let opts = PHImageRequestOptions()
         opts.deliveryMode = .highQualityFormat
         opts.isNetworkAccessAllowed = true
-        PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: opts) { img, info in
+            PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: opts) { img, info in
             guard let img else { return }
             let degraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
             if !degraded { Task { @MainActor in self.image = img } }

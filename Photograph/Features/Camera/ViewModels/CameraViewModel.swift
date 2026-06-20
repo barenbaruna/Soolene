@@ -246,7 +246,7 @@ final class CameraViewModel {
         if hasCameraPermission {
             await spatialEngine.checkPermissionsAndSetup()
         }
-        await loadLatestThumbnail()
+        await refreshThumbnail()
         motionService.start()
     }
 
@@ -303,9 +303,14 @@ final class CameraViewModel {
 
     // MARK: - Private
 
-    private func loadLatestThumbnail() async {
+    func refreshThumbnail() async {
         guard let assets = await GalleryManager.shared.fetchAllPhotos(),
-              let latestAsset = assets.firstObject else { return }
+              let latestAsset = assets.firstObject else {
+            Task { @MainActor in
+                self.lastSavedThumbnail = nil
+            }
+            return 
+        }
 
         let size = CGSize(width: 80, height: 80)
         let options = PHImageRequestOptions()

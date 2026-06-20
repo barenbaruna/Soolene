@@ -153,6 +153,7 @@ struct CameraView: View {
                 viewModel.pauseSession()
             } else {
                 viewModel.resumeSession()
+                Task { await viewModel.refreshThumbnail() }
             }
         }
         .onChange(of: onboarding.hasCompletedWalkthrough) { _, completed in
