@@ -1,6 +1,6 @@
 //
 //  CameraViewModel+Controls.swift
-//  Photograph
+//  Soolene
 //
 
 import AVFoundation

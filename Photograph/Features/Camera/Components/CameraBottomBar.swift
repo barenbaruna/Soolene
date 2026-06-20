@@ -1,6 +1,6 @@
 //
 //  CameraBottomBar.swift
-//  Photograph
+//  Soolene
 //
 //  Bottom camera band: gallery, shutter, flip (design reference).
 //

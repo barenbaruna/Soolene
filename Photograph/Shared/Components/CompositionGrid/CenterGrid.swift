@@ -1,6 +1,6 @@
 //
 //  CenterGrid.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI

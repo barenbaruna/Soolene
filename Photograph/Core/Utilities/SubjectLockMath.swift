@@ -1,6 +1,6 @@
 //
 //  SubjectLockMath.swift
-//  Photograph
+//  Soolene
 //
 //  Pure functions for subject-lock coordinate math (unit-testable).
 //

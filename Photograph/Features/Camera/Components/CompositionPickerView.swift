@@ -1,6 +1,6 @@
 //
 //  CompositionPickerView.swift
-//  Photograph
+//  Soolene
 //
 //  Horizontal composition picker that appears when the user locks a subject.
 //  Each composition is displayed as a pill with an SF Symbol icon and label.

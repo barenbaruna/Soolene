@@ -1,6 +1,6 @@
 //
 //  SpatialFramePacket.swift
-//  Photograph
+//  Soolene
 //
 //  Immutable frame payload safe to pass off the ARSession delegate thread.
 //

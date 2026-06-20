@@ -1,6 +1,6 @@
 //
 //  GalleryManager.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 18/05/26.
 //
@@ -9,7 +9,7 @@ import Foundation
 import Photos
 import UIKit
 
-/// Manages saving and reading photos in the Visula album.
+/// Manages saving and reading photos in the Soolene album.
 /// Photos are saved to both Camera Roll and the custom album for in-app library.
 actor GalleryManager {
     static let shared = GalleryManager()
@@ -18,7 +18,7 @@ actor GalleryManager {
 
     // MARK: - Save Photo
 
-    /// Saves photo data to Camera Roll AND the Visula album.
+    /// Saves photo data to Camera Roll AND the Soolene album.
     /// - Parameters:
     ///   - photoData: Raw JPEG data including EXIF metadata
     ///   - composition: The detected composition type to store as metadata
@@ -62,7 +62,7 @@ actor GalleryManager {
 
     // MARK: - Fetch Photos
 
-    /// Fetches all photos from the "Photograph" album.
+    /// Fetches all photos from the "Soolene" album.
     func fetchAllPhotos() async -> PHFetchResult<PHAsset>? {
         guard let album = findAlbum() else { return nil }
         let options = PHFetchOptions()
@@ -127,7 +127,7 @@ actor GalleryManager {
 
     private var metadataURL: URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return docs.appendingPathComponent("photograph_metadata.json")
+        return docs.appendingPathComponent("soolene_metadata.json")
     }
 
     private func saveCompositionMetadata(composition: CompositionType, localIdentifier: String) {
@@ -148,7 +148,7 @@ actor GalleryManager {
     private nonisolated func loadAllMetadata() -> [PhotoMetadata] {
         guard let data = try? Data(contentsOf: {
             let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            return docs.appendingPathComponent("photograph_metadata.json")
+            return docs.appendingPathComponent("soolene_metadata.json")
         }()) else { return [] }
         return (try? JSONDecoder().decode([PhotoMetadata].self, from: data)) ?? []
     }

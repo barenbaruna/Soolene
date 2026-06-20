@@ -1,6 +1,6 @@
 //
 //  CaptureButton.swift
-//  Photograph
+//  Soolene
 //
 //  Shutter: olive (idle) → gold (stabilizing) → green (ready).
 //

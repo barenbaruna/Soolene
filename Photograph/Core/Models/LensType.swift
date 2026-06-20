@@ -1,6 +1,6 @@
 //
 //  LensType.swift
-//  Photograph
+//  Soolene
 //
 //  Internal zoom preset identifiers — telemetry and handoff legacy only (no UI chips).
 //

@@ -1,6 +1,6 @@
 //
 //  GuidanceEngine.swift
-//  Photograph
+//  Soolene
 //
 //  Selects the best composition from ML predictions and generates a guidance tip.
 //

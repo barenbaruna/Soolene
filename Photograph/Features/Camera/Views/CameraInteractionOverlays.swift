@@ -1,6 +1,6 @@
 //
 //  CameraInteractionOverlays.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI

@@ -1,6 +1,6 @@
 //
 //  ScanningCoachOverlay.swift
-//  Photograph
+//  Soolene
 //
 //  Scanning-phase coach: optional viewfinder hint, debounced saliency pulse.
 //

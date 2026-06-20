@@ -1,6 +1,6 @@
 //
 //  CaptureReadiness.swift
-//  Photograph
+//  Soolene
 //
 //  Single source of truth for guidance UI, shutter, and capture gates.
 //

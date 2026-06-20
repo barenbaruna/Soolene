@@ -1,6 +1,6 @@
 //
 //  ARZoomProfile.swift
-//  Photograph
+//  Soolene
 //
 //  Maps display-space zoom to AR primary camera `videoZoomFactor`.
 //  On Pro/Max, ARKit often uses the ultra-wide as the primary feed — display 1×

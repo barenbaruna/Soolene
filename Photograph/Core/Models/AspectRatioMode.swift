@@ -1,6 +1,6 @@
 //
 //  AspectRatioMode.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 18/05/26.
 //

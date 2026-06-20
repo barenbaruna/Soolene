@@ -1,6 +1,6 @@
 //
 //  PermissionChecking.swift
-//  Photograph
+//  Soolene
 //
 
 import Foundation

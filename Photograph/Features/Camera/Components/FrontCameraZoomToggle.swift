@@ -1,6 +1,6 @@
 //
 //  FrontCameraZoomToggle.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap.
 //

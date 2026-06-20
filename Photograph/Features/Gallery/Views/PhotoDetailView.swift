@@ -1,6 +1,6 @@
 //
 //  PhotoDetailView.swift
-//  Photograph
+//  Soolene
 //
 //  Full-screen photo viewer with composition overlay toggle.
 //

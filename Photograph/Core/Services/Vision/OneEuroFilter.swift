@@ -1,6 +1,6 @@
 //
 //  OneEuroFilter.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 06/06/26.
 //

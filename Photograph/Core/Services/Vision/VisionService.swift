@@ -1,6 +1,6 @@
 //
 //  VisionService.swift
-//  Photograph
+//  Soolene
 //
 //  Coordinates spatial and classic Vision pipelines with shared analysis finalization.
 //

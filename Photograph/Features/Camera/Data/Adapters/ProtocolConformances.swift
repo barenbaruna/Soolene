@@ -1,6 +1,6 @@
 //
 //  ProtocolConformances.swift
-//  Photograph
+//  Soolene
 //
 //  Bridges existing Core services to Core/Protocols during incremental migration.
 //

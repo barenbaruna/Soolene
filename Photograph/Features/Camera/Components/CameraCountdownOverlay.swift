@@ -1,6 +1,6 @@
 //
 //  CameraCountdownOverlay.swift
-//  Photograph
+//  Soolene
 //
 //  Timer countdown displayed over the viewfinder.
 //

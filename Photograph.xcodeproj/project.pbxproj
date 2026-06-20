@@ -24,25 +24,15 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A8B2C4CD2FBACA5C0039F503 /* Photograph */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = Photograph;
-			sourceTree = "<group>";
-		};
-		A8TEST022FBACA5C0039F503 /* PhotographTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PhotographTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A8B2C4C82FBACA5C0039F503 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A8TEST042FBACA5C0039F503 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -56,7 +46,6 @@
 			isa = PBXGroup;
 			children = (
 				A8B2C4CD2FBACA5C0039F503 /* Photograph */,
-				A8TEST022FBACA5C0039F503 /* PhotographTests */,
 				A8B2C4CC2FBACA5C0039F503 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -89,34 +78,9 @@
 				A8B2C4CD2FBACA5C0039F503 /* Photograph */,
 			);
 			name = Photograph;
-			packageProductDependencies = (
-			);
 			productName = Photograph;
 			productReference = A8B2C4CB2FBACA5C0039F503 /* Photograph.app */;
 			productType = "com.apple.product-type.application";
-		};
-		A8TEST052FBACA5C0039F503 /* PhotographTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = A8TEST0A2FBACA5D0039F503 /* Build configuration list for PBXNativeTarget "PhotographTests" */;
-			buildPhases = (
-				A8TEST062FBACA5C0039F503 /* Sources */,
-				A8TEST042FBACA5C0039F503 /* Frameworks */,
-				A8TEST072FBACA5C0039F503 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				A8TEST082FBACA5C0039F503 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				A8TEST022FBACA5C0039F503 /* PhotographTests */,
-			);
-			name = PhotographTests;
-			packageProductDependencies = (
-			);
-			productName = PhotographTests;
-			productReference = A8TEST012FBACA5C0039F503 /* PhotographTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -148,20 +112,12 @@
 			projectRoot = "";
 			targets = (
 				A8B2C4CA2FBACA5C0039F503 /* Photograph */,
-				A8TEST052FBACA5C0039F503 /* PhotographTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A8B2C4C92FBACA5C0039F503 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A8TEST072FBACA5C0039F503 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -178,22 +134,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A8TEST062FBACA5C0039F503 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		A8TEST082FBACA5C0039F503 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A8B2C4CA2FBACA5C0039F503 /* Photograph */;
-			targetProxy = A8TEST032FBACA5C0039F503 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A8B2C4D62FBACA5D0039F503 /* Debug */ = {
@@ -442,15 +383,6 @@
 			buildConfigurations = (
 				A8B2C4D92FBACA5D0039F503 /* Debug */,
 				A8B2C4DA2FBACA5D0039F503 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		A8TEST0A2FBACA5D0039F503 /* Build configuration list for PBXNativeTarget "PhotographTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A8TEST092FBACA5D0039F503 /* Debug */,
-				A8TEST0B2FBACA5D0039F503 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

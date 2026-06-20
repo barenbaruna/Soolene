@@ -1,6 +1,6 @@
 //
 //  CameraControlSnapshot.swift
-//  Photograph
+//  Soolene
 //
 //  Camera control state synchronized across AR guidance and AV capture handoff.
 //

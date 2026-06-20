@@ -1,6 +1,6 @@
 //
 //  CompositionType.swift
-//  Photograph
+//  Soolene
 //
 //  The 5 supported composition types used throughout the app:
 //  camera overlay, ML classification, gallery categorisation.

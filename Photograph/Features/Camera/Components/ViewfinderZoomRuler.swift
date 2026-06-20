@@ -1,6 +1,6 @@
 //
 //  ViewfinderZoomRuler.swift
-//  Photograph
+//  Soolene
 //
 //  Continuous zoom ruler — floats above gallery / shutter / flip bar.
 //

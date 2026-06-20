@@ -1,6 +1,6 @@
 //
 //  CameraManager+Capture.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
@@ -13,7 +13,7 @@ import UIKit
 
 extension CameraManager {
 
-    private static let captureLog = Logger(subsystem: "com.barenbaruna.Photograph", category: "AVCapture")
+    private static let captureLog = Logger(subsystem: "com.barenbaruna.Soolene", category: "AVCapture")
 
     /// Configures fusion-capable photo output — call after `photoOutput` is attached to the session.
     func configurePhotoOutput(for device: AVCaptureDevice) {

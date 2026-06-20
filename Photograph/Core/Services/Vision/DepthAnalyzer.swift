@@ -1,6 +1,6 @@
 //
 //  DepthAnalyzer.swift
-//  Photograph
+//  Soolene
 //
 //  Utility for extracting distance in meters from an AVDepthData object.
 //  Handles coordinate mapping from normalized UI space to Depth Map pixel space.

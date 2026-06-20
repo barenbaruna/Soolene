@@ -1,6 +1,6 @@
 //
 //  SpatialVisionPipeline.swift
-//  Photograph
+//  Soolene
 //
 
 import CoreGraphics

@@ -1,6 +1,6 @@
 //
 //  PrivacyPermissionService.swift
-//  Visula
+//  Soolene
 //
 //  Camera and Photo Library permission status, requests, and Settings deep link.
 //

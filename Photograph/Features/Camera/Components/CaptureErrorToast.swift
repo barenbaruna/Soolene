@@ -1,6 +1,6 @@
 //
 //  CaptureErrorToast.swift
-//  Visula
+//  Soolene
 //
 //  Inline capture / save feedback above the shutter band.
 //

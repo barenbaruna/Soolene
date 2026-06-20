@@ -1,6 +1,6 @@
 //
 //  SpatialCameraView.swift
-//  Photograph
+//  Soolene
 //
 //  SwiftUI wrapper for ARKit camera preview with tap / long-press / pinch gestures.
 //  AR guidance uses visual preview zoom — ARKit wide-primary hi-res feeds ignore

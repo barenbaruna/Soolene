@@ -1,6 +1,6 @@
 //
 //  CaptureTelemetry.swift
-//  Photograph
+//  Soolene
 //
 //  OSLog metrics for Option F capture architecture (§15 spec).
 //
@@ -9,7 +9,7 @@ import Foundation
 import OSLog
 import ARKit
 
-/// Structured capture metrics — filter Console with subsystem `com.barenbaruna.Photograph` category `CaptureTelemetry`.
+/// Structured capture metrics — filter Console with subsystem `com.barenbaruna.Soolene` category `CaptureTelemetry`.
 enum CaptureTelemetry {
 
     enum CaptureMode: String, Sendable {
@@ -25,7 +25,7 @@ enum CaptureTelemetry {
     }
 
     private static let log = Logger(
-        subsystem: "com.barenbaruna.Photograph",
+        subsystem: "com.barenbaruna.Soolene",
         category: "CaptureTelemetry"
     )
 

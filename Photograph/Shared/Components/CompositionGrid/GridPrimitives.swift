@@ -1,6 +1,6 @@
 //
 //  GridPrimitives.swift
-//  Photograph
+//  Soolene
 //
 //  Reusable drawing primitives for composition overlay grids.
 //  Grouped here because they are small, tightly coupled, and always

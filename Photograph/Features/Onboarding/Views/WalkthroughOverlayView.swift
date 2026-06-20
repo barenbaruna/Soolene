@@ -1,6 +1,6 @@
 //
 //  WalkthroughOverlayView.swift
-//  Photograph
+//  Soolene
 //
 //  Renders walkthrough tooltips precisely on the camera & detail views.
 //

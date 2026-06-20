@@ -1,6 +1,6 @@
 //
 //  CameraViewModel+Permissions.swift
-//  Photograph
+//  Soolene
 //
 
 import Foundation

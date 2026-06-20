@@ -1,6 +1,6 @@
 //
 //  CameraSessionCoordinator.swift
-//  Photograph
+//  Soolene
 //
 //  Serializes rear/front camera handoff and session lifecycle.
 //
@@ -12,7 +12,7 @@ import OSLog
 final class CameraSessionCoordinator {
 
     private static let handoffLog = Logger(
-        subsystem: "com.barenbaruna.Photograph",
+        subsystem: "com.barenbaruna.Soolene",
         category: "CaptureHandoff"
     )
 

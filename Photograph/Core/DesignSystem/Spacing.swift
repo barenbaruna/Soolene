@@ -1,6 +1,6 @@
 //
 //  Spacing.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 03/06/26.
 //

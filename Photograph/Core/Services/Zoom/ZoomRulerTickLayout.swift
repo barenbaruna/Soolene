@@ -1,6 +1,6 @@
 //
 //  ZoomRulerTickLayout.swift
-//  Photograph
+//  Soolene
 //
 //  Device-aware tick density for the zoom ruler — scales with supported max zoom.
 //

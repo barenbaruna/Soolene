@@ -1,6 +1,6 @@
 //
 //  ShutterReadiness.swift
-//  Photograph
+//  Soolene
 //
 //  Unified shutter visual state — composition alignment vs capture readiness.
 //

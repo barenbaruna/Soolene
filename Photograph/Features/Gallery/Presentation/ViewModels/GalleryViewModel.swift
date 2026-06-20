@@ -1,6 +1,6 @@
 //
 //  GalleryViewModel.swift
-//  Photograph
+//  Soolene
 //
 
 import Photos

@@ -1,6 +1,6 @@
 //
 //  CameraPermissionGateView.swift
-//  Visula
+//  Soolene
 //
 //  Shown before the camera starts when required permissions are missing.
 //

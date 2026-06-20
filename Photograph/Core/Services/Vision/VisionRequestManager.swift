@@ -1,6 +1,6 @@
 //
 //  VisionRequestManager.swift
-//  Photograph
+//  Soolene
 //
 //  Handles the setup and execution of VNImageRequestHandlers for different tiers.
 //

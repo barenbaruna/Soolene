@@ -1,6 +1,6 @@
 //
 //  GalleryView.swift
-//  Photograph
+//  Soolene
 //
 
 import Photos
@@ -341,11 +341,11 @@ struct GalleryView: View {
     }
 
     private func compositionListRoute(for composition: CompositionType) -> String {
-        "photograph-composition-list://\(composition.rawValue)"
+        "soolene-composition-list://\(composition.rawValue)"
     }
 
     private func compositionListType(from route: String) -> CompositionType? {
-        let prefix = "photograph-composition-list://"
+        let prefix = "soolene-composition-list://"
         guard route.hasPrefix(prefix) else { return nil }
         let rawValue = String(route.dropFirst(prefix.count))
         return CompositionType(rawValue: rawValue)

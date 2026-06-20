@@ -1,6 +1,6 @@
 //
 //  GuidanceTipView.swift
-//  Photograph
+//  Soolene
 //
 //  Centered guidance label — driven by `tip` and unified `captureReadiness`.
 //

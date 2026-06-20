@@ -1,6 +1,6 @@
 //
 //  HorizontalGrid.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI

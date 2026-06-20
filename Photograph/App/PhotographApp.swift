@@ -1,6 +1,6 @@
 //
-//  PhotographApp.swift
-//  Photograph
+//  SooleneApp.swift
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 18/05/26.
 //
@@ -10,7 +10,7 @@ import TipKit
 import UIKit
 
 @main
-struct PhotographApp: App {
+struct SooleneApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {

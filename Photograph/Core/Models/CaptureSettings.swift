@@ -1,6 +1,6 @@
 //
 //  CaptureSettings.swift
-//  Photograph
+//  Soolene
 //
 //  User preferences for capture modes.
 //

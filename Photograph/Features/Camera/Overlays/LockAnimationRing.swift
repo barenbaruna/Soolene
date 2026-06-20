@@ -1,6 +1,6 @@
 //
 //  LockAnimationRing.swift
-//  Photograph
+//  Soolene
 //
 //  Animated ring burst shown at the subject pin point when the user
 //  long-presses to lock a subject. Creates a premium "lock-in" feel.

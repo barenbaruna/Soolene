@@ -1,6 +1,6 @@
 //
 //  CaptureArchitectureFlags.swift
-//  Photograph
+//  Soolene
 //
 
 import Foundation

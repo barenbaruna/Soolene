@@ -1,6 +1,6 @@
 //
 //  CameraView.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI

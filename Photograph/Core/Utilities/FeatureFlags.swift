@@ -1,6 +1,6 @@
 //
 //  FeatureFlags.swift
-//  Photograph
+//  Soolene
 //
 //  App-wide engineering flags. Capture architecture flags: `CaptureArchitectureFlags`.
 //

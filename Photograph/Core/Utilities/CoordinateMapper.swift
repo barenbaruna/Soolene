@@ -1,6 +1,6 @@
 //
 //  CoordinateMapper.swift
-//  Photograph
+//  Soolene
 //
 //  Single source of truth for screen ↔ normalized UIKit coordinate conversion.
 //

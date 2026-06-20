@@ -1,6 +1,6 @@
 //
 //  ViewfinderZoomShortcuts.swift
-//  Photograph
+//  Soolene
 //
 //  Zoom shortcut buttons (0.5x, 1x, 2x, etc.).
 //

@@ -1,6 +1,6 @@
 //
 //  SceneGeometry.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 25/05/26.
 //

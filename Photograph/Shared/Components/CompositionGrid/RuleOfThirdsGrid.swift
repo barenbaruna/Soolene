@@ -1,6 +1,6 @@
 //
 //  RuleOfThirdsGrid.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //

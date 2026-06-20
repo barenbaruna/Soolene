@@ -1,6 +1,6 @@
 //
 //  GuidancePhase.swift
-//  Photograph
+//  Soolene
 //
 //  Explicit state machine for the camera guidance flow.
 //  Replaces the implicit ML-driven composition switching with user-driven intent.

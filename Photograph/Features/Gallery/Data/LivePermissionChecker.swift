@@ -1,6 +1,6 @@
 //
 //  LivePermissionChecker.swift
-//  Photograph
+//  Soolene
 //
 
 import Foundation

@@ -1,6 +1,6 @@
 //
 //  RulerHapticEngine.swift
-//  Photograph
+//  Soolene
 //
 //  Reusable tiered haptics for continuous ruler controls (zoom + exposure).
 //
