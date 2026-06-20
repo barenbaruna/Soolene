@@ -1,6 +1,6 @@
 //
 //  TooltipView.swift
-//  Photograph
+//  Soolene
 //
 //  Reusable walkthrough tooltip using native `.ultraThinMaterial`.
 //  Matches Hi-Fi: dark glass card with title, description, and optional action.

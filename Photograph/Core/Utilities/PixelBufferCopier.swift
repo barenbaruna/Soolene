@@ -1,6 +1,6 @@
 //
 //  PixelBufferCopier.swift
-//  Photograph
+//  Soolene
 //
 //  Creates an independent copy of a CVPixelBuffer for safe async Vision processing.
 //

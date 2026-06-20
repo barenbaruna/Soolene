@@ -1,6 +1,6 @@
 //
 //  PhotoLibraryPermissionView.swift
-//  Visula
+//  Soolene
 //
 //  Library gate for denied, restricted, limited, or not-determined photo access.
 //

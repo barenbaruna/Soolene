@@ -1,6 +1,6 @@
 //
 //  ZoomMappingEngine.swift
-//  Photograph
+//  Soolene
 //
 //  Maps user-facing display multiplier ↔ device videoZoomFactor per capture path.
 //

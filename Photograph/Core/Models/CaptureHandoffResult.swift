@@ -1,6 +1,6 @@
 //
 //  CaptureHandoffResult.swift
-//  Photograph
+//  Soolene
 //
 
 import Foundation

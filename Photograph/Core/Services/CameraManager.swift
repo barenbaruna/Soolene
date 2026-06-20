@@ -1,6 +1,6 @@
 //
 //  CameraManager.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 18/05/26.
 //
@@ -39,8 +39,8 @@ final class CameraManager: NSObject, @unchecked Sendable {
     // MARK: - Session
 
     let session = AVCaptureSession()
-    let sessionQueue = DispatchQueue(label: "com.photograph.sessionQueue", qos: .userInitiated)
-    let processingQueue = DispatchQueue(label: "com.photograph.processingQueue", qos: .userInitiated)
+    let sessionQueue = DispatchQueue(label: "com.soolene.sessionQueue", qos: .userInitiated)
+    let processingQueue = DispatchQueue(label: "com.soolene.processingQueue", qos: .userInitiated)
 
     // MARK: - Outputs
 
@@ -194,12 +194,12 @@ final class CameraManager: NSObject, @unchecked Sendable {
             outputSynchronizer = AVCaptureDataOutputSynchronizer(dataOutputs: [videoDataOutput, depthDataOutput])
             outputSynchronizer?.setDelegate(
                 self,
-                queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
+                queue: DispatchQueue(label: "com.soolene.videoQueue", qos: .userInitiated)
             )
         } else {
             videoDataOutput.setSampleBufferDelegate(
                 self,
-                queue: DispatchQueue(label: "com.photograph.videoQueue", qos: .userInitiated)
+                queue: DispatchQueue(label: "com.soolene.videoQueue", qos: .userInitiated)
             )
         }
 

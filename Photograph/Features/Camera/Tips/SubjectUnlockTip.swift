@@ -1,6 +1,6 @@
 //
 //  SubjectUnlockTip.swift
-//  Photograph
+//  Soolene
 //
 //  One-time TipKit tip after the user's first subject lock.
 //

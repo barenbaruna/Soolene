@@ -1,6 +1,6 @@
 //
 //  CameraTopToolbar.swift
-//  Photograph
+//  Soolene
 //
 //  Native-style top control row: Flash, Exposure, Timer, Aspect Ratio.
 //  Active controls tint gold (#B6A71A) per design references.

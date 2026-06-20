@@ -1,6 +1,6 @@
 //
 //  CaptureCoordinator.swift
-//  Photograph
+//  Soolene
 //
 
 import ARKit

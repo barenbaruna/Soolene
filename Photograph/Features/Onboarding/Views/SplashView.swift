@@ -1,11 +1,11 @@
 //
 //  SplashView.swift
-//  Photograph
+//  Soolene
 //
 //  Splash / intro screen matching Hi-Fi:
 //  - Dark background (AppColors.screen)
 //  - App icon from Assets
-//  - "Visula" title + italic tagline
+//  - "Soolene" title + italic tagline
 //  - Auto-transitions after 2.5 seconds
 //
 //  Uses Design System tokens: AppColors, Typography, Spacing.

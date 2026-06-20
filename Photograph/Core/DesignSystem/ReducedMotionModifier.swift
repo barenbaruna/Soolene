@@ -1,6 +1,6 @@
 //
 //  ReducedMotionModifier.swift
-//  Photograph
+//  Soolene
 //
 //  Provides a conditional animation modifier that respects the user's
 //  Accessibility → Reduce Motion setting.

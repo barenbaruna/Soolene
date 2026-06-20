@@ -1,6 +1,6 @@
 //
 //  PreTutorialOnboardingView.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI

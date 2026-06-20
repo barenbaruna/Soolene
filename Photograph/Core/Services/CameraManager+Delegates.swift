@@ -1,6 +1,6 @@
 //
 //  CameraManager+Delegates.swift
-//  Photograph
+//  Soolene
 //
 //  Created by Baren Baruna Harahap on 05/06/26.
 //
@@ -47,7 +47,7 @@ extension CameraManager: AVCaptureDataOutputSynchronizerDelegate {
 
 extension CameraManager: AVCapturePhotoCaptureDelegate {
 
-    private static let photoDelegateLog = Logger(subsystem: "com.barenbaruna.Photograph", category: "AVCapture")
+    private static let photoDelegateLog = Logger(subsystem: "com.barenbaruna.Soolene", category: "AVCapture")
 
     nonisolated func photoOutput(
         _ output: AVCapturePhotoOutput,

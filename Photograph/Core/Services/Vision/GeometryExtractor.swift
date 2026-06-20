@@ -1,6 +1,6 @@
 //
 //  GeometryExtractor.swift
-//  Photograph
+//  Soolene
 //
 //  Converts raw Vision observations into our SceneGeometry domain model.
 //  Handles coordinate system differences between Vision (bottom-left origin)

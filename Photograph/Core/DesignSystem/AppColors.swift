@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Brand and semantic colors from the C3Photograph design system.
+/// Brand and semantic colors from the C3Soolene design system.
 ///
 /// Organized to match the Design System spec:
 ///   Color/Brand/Primary, Color/Brand/Secondary,

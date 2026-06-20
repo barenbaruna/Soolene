@@ -1,6 +1,6 @@
 //
 //  TrackingStabilityMeter.swift
-//  Visula
+//  Soolene
 //
 //  Gold tick meter shown while AR tracking stabilizes for capture.
 //

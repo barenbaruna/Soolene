@@ -1,6 +1,6 @@
 //
 //  AppDependencies.swift
-//  Photograph
+//  Soolene
 //
 //  Composition root for feature ViewModels. Existing code may still construct
 //  services directly until migration completes.

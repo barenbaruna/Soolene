@@ -1,6 +1,6 @@
 //
 //  ZoomDeviceCapabilities.swift
-//  Photograph
+//  Soolene
 //
 //  Runtime discovery of rear zoom range, switch factors, and tick boundaries.
 //
@@ -39,7 +39,7 @@ struct ZoomDeviceCapabilities: Equatable, Sendable {
     // MARK: - Discovery
 
     private static let log = Logger(
-        subsystem: "com.barenbaruna.Photograph",
+        subsystem: "com.barenbaruna.Soolene",
         category: "ZoomDiscovery"
     )
 

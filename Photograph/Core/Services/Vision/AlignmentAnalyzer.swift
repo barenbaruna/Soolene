@@ -1,6 +1,6 @@
 //
 //  AlignmentAnalyzer.swift
-//  Photograph
+//  Soolene
 //
 //  Computes subject offset and scene alignment score from SceneGeometry data.
 //

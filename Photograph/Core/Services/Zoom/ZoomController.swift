@@ -1,6 +1,6 @@
 //
 //  ZoomController.swift
-//  Photograph
+//  Soolene
 //
 //  Single source of truth for display-space zoom multiplier and boundary haptics.
 //

@@ -1,6 +1,6 @@
 //
 //  SpatialCameraEngine.swift
-//  Photograph
+//  Soolene
 //
 //  Unified Spatial-Photo Engine: ARSession for world-locked tracking and
 //  out-of-band high-resolution capture via captureHighResolutionFrame(using:).
@@ -64,7 +64,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
 
     // MARK: - Private
 
-    private let sessionQueue = DispatchQueue(label: "com.photograph.arSession", qos: .userInitiated)
+    private let sessionQueue = DispatchQueue(label: "com.soolene.arSession", qos: .userInitiated)
     private let arStateLock = NSLock()
     private var worldConfiguration: ARWorldTrackingConfiguration? {
         sessionController.worldConfiguration
@@ -88,7 +88,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
     private var pendingDeviceVideoZoom: CGFloat = 1.0
 
     private static let captureCIContext = CIContext(options: nil)
-    private static let zoomLog = Logger(subsystem: "com.barenbaruna.Photograph", category: "ZoomDiscovery")
+    private static let zoomLog = Logger(subsystem: "com.barenbaruna.Soolene", category: "ZoomDiscovery")
     private static let requiredNormalFramesForCapture = 3
     private static let visionProcessEveryNthFrame = 2
 
@@ -99,7 +99,7 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
         default: return visionProcessEveryNthFrame
         }
     }
-    private static let captureLog = Logger(subsystem: "com.barenbaruna.Photograph", category: "SpatialCapture")
+    private static let captureLog = Logger(subsystem: "com.barenbaruna.Soolene", category: "SpatialCapture")
 
     // MARK: - Lifecycle
 

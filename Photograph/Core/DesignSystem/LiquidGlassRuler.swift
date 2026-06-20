@@ -1,6 +1,6 @@
 //
 //  LiquidGlassRuler.swift
-//  Photograph
+//  Soolene
 //
 //  Shared horizontal ruler components for exposure (knob) and zoom (center-pinned).
 //

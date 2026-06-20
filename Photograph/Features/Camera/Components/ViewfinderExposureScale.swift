@@ -1,6 +1,6 @@
 //
 //  ViewfinderExposureScale.swift
-//  Photograph
+//  Soolene
 //
 //  Continuous EV ruler — tap outside to dismiss (no Done button).
 //

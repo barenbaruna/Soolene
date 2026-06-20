@@ -1,6 +1,6 @@
 //
 //  DiagonalGrid.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI

@@ -1,6 +1,6 @@
 //
 //  OnboardingStore.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI
@@ -21,9 +21,9 @@ enum WalkthroughStep: Int, CaseIterable {
 @Observable
 final class OnboardingStore {
     private enum StorageKey {
-        static let completedSplash = "visula_hasCompletedSplash"
-        static let completedPreTutorialOnboarding = "visula_hasCompletedPreTutorialOnboarding"
-        static let completedWalkthrough = "visula_hasCompletedWalkthrough"
+        static let completedSplash = "soolene_hasCompletedSplash"
+        static let completedPreTutorialOnboarding = "soolene_hasCompletedPreTutorialOnboarding"
+        static let completedWalkthrough = "soolene_hasCompletedWalkthrough"
         static let scanCoachSessions = "coach.scanSessionsShown"
         static let hasLockedSubjectOnce = "coach.hasLockedSubjectOnce"
     }

@@ -1,6 +1,6 @@
 //
 //  ClassicVisionPipeline.swift
-//  Photograph
+//  Soolene
 //
 
 import AVFoundation

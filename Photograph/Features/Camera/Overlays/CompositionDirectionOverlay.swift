@@ -1,6 +1,6 @@
 //
 //  CompositionDirectionOverlay.swift
-//  Photograph
+//  Soolene
 //
 //  Dual-Anchor guidance overlay rendered on top of the camera preview.
 //

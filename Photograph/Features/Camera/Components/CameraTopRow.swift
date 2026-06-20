@@ -1,6 +1,6 @@
 //
 //  CameraTopRow.swift
-//  Photograph
+//  Soolene
 //
 //  Centered phase guidance label below the top toolbar.
 //

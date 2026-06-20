@@ -1,6 +1,6 @@
 //
 //  CameraControlsView.swift
-//  Photograph
+//  Soolene
 //
 //  Camera HUD: top toolbar, guidance, exposure overlay, bottom controls.
 //

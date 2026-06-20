@@ -1,6 +1,6 @@
 //
 //  CompositionCoordinator.swift
-//  Photograph
+//  Soolene
 //
 
 import CoreGraphics

@@ -1,6 +1,6 @@
 //
 //  CongratulationView.swift
-//  Photograph
+//  Soolene
 //
 //  The final onboarding screen — a centered glass card
 //  thanking the user with a yellow "Start" CTA button.

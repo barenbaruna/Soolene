@@ -1,6 +1,6 @@
 //
 //  ExposureRulerLayout.swift
-//  Photograph
+//  Soolene
 //
 //  Tick boundaries and step size for the EV ruler.
 //

@@ -1,6 +1,6 @@
 //
 //  CaptureHandoffSnapshot.swift
-//  Photograph
+//  Soolene
 //
 //  AR state bundle captured before pausing ARKit for AVFoundation photo capture.
 //

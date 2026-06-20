@@ -1,6 +1,6 @@
 //
 //  CompositionOverlayView.swift
-//  Photograph
+//  Soolene
 //
 
 import SwiftUI

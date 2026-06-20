@@ -1,6 +1,6 @@
 //
 //  ClassicCameraProviding.swift
-//  Photograph
+//  Soolene
 //
 
 import AVFoundation

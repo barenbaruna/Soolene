@@ -1,6 +1,6 @@
 //
 //  CameraBottomControlsStack.swift
-//  Photograph
+//  Soolene
 //
 //  Zoom ruler (viewfinder), composition picker, and shutter band.
 //

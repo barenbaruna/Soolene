@@ -1,6 +1,6 @@
 //
 //  CameraViewModel+Capture.swift
-//  Photograph
+//  Soolene
 //
 
 import Photos

@@ -1,6 +1,6 @@
 //
 //  AppIdentity.swift
-//  Visula
+//  Soolene
 //
 //  Display name, album name, and privacy purpose copy shown in Info.plist.
 //

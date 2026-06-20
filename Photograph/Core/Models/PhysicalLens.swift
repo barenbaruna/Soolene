@@ -1,6 +1,6 @@
 //
 //  PhysicalLens.swift
-//  Photograph
+//  Soolene
 //
 //  Optical lens constituents — telemetry and mapping only (not UI).
 //

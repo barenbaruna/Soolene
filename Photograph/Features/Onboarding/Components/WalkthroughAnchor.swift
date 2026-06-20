@@ -1,6 +1,6 @@
 //
 //  WalkthroughAnchor.swift
-//  Photograph
+//  Soolene
 //
 //  Reports UI element frames for walkthrough tooltip placement.
 //

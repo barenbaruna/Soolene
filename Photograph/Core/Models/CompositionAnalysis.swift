@@ -1,6 +1,6 @@
 //
 //  CompositionAnalysis.swift
-//  Photograph
+//  Soolene
 //
 //  Assembled result from the Vision analysis pipeline.
 //  Built on the Vision queue, delivered to ViewModel on the main queue.

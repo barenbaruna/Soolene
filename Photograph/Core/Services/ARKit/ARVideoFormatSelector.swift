@@ -1,6 +1,6 @@
 //
 //  ARVideoFormatSelector.swift
-//  Photograph
+//  Soolene
 //
 //  Option B: prefer main/wide camera as AR primary at session start.
 //

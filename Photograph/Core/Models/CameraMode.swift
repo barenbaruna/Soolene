@@ -1,6 +1,6 @@
 //
 //  CameraMode.swift
-//  Photograph
+//  Soolene
 //
 //  Rear spatial mode uses ARKit world-lock; front classic uses AVFoundation + 2D Vision tracking.
 //

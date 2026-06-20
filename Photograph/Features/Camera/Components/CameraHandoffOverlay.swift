@@ -1,6 +1,6 @@
 //
 //  CameraHandoffOverlay.swift
-//  Photograph
+//  Soolene
 //
 //  Frozen preview + status during AR ↔ AV session handoff.
 //

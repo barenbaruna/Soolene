@@ -1,6 +1,6 @@
 //
 //  MotionService.swift
-//  Photograph
+//  Soolene
 //
 //  Provides real-time device attitude data using sensor fusion (accelerometer + gyroscope).
 //  Used to give accurate horizontal/vertical level guidance independent of Vision.
