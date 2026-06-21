@@ -23,7 +23,7 @@ struct SplashView: View {
         ZStack {
             Color.white.ignoresSafeArea()
 
-            VStack(spacing: 40) {
+            VStack(spacing: 20) {
                 Spacer()
 
                 // App Icon — loads from the asset catalog
@@ -65,28 +65,19 @@ struct SplashView: View {
     /// Attempts to load the app icon from the bundle; falls back to a styled "V".
     @ViewBuilder
     private var appIcon: some View {
-        if let icon = loadAppIcon() {
-            Image(uiImage: icon)
+        if let image = UIImage(named: "SplashView") {
+            Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 140, height: 140)
                 .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
         } else {
-            Text("V")
+            Text("S")
                 .font(.system(size: 120, weight: .bold, design: .serif))
                 .italic()
                 .foregroundStyle(AppColors.primary)
         }
-    }
-
-    private func loadAppIcon() -> UIImage? {
-        guard let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
-              let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
-              let files = primary["CFBundleIconFiles"] as? [String],
-              let lastFile = files.last
-        else { return nil }
-        return UIImage(named: lastFile)
     }
 }
 
