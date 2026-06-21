@@ -23,6 +23,10 @@ struct CameraControlsView: View {
             }
 
             mainControls
+
+            if viewModel.isCountingDown {
+                CameraCountdownOverlay(value: viewModel.countdownValue)
+            }
         }
         .onAppear {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
@@ -49,10 +53,6 @@ struct CameraControlsView: View {
         VStack(spacing: 0) {
             topSection
             Spacer()
-
-            if viewModel.isCountingDown {
-                CameraCountdownOverlay(value: viewModel.countdownValue)
-            }
 
             CameraBottomControlsStack(
                 viewModel: viewModel,

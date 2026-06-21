@@ -57,36 +57,51 @@ struct CameraGuidanceOverlayStack: View {
             }
 
             if case .scanning = viewModel.guidancePhase {
-                ScanningCoachOverlay(
-                    saliencyCentroid: viewModel.analysis.sceneGeometry.saliencyCentroid,
-                    faceDetected: !viewModel.analysis.sceneGeometry.faceRects.isEmpty,
-                    showsViewfinderHint: onboarding.showsScanningViewfinderHint
-                )
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.4), value: viewModel.guidancePhase)
-                .onAppear {
-                    guard !recordedScanCoachSession else { return }
-                    recordedScanCoachSession = true
-                    onboarding.recordScanningCoachSession()
+                GeometryReader { proxy in
+                    let fullRect = proxy.frame(in: .local)
+                    let drawRect = aspectMaskedRect(in: fullRect, aspectRatio: viewModel.selectedAspectRatio)
+
+                    ScanningCoachOverlay(
+                        saliencyCentroid: viewModel.analysis.sceneGeometry.saliencyCentroid,
+                        faceDetected: !viewModel.analysis.sceneGeometry.faceRects.isEmpty,
+                        showsViewfinderHint: onboarding.showsScanningViewfinderHint
+                    )
+                    .frame(width: drawRect.width, height: drawRect.height)
+                    .position(x: drawRect.midX, y: drawRect.midY)
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.4), value: viewModel.guidancePhase)
+                    .onAppear {
+                        guard !recordedScanCoachSession else { return }
+                        recordedScanCoachSession = true
+                        onboarding.recordScanningCoachSession()
+                    }
                 }
+                .ignoresSafeArea()
             }
 
             if viewModel.showsDualAnchorGuidance,
                let composition = viewModel.guidancePhase.composition {
-                CompositionDirectionOverlay(
-                    composition: composition,
-                    subjectPoint: viewModel.analysis.bestSubjectPoint,
-                    targetPoint: viewModel.analysis.sceneGeometry.lockedTargetPoint,
-                    isPerfect: viewModel.analysis.isCompositionPerfect,
-                    showsGreenCelebration: viewModel.captureReadiness.showsGreenCelebration,
-                    hasSceneData: viewModel.analysis.hasSceneData,
-                    hasMLData: viewModel.analysis.hasMLData,
-                    alignmentScore: viewModel.analysis.sceneAlignmentScore,
-                    guidanceDistance: viewModel.analysis.guidanceDistance
-                )
+                GeometryReader { proxy in
+                    let fullRect = proxy.frame(in: .local)
+                    let drawRect = aspectMaskedRect(in: fullRect, aspectRatio: viewModel.selectedAspectRatio)
+
+                    CompositionDirectionOverlay(
+                        composition: composition,
+                        subjectPoint: viewModel.analysis.bestSubjectPoint,
+                        targetPoint: viewModel.analysis.sceneGeometry.lockedTargetPoint,
+                        isPerfect: viewModel.analysis.isCompositionPerfect,
+                        showsGreenCelebration: viewModel.captureReadiness.showsGreenCelebration,
+                        hasSceneData: viewModel.analysis.hasSceneData,
+                        hasMLData: viewModel.analysis.hasMLData,
+                        alignmentScore: viewModel.analysis.sceneAlignmentScore,
+                        guidanceDistance: viewModel.analysis.guidanceDistance
+                    )
+                    .frame(width: drawRect.width, height: drawRect.height)
+                    .position(x: drawRect.midX, y: drawRect.midY)
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.guidancePhase.isActive)
+                }
                 .ignoresSafeArea()
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.3), value: viewModel.guidancePhase.isActive)
             }
         }
         .onChange(of: viewModel.guidancePhase) { _, phase in

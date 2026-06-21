@@ -12,9 +12,9 @@ struct CameraCountdownOverlay: View {
 
     var body: some View {
         Text("\(value)")
-            .font(.system(size: 72, weight: .bold, design: .rounded))
+            .font(.system(size: 120, weight: .bold, design: .rounded))
             .monospacedDigit()
-            .foregroundStyle(AppColors.primary)
+            .foregroundStyle(Color.white)
             .shadow(color: .black.opacity(0.4), radius: 8)
             .transition(.scale.combined(with: .opacity))
             .accessibilityLabel("Timer")

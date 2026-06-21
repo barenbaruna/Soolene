@@ -58,9 +58,10 @@ struct RuleOfThirdsGrid: View {
     }
     
     private func localPoint(for normalized: CGPoint) -> CGPoint {
-        let screenX = fullRect.minX + normalized.x * fullRect.width
-        let screenY = fullRect.minY + normalized.y * fullRect.height
-        return CGPoint(x: screenX - aspectRect.minX, y: screenY - aspectRect.minY)
+        CGPoint(
+            x: normalized.x * aspectRect.width,
+            y: normalized.y * aspectRect.height
+        )
     }
     
     private var nearestIndex: Int? {

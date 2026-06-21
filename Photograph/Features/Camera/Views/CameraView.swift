@@ -20,6 +20,7 @@ struct CameraView: View {
     @State private var lockRingAnimating = false
     @State private var showLockIcon = false
     @State private var previewSize: CGSize = .zero
+    @State private var previewFrame: CGRect = .zero
     @State private var walkthroughAnchors: [WalkthroughAnchorID: CGRect] = [:]
     @State private var permissionAlert: PermissionAlertKind?
     @State private var hasLoadedInitialPermissions = false
@@ -92,8 +93,11 @@ struct CameraView: View {
             .background {
                 GeometryReader { geo in
                     Color.clear
-                        .onAppear { previewSize = geo.size }
-                        .onChange(of: geo.size) { _, size in previewSize = size }
+                        .onAppear { updatePreviewMetrics(for: geo.size) }
+                        .onChange(of: geo.size) { _, size in updatePreviewMetrics(for: size) }
+                        .onChange(of: viewModel.selectedAspectRatio) { _, _ in
+                            updatePreviewMetrics(for: geo.size)
+                        }
                 }
             }
 
@@ -188,7 +192,7 @@ struct CameraView: View {
             guard viewModel.isSubjectPinned, lockRingPoint != nil,
                   let point, previewSize.width > 0, previewSize.height > 0
             else { return }
-            lockRingPoint = CoordinateMapper.viewPoint(from: point, in: previewSize)
+            lockRingPoint = viewPointInPreview(from: point)
         }
         .alert("Could Not Save", isPresented: Binding(
             get: { viewModel.saveError != nil },
@@ -307,6 +311,20 @@ struct CameraView: View {
     private func advanceGuideWalkthroughIfReady() {
         guard viewModel.captureReadiness.showsGreenCelebration else { return }
         onboarding.advanceAfterGuideCompletion()
+    }
+
+    private func updatePreviewMetrics(for size: CGSize) {
+        let frame = viewModel.selectedAspectRatio.cropRect(in: size)
+        previewFrame = frame
+        previewSize = frame.size
+    }
+
+    private func viewPointInPreview(from normalized: CGPoint) -> CGPoint {
+        let localPoint = CoordinateMapper.viewPoint(from: normalized, in: previewSize)
+        return CGPoint(
+            x: previewFrame.minX + localPoint.x,
+            y: previewFrame.minY + localPoint.y
+        )
     }
 
     // MARK: - Gestures

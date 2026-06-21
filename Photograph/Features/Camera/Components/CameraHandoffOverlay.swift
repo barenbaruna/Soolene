@@ -70,6 +70,6 @@ struct CameraHandoffOverlay: View {
         var w = rect.width
         var h = w / ratio
         if h > rect.height { h = rect.height; w = h * ratio }
-        return CGRect(x: (rect.width - w) / 2, y: (rect.width - h) / 2, width: w, height: h)
+        return CGRect(x: (rect.width - w) / 2, y: (rect.height - h) / 2, width: w, height: h)
     }
 }

@@ -46,7 +46,6 @@ struct ScanningCoachOverlay: View {
             }
         }
         .allowsHitTesting(false)
-        .ignoresSafeArea()
         .onAppear {
             if showsViewfinderHint {
                 startBreathing()

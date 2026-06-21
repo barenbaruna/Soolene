@@ -152,7 +152,8 @@ struct PhotoDetailView: View {
                 PhotoPageView(
                     asset: asset,
                     composition: composition,
-                    isShowingOverlay: isShowingOverlay
+                    isShowingOverlay: isShowingOverlay,
+                    onDismiss: { dismiss() }
                 )
                 .tag(index)
             }
@@ -339,6 +340,7 @@ struct PhotoPageView: View {
     let asset: PHAsset
     let composition: CompositionType
     let isShowingOverlay: Bool
+    var onDismiss: (() -> Void)? = nil
 
     @State private var image: UIImage?
     
@@ -347,6 +349,9 @@ struct PhotoPageView: View {
     @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
+    
+    // Dismiss state
+    @State private var dismissOffset: CGSize = .zero
 
     var body: some View {
         GeometryReader { geo in
@@ -378,6 +383,10 @@ struct PhotoPageView: View {
             }
             .scaleEffect(scale)
             .offset(offset)
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .offset(y: dismissOffset.height)
+            .opacity(1.0 - Double(max(dismissOffset.height, 0)) / 400.0)
             .gesture(
                 MagnifyGesture()
                     .onChanged { value in
@@ -385,11 +394,10 @@ struct PhotoPageView: View {
                         lastScale = value.magnification
                         scale = max(1.0, min(scale * delta, 5.0))
                         
-                        let maxOffsetX = max(0, (scale - 1) * geo.size.width / 2)
-                        let maxOffsetY = max(0, (scale - 1) * geo.size.height / 2)
+                        let maxOff = maxOffset(for: scale, geoSize: geo.size, imageSize: image?.size ?? geo.size)
                         offset = CGSize(
-                            width: min(max(offset.width, -maxOffsetX), maxOffsetX),
-                            height: min(max(offset.height, -maxOffsetY), maxOffsetY)
+                            width: min(max(offset.width, -maxOff.width), maxOff.width),
+                            height: min(max(offset.height, -maxOff.height), maxOff.height)
                         )
                     }
                     .onEnded { _ in
@@ -401,7 +409,14 @@ struct PhotoPageView: View {
                                 lastOffset = .zero
                             }
                         } else {
-                            lastOffset = offset
+                            let maxOff = maxOffset(for: scale, geoSize: geo.size, imageSize: image?.size ?? geo.size)
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                offset = CGSize(
+                                    width: min(max(offset.width, -maxOff.width), maxOff.width),
+                                    height: min(max(offset.height, -maxOff.height), maxOff.height)
+                                )
+                                lastOffset = offset
+                            }
                         }
                     }
             )
@@ -414,12 +429,11 @@ struct PhotoPageView: View {
                                 height: lastOffset.height + value.translation.height
                             )
                             
-                            let maxOffsetX = max(0, (scale - 1) * geo.size.width / 2)
-                            let maxOffsetY = max(0, (scale - 1) * geo.size.height / 2)
+                            let maxOff = maxOffset(for: scale, geoSize: geo.size, imageSize: image?.size ?? geo.size)
                             
                             offset = CGSize(
-                                width: min(max(proposedOffset.width, -maxOffsetX), maxOffsetX),
-                                height: min(max(proposedOffset.height, -maxOffsetY), maxOffsetY)
+                                width: min(max(proposedOffset.width, -maxOff.width), maxOff.width),
+                                height: min(max(proposedOffset.height, -maxOff.height), maxOff.height)
                             )
                         }
                     }
@@ -429,7 +443,33 @@ struct PhotoPageView: View {
                         }
                     }
             )
-            .frame(width: geo.size.width, height: geo.size.height)
+            .gesture(
+                DragGesture(minimumDistance: 40)
+                    .onChanged { value in
+                        if scale == 1.0 {
+                            if dismissOffset != .zero || (value.translation.height > 0 && value.translation.height > abs(value.translation.width) * 1.5) {
+                                dismissOffset = CGSize(width: 0, height: max(value.translation.height, 0))
+                            }
+                        }
+                    }
+                    .onEnded { value in
+                        if scale == 1.0 {
+                            if dismissOffset.height > 120 {
+                                onDismiss?()
+                            } else {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    dismissOffset = .zero
+                                }
+                            }
+                        }
+                    }
+            )
+        }
+        .onChange(of: dismissOffset) { _, newValue in
+            if newValue == .zero && scale == 1.0 {
+                lastOffset = .zero
+                offset = .zero
+            }
         }
         .onChange(of: asset.localIdentifier) { _, _ in
             image = nil
@@ -437,10 +477,35 @@ struct PhotoPageView: View {
             lastScale = 1.0
             offset = .zero
             lastOffset = .zero
+            dismissOffset = .zero
         }
         .task(id: asset.localIdentifier) {
             await loadImage()
         }
+    }
+    
+    private func maxOffset(for scale: CGFloat, geoSize: CGSize, imageSize: CGSize) -> CGSize {
+        let imageAR = imageSize.width / imageSize.height
+        let geoAR = geoSize.width / geoSize.height
+        
+        let renderedWidth: CGFloat
+        let renderedHeight: CGFloat
+        
+        if imageAR > geoAR {
+            renderedWidth = geoSize.width
+            renderedHeight = geoSize.width / imageAR
+        } else {
+            renderedWidth = geoSize.height * imageAR
+            renderedHeight = geoSize.height
+        }
+        
+        let scaledWidth = renderedWidth * scale
+        let scaledHeight = renderedHeight * scale
+        
+        let maxOffsetX = max(0, (scaledWidth - geoSize.width) / 2)
+        let maxOffsetY = max(0, (scaledHeight - geoSize.height) / 2)
+        
+        return CGSize(width: maxOffsetX, height: maxOffsetY)
     }
 
     private func loadImage() async {
@@ -448,7 +513,7 @@ struct PhotoPageView: View {
         let opts = PHImageRequestOptions()
         opts.deliveryMode = .highQualityFormat
         opts.isNetworkAccessAllowed = true
-            PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: opts) { img, info in
+        PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: opts) { img, info in
             guard let img else { return }
             let degraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
             if !degraded { Task { @MainActor in self.image = img } }
@@ -456,3 +521,5 @@ struct PhotoPageView: View {
         }
     }
 }
+
+

@@ -68,7 +68,7 @@ struct CompositionGridView: View {
             .position(x: aspectRect.midX, y: aspectRect.midY)
 
             if showSubjectBox {
-                SubjectBox(faceRect: geometry.faceRects.first, frameRect: fullRect, color: color)
+                SubjectBox(faceRect: geometry.faceRects.first, frameRect: aspectRect, color: color)
             }
         }
         .frame(width: fullRect.width, height: fullRect.height)
