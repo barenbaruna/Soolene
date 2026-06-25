@@ -12,6 +12,7 @@ import SwiftUI
 /// Full-screen, hardware-composited — lowest possible latency.
 struct CameraPreviewView: UIViewRepresentable {
     let session: AVCaptureSession
+    var showsCamera = true
     var onTap: ((CGPoint, CGPoint) -> Void)?
     var onLongPress: ((CGPoint, CGPoint) -> Void)?
     var onDoubleTap: (() -> Void)?
@@ -25,6 +26,7 @@ struct CameraPreviewView: UIViewRepresentable {
         let view = PreviewUIView()
         view.previewLayer.session = session
         view.previewLayer.videoGravity = .resizeAspectFill
+        view.previewLayer.isHidden = !showsCamera
         context.coordinator.previewView = view
         context.coordinator.onTap = onTap
         context.coordinator.onLongPress = onLongPress
@@ -53,6 +55,7 @@ struct CameraPreviewView: UIViewRepresentable {
         context.coordinator.onLongPress = onLongPress
         context.coordinator.onDoubleTap = onDoubleTap
         context.coordinator.onPinch = onPinch
+        uiView.previewLayer.isHidden = !showsCamera
 
         // Handle camera switch (inputs changed)
         if let input = session.inputs.first as? AVCaptureDeviceInput, 

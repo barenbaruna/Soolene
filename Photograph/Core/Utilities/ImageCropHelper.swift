@@ -8,6 +8,7 @@
 import CoreGraphics
 import Foundation
 import ImageIO
+import UIKit
 import UniformTypeIdentifiers
 
 /// Utility to handle image cropping while preserving EXIF metadata.
@@ -15,8 +16,6 @@ enum ImageCropHelper {
     /// Crops the given JPEG data to the specified aspect ratio.
     /// Returns the cropped JPEG data with the original metadata intact.
     static func cropImageWithMetadata(imageData: Data, ratio: AspectRatioMode) -> Data? {
-        if ratio == .fourThree { return imageData }
-
         guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else { return nil }
         guard let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] else { return nil }
         guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
@@ -24,36 +23,18 @@ enum ImageCropHelper {
         let width = CGFloat(cgImage.width)
         let height = CGFloat(cgImage.height)
 
-        // Calculate crop rectangle
-        var cropRect = CGRect.zero
-        
         let isRotated = {
             if let orientation = metadata[kCGImagePropertyOrientation as String] as? UInt {
                 return orientation >= 5 && orientation <= 8
             }
             return false
         }()
-        
-        let effectiveRatio = ratio.pixelSpaceRatio(isRotated: isRotated)
-        
-        switch ratio {
-        case .oneOne:
-            let side = min(width, height)
-            cropRect = CGRect(x: (width - side) / 2, y: (height - side) / 2, width: side, height: side)
-        case .sixteenNine:
-            let targetRatio = effectiveRatio.w / effectiveRatio.h
-            let currentRatio = width / height
-            
-            if targetRatio < currentRatio {
-                let targetWidth = height * targetRatio
-                cropRect = CGRect(x: (width - targetWidth) / 2, y: 0, width: targetWidth, height: height)
-            } else {
-                let targetHeight = width / targetRatio
-                cropRect = CGRect(x: 0, y: (height - targetHeight) / 2, width: width, height: targetHeight)
-            }
-        case .fourThree:
-            return imageData
-        }
+
+        let cropRect = visiblePreviewCropRect(
+            pixelSize: CGSize(width: width, height: height),
+            aspectRatio: ratio,
+            isRotated: isRotated
+        )
 
         guard let croppedCGImage = cgImage.cropping(to: cropRect) else { return nil }
 
@@ -68,6 +49,54 @@ enum ImageCropHelper {
         }
 
         return nil
+    }
+
+    /// Center crop matching the active aspect-ratio frame shown over the full-screen aspect-fill preview.
+    static func visiblePreviewCropRect(
+        pixelSize: CGSize,
+        aspectRatio: AspectRatioMode,
+        isRotated: Bool,
+        screenSize: CGSize = UIScreen.main.bounds.size
+    ) -> CGRect {
+        guard pixelSize.width > 0, pixelSize.height > 0 else { return .zero }
+
+        let displaySize = isRotated
+            ? CGSize(width: pixelSize.height, height: pixelSize.width)
+            : pixelSize
+        let portraitScreen = CGSize(
+            width: min(screenSize.width, screenSize.height),
+            height: max(screenSize.width, screenSize.height)
+        )
+        let activeRect = aspectRatio.cropRect(in: portraitScreen)
+
+        let scale = max(
+            portraitScreen.width / displaySize.width,
+            portraitScreen.height / displaySize.height
+        )
+        let scaledSize = CGSize(
+            width: displaySize.width * scale,
+            height: displaySize.height * scale
+        )
+        let cropOffset = CGPoint(
+            x: max(0, (scaledSize.width - portraitScreen.width) / 2),
+            y: max(0, (scaledSize.height - portraitScreen.height) / 2)
+        )
+
+        let visibleDisplayRect = CGRect(
+            x: (activeRect.minX + cropOffset.x) / scale,
+            y: (activeRect.minY + cropOffset.y) / scale,
+            width: activeRect.width / scale,
+            height: activeRect.height / scale
+        )
+
+        let cropWidth = isRotated ? visibleDisplayRect.height : visibleDisplayRect.width
+        let cropHeight = isRotated ? visibleDisplayRect.width : visibleDisplayRect.height
+        return CGRect(
+            x: (pixelSize.width - cropWidth) / 2,
+            y: (pixelSize.height - cropHeight) / 2,
+            width: cropWidth,
+            height: cropHeight
+        ).integral.intersection(CGRect(origin: .zero, size: pixelSize))
     }
 
     /// Center-crops to the fraction of the image visible through a scaled preview (e.g. 0.5 = half width/height).

@@ -15,6 +15,8 @@ struct SpatialCameraView: UIViewRepresentable {
     let engine: SpatialCameraEngine
     /// Display-space multiplier — drives visual preview zoom (1× = identity).
     let previewZoom: CGFloat
+    var updatesViewport = true
+    var showsCamera = true
     var onTap: ((CGPoint, CGPoint) -> Void)?
     var onLongPress: ((CGPoint, CGPoint) -> Void)?
     var onDoubleTap: (() -> Void)?
@@ -33,6 +35,8 @@ struct SpatialCameraView: UIViewRepresentable {
             ? .multisampling4X
             : .none
         container.arView.contentMode = .scaleAspectFill
+        container.backgroundColor = showsCamera ? .black : .clear
+        container.arView.isHidden = !showsCamera
 
         context.coordinator.container = container
         context.coordinator.engine = engine
@@ -43,7 +47,9 @@ struct SpatialCameraView: UIViewRepresentable {
         context.coordinator.installGestures(on: container)
 
         container.setPreviewZoom(previewZoom)
-        updateViewportSize(for: container)
+        if updatesViewport {
+            updateViewportSize(for: container)
+        }
         return container
     }
 
@@ -54,8 +60,12 @@ struct SpatialCameraView: UIViewRepresentable {
         context.coordinator.onLongPress = onLongPress
         context.coordinator.onDoubleTap = onDoubleTap
         context.coordinator.onPinch = onPinch
+        uiView.backgroundColor = showsCamera ? .black : .clear
+        uiView.arView.isHidden = !showsCamera
         uiView.setPreviewZoom(previewZoom)
-        updateViewportSize(for: uiView)
+        if updatesViewport {
+            updateViewportSize(for: uiView)
+        }
     }
 
     private func updateViewportSize(for container: ARPreviewContainer) {

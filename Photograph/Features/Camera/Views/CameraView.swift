@@ -136,7 +136,7 @@ struct CameraView: View {
                     frozenPreview: viewModel.handoffFrozenPreviewImage,
                     message: handoffOverlayMessage,
                     aspectRatio: viewModel.selectedAspectRatio,
-                    displayMultiplier: viewModel.zoomController.displayMultiplier
+                    displayMultiplier: viewModel.rearSpatialPreviewVisualZoom
                 )
             }
 

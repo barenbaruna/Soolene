@@ -13,16 +13,36 @@ struct AspectMask: View {
     let contentRect: CGRect
 
     var body: some View {
+        outsidePath
+            .fill(Color.black.opacity(0.28))
+    }
+
+    private var outsidePath: Path {
         Path { path in
-            // Top
-            path.addRect(CGRect(x: fullRect.minX, y: fullRect.minY, width: fullRect.width, height: contentRect.minY - fullRect.minY))
-            // Bottom
-            path.addRect(CGRect(x: fullRect.minX, y: contentRect.maxY, width: fullRect.width, height: fullRect.maxY - contentRect.maxY))
-            // Left
-            path.addRect(CGRect(x: fullRect.minX, y: contentRect.minY, width: contentRect.minX - fullRect.minX, height: contentRect.height))
-            // Right
-            path.addRect(CGRect(x: contentRect.maxX, y: contentRect.minY, width: fullRect.maxX - contentRect.maxX, height: contentRect.height))
+            path.addRect(CGRect(
+                x: fullRect.minX,
+                y: fullRect.minY,
+                width: fullRect.width,
+                height: max(0, contentRect.minY - fullRect.minY)
+            ))
+            path.addRect(CGRect(
+                x: fullRect.minX,
+                y: contentRect.maxY,
+                width: fullRect.width,
+                height: max(0, fullRect.maxY - contentRect.maxY)
+            ))
+            path.addRect(CGRect(
+                x: fullRect.minX,
+                y: contentRect.minY,
+                width: max(0, contentRect.minX - fullRect.minX),
+                height: contentRect.height
+            ))
+            path.addRect(CGRect(
+                x: contentRect.maxX,
+                y: contentRect.minY,
+                width: max(0, fullRect.maxX - contentRect.maxX),
+                height: contentRect.height
+            ))
         }
-        .fill(Color.black.opacity(0.5))
     }
 }

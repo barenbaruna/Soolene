@@ -302,36 +302,11 @@ struct AlignmentAnalyzer {
 
     // MARK: - Geometry Helpers
     
-    private static func aspectMaskedNormalizedRect(aspectRatio: AspectRatioMode) -> CGRect {
-        // Physical ratio of the base normalized frame [0,1] is the screen size since UI uses scaleAspectFill.
-        // The UI is locked in portrait, so we always use the portrait bounds.
-        let screenSize = UIScreen.main.bounds.size
-        let physicalWidth = min(screenSize.width, screenSize.height)
-        let physicalHeight = max(screenSize.width, screenSize.height)
-        
-        let ratio: CGFloat
-        switch aspectRatio {
-        case .oneOne: ratio = 1.0
-        case .sixteenNine: ratio = 9.0 / 16.0
-        case .fourThree: ratio = 3.0 / 4.0
-        }
-        
-        var w = physicalWidth
-        var h = w / ratio
-        if h > physicalHeight { 
-            h = physicalHeight
-            w = h * ratio 
-        }
-        
-        let normW = w / physicalWidth
-        let normH = h / physicalHeight
-        
-        return CGRect(
-            x: 0.5 - normW / 2,
-            y: 0.5 - normH / 2,
-            width: normW,
-            height: normH
-        )
+    private static func aspectMaskedNormalizedRect(aspectRatio _: AspectRatioMode) -> CGRect {
+        // Camera preview coordinates are already scoped to the active viewfinder
+        // rectangle. Composition templates should therefore occupy the full
+        // normalized coordinate space for every selected export ratio.
+        CGRect(x: 0, y: 0, width: 1, height: 1)
     }
 
     private static func distanceSquared(_ a: CGPoint, _ b: CGPoint) -> CGFloat {

@@ -18,6 +18,15 @@ extension CameraManager {
     /// Configures fusion-capable photo output — call after `photoOutput` is attached to the session.
     func configurePhotoOutput(for device: AVCaptureDevice) {
         photoOutput.maxPhotoQualityPrioritization = .quality
+        let canConfigureFusion = photoOutput.responds(
+            to: Selector(("setAutoVirtualDeviceFusionEnabled:"))
+        )
+        if photoOutput.isVirtualDeviceFusionSupported, canConfigureFusion {
+            photoOutput.setValue(false, forKey: "autoVirtualDeviceFusionEnabled")
+        }
+        let autoFusionEnabled = photoOutput.responds(to: Selector(("isAutoVirtualDeviceFusionEnabled")))
+            ? (photoOutput.value(forKey: "autoVirtualDeviceFusionEnabled") as? Bool ?? false)
+            : false
 
         let supported = device.activeFormat.supportedMaxPhotoDimensions
         guard let largest = supported.max(by: {
@@ -31,7 +40,7 @@ extension CameraManager {
         configuredMaxPhotoDimensions = largest
 
         Self.captureLog.info(
-            "Photo output configured max=\(largest.width)x\(largest.height) hevc=\(self.photoOutput.availablePhotoCodecTypes.contains(.hevc))"
+            "Photo output configured max=\(largest.width)x\(largest.height) hevc=\(self.photoOutput.availablePhotoCodecTypes.contains(.hevc)) fusionSupported=\(self.photoOutput.isVirtualDeviceFusionSupported) autoFusion=\(autoFusionEnabled)"
         )
     }
 

@@ -10,12 +10,15 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import Observation
+import OSLog
 import UIKit
 import UniformTypeIdentifiers
 
 /// Manages the AVCaptureSession pipeline.
 @Observable
 final class CameraManager: NSObject, @unchecked Sendable {
+    private static let sessionLog = Logger(subsystem: "com.barenbaruna.Soolene", category: "AVCapture")
+
     // MARK: - Observable State (always mutated on MainActor)
 
     var isSessionRunning = false
@@ -249,7 +252,11 @@ final class CameraManager: NSObject, @unchecked Sendable {
                 device.maxAvailableVideoZoomFactor
             )
             device.videoZoomFactor = zoom
+            let readback = device.videoZoomFactor
             device.unlockForConfiguration()
+            Self.sessionLog.info(
+                "AV handoff zoom display=\(displayMultiplier) requested=\(application.deviceVideoZoomFactor) applied=\(zoom) readback=\(readback) min=\(device.minAvailableVideoZoomFactor) max=\(device.maxAvailableVideoZoomFactor)"
+            )
         } catch {
             // Non-fatal — capture with current zoom.
         }

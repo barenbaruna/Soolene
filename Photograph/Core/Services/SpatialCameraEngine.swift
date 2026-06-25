@@ -1062,38 +1062,21 @@ final class SpatialCameraEngine: NSObject, @unchecked Sendable {
             )
         }
 
-        if aspectRatio != .fourThree {
-            let cw = cropRect.width
-            let ch = cropRect.height
-            // Determine if the image pixels are in landscape but display orientation is portrait
-            let isRotated = image.imageOrientation == .left
-                || image.imageOrientation == .right
-                || image.imageOrientation == .leftMirrored
-                || image.imageOrientation == .rightMirrored
-            
-            let effectiveRatio = aspectRatio.pixelSpaceRatio(isRotated: isRotated)
-
-            switch aspectRatio {
-            case .oneOne:
-                let side = min(cw, ch)
-                cropRect = CGRect(x: cropRect.minX + (cw - side) / 2, y: cropRect.minY + (ch - side) / 2, width: side, height: side)
-            case .sixteenNine:
-                let ratio = effectiveRatio
-                let targetRatio = ratio.w / ratio.h
-                let currentRatio = cw / ch
-                
-                if targetRatio < currentRatio {
-                    // Pillarbox: width needs to shrink
-                    let targetWidth = ch * targetRatio
-                    cropRect = CGRect(x: cropRect.minX + (cw - targetWidth) / 2, y: cropRect.minY, width: targetWidth, height: ch)
-                } else {
-                    // Letterbox: height needs to shrink
-                    let targetHeight = cw / targetRatio
-                    cropRect = CGRect(x: cropRect.minX, y: cropRect.minY + (ch - targetHeight) / 2, width: cw, height: targetHeight)
-                }
-            case .fourThree: break
-            }
-        }
+        let isRotated = image.imageOrientation == .left
+            || image.imageOrientation == .right
+            || image.imageOrientation == .leftMirrored
+            || image.imageOrientation == .rightMirrored
+        let visibleRect = ImageCropHelper.visiblePreviewCropRect(
+            pixelSize: cropRect.size,
+            aspectRatio: aspectRatio,
+            isRotated: isRotated
+        )
+        cropRect = CGRect(
+            x: cropRect.minX + visibleRect.minX,
+            y: cropRect.minY + visibleRect.minY,
+            width: visibleRect.width,
+            height: visibleRect.height
+        )
         
         if cropRect.width < width || cropRect.height < height {
             if let croppedCGImage = cgImage.cropping(to: cropRect) {

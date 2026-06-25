@@ -18,7 +18,8 @@ struct CameraPreviewLayer: View {
             let previewRect = viewModel.selectedAspectRatio.cropRect(in: proxy.size)
 
             ZStack {
-                Color.black
+                backgroundPreview
+                    .allowsHitTesting(false)
                     .ignoresSafeArea()
 
                 previewSurface(in: previewRect)
@@ -32,11 +33,33 @@ struct CameraPreviewLayer: View {
     }
 
     @ViewBuilder
+    private var backgroundPreview: some View {
+        if viewModel.cameraMode == .rearSpatial {
+            SpatialCameraView(
+                engine: viewModel.spatialEngine,
+                previewZoom: viewModel.rearSpatialPreviewVisualZoom,
+                updatesViewport: false,
+                showsCamera: true
+            )
+        } else {
+            CameraPreviewView(
+                session: viewModel.cameraManager.session,
+                showsCamera: true,
+                onTap: nil,
+                onLongPress: nil,
+                onDoubleTap: nil,
+                onPinch: nil
+            )
+        }
+    }
+
+    @ViewBuilder
     private func previewSurface(in previewRect: CGRect) -> some View {
         if viewModel.cameraMode == .rearSpatial {
             SpatialCameraView(
                 engine: viewModel.spatialEngine,
-                previewZoom: viewModel.zoomController.displayMultiplier,
+                previewZoom: viewModel.rearSpatialPreviewVisualZoom,
+                showsCamera: false,
                 onTap: offset(onFocusTap, by: previewRect.origin),
                 onLongPress: offset(onSubjectPin, by: previewRect.origin),
                 onDoubleTap: onClearPin,
@@ -45,6 +68,7 @@ struct CameraPreviewLayer: View {
         } else {
             CameraPreviewView(
                 session: viewModel.cameraManager.session,
+                showsCamera: false,
                 onTap: offset(onFocusTap, by: previewRect.origin),
                 onLongPress: offset(onSubjectPin, by: previewRect.origin),
                 onDoubleTap: onClearPin,

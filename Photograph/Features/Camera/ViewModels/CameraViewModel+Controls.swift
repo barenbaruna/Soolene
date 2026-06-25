@@ -46,6 +46,13 @@ extension CameraViewModel {
             && isZoomRulerActive
     }
 
+    var rearSpatialPreviewVisualZoom: CGFloat {
+        guard cameraMode == .rearSpatial else { return 1.0 }
+        return zoomController.arZoomProfile.primaryIsUltraWide
+            ? zoomController.displayMultiplier
+            : 1.0
+    }
+
     func setZoomMultiplier(_ multiplier: CGFloat, isFinal: Bool) {
         guard !isSwitchingCamera else { return }
         let application = zoomController.setDisplayMultiplier(
