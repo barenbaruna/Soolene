@@ -1,3 +1,23 @@
-HIG_REFERENCE.md
-PRD.md
-prompt_ios_app_build.md
+# Xcode user state
+*.xcuserstate
+**/xcuserdata/
+
+# Local derived data
+.derivedData/
+.agents
+
+# Document
+Docs/
+
+# Xcode Project File
+project.pbxproj
+.DS_Store
+SubjectLockVerification.md
+prompt_code_review.md
+Optimizing Photography Guidance Engine.md
+MIGRATION.MD
+PHASE_MIGRATION.md
+
+# Agent and generated markdown files
+*.md
+!README.md

@@ -6,13 +6,26 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		A8TEST032FBACA5C0039F503 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A8B2C4C32FBACA5C0039F503 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A8B2C4CA2FBACA5C0039F503;
+			remoteInfo = Photograph;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A8B2C4CB2FBACA5C0039F503 /* Photograph.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Photograph.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A8TEST012FBACA5C0039F503 /* PhotographTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PhotographTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A8B2C4CD2FBACA5C0039F503 /* Photograph */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = Photograph;
 			sourceTree = "<group>";
 		};
@@ -41,6 +54,7 @@
 			isa = PBXGroup;
 			children = (
 				A8B2C4CB2FBACA5C0039F503 /* Photograph.app */,
+				A8TEST012FBACA5C0039F503 /* PhotographTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,8 +78,6 @@
 				A8B2C4CD2FBACA5C0039F503 /* Photograph */,
 			);
 			name = Photograph;
-			packageProductDependencies = (
-			);
 			productName = Photograph;
 			productReference = A8B2C4CB2FBACA5C0039F503 /* Photograph.app */;
 			productType = "com.apple.product-type.application";
@@ -256,21 +268,22 @@
 				DEVELOPMENT_TEAM = V36823696A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "FrameIt needs camera access to provide real-time composition guidance.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "FrameIt saves your composed photos to a dedicated FrameIt album.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FrameIt reads your library to display photos.";
+				INFOPLIST_KEY_CFBundleDisplayName = Soolene;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Soolene uses the camera to show a live preview and provide real-time composition guidance while you take photos.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Soolene saves photos you capture to your Photo Library and a Soolene album so you can review them in the app.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Soolene accesses your Photo Library to display photos saved by Soolene in your Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.barenbaruna.Photograph;
+				PRODUCT_BUNDLE_IDENTIFIER = com.barenbaruna.Soolene;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -290,27 +303,66 @@
 				DEVELOPMENT_TEAM = V36823696A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "FrameIt needs camera access to provide real-time composition guidance.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "FrameIt saves your composed photos to a dedicated FrameIt album.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FrameIt reads your library to display photos.";
+				INFOPLIST_KEY_CFBundleDisplayName = Soolene;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Soolene uses the camera to show a live preview and provide real-time composition guidance while you take photos.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Soolene saves photos you capture to your Photo Library and a Soolene album so you can review them in the app.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Soolene accesses your Photo Library to display photos saved by Soolene in your Library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.barenbaruna.Photograph;
+				PRODUCT_BUNDLE_IDENTIFIER = com.barenbaruna.Soolene;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A8TEST092FBACA5D0039F503 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V36823696A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.barenbaruna.PhotographTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Photograph.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Photograph";
+			};
+			name = Debug;
+		};
+		A8TEST0B2FBACA5D0039F503 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V36823696A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.barenbaruna.PhotographTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Photograph.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Photograph";
 			};
 			name = Release;
 		};
